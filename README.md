@@ -15,7 +15,6 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Conditionals (`cond`)
  * [x] Lambdas (`fn`)
  * [x] Bindings (`def`, `defn`, and `let`)
- * [x] A Basic Repl
  * [x] Tail-call optimization
  * [x] Go API
  * [x] Macro System
@@ -23,4 +22,4 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
 
-The full documentation can be found in the [Wiki](https://github.com/zhemao/glisp/wiki).
+The full documentation can be found in the [Wiki](https://github.com/qjpcpu/glisp/wiki).
