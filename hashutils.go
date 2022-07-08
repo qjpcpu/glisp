@@ -33,19 +33,16 @@ func HashExpression(expr Sexp) (int, error) {
 	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
 }
 
-func MakeHash(args []Sexp, typename string) (SexpHash, error) {
+func MakeHash(args []Sexp) (SexpHash, error) {
 	if len(args)%2 != 0 {
 		return SexpHash{},
 			errors.New("hash requires even number of arguments")
 	}
 
-	var iface interface{}
 	var memberCount int
 	hash := SexpHash{
-		TypeName: &typename,
 		Map:      make(map[int][]SexpPair),
 		KeyOrder: &[]Sexp{},
-		GoStruct: &iface,
 		NumKeys:  &memberCount,
 	}
 	k := 0

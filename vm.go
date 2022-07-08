@@ -397,8 +397,7 @@ func (s VectorizeInstr) Execute(env *Glisp) error {
 }
 
 type HashizeInstr struct {
-	HashLen  int
-	TypeName string
+	HashLen int
 }
 
 func (s HashizeInstr) InstrString() string {
@@ -418,7 +417,7 @@ func (s HashizeInstr) Execute(env *Glisp) error {
 		}
 		a = append(a, expr)
 	}
-	hash, err := MakeHash(a, s.TypeName)
+	hash, err := MakeHash(a)
 	if err != nil {
 		return err
 	}

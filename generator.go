@@ -787,8 +787,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 		gen.AddInstruction(ExplodeInstr(0))
 	}
 	gen.AddInstruction(HashizeInstr{
-		HashLen:  n,
-		TypeName: *(hash.TypeName),
+		HashLen: n,
 	})
 	return nil
 }

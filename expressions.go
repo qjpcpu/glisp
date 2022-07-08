@@ -77,10 +77,8 @@ func (pair SexpPair) SexpString() string {
 
 type SexpArray []Sexp
 type SexpHash struct {
-	TypeName *string
 	Map      map[int][]SexpPair
 	KeyOrder *[]Sexp // must user pointers here, else hset! will fail to update.
-	GoStruct *interface{}
 	NumKeys  *int
 }
 

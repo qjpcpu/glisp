@@ -652,7 +652,7 @@ func GetConstructorFunction(name string) GlispUserFunction {
 		case "list":
 			return MakeList(args), nil
 		case "hash":
-			return MakeHash(args, "hash")
+			return MakeHash(args)
 		}
 		return SexpNull, errors.New("invalid constructor")
 	}
