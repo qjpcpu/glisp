@@ -174,10 +174,10 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 	if env.scopestack.IsEmpty() {
 		panic("where's the global scope?")
 	}
-	globalScope := env.scopestack.elements[0]
+	old := env.scopestack
 	env.stackstack.Push(env.scopestack)
 	env.scopestack = NewStack(ScopeStackSize)
-	env.scopestack.Push(globalScope)
+	old.PushAllTo(env.scopestack)
 
 	if function.closeScope != nil {
 		function.closeScope.PushAllTo(env.scopestack)
@@ -459,6 +459,19 @@ func (env *Glisp) FindObject(name string) (Sexp, bool) {
 		return SexpNull, false
 	}
 	return obj, true
+}
+
+func (env *Glisp) AddScope() {
+	env.scopestack.PushScope()
+}
+
+func (env *Glisp) PopScope() error {
+	return env.scopestack.PopScope()
+}
+
+func (env *Glisp) BindObject(name string, expr Sexp) error {
+	sym := env.MakeSymbol(name)
+	return env.scopestack.BindSymbol(sym, expr)
 }
 
 func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {

@@ -30,4 +30,4 @@
 (def item (aget (hget js "list") 0))
 (assert (= "5e7dbc9fd0cc8370c563a1d7" (hget item "_id")))
 (assert (hget item "isActive"))
-(assert (=  "{\"first\":\"Fuller\",\"last\":\"Pugh\"}" (json/stringify (hget item "name"))))
+(assert (=  "\"Fuller\"" (json/stringify (hget (hget item "name") "first"))))
