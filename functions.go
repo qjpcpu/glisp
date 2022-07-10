@@ -386,9 +386,18 @@ func LenFunction(string) GlispUserFunction {
 			return NewSexpInt(len(t)), nil
 		case SexpHash:
 			return NewSexpInt(HashCountKeys(t)), nil
+		case SexpPair:
+			if IsList(t) {
+				arr, _ := ListToArray(t)
+				return NewSexpInt(len(arr)), nil
+			}
+		case SexpSentinel:
+			if t == SexpNull {
+				return NewSexpInt(0), nil
+			}
 		}
 
-		return NewSexpInt(0), errors.New("argument must be string or array")
+		return NewSexpInt(0), fmt.Errorf("argument must be string or array but got %s", args[0])
 	}
 }
 
@@ -422,6 +431,10 @@ func ConcatFunction(string) GlispUserFunction {
 			return ConcatStr(t, args[1])
 		case SexpPair:
 			return ConcatList(t, args[1])
+		case SexpSentinel:
+			if t == SexpNull {
+				return args[1], nil
+			}
 		}
 
 		return SexpNull, errors.New("expected strings or arrays")

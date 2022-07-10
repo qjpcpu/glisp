@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	//go:embed alias.lisp
-	alias_macro string
+	//go:embed core_utils.lisp
+	core_scripts string
 )
 
 func ImportCoreUtils(env *glisp.Glisp) error {
-	return env.SourceStream(bytes.NewBufferString(alias_macro))
+	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
