@@ -18,6 +18,11 @@ func (t SexpTime) TypeName() string {
 	return `time`
 }
 
+func (t SexpTime) MarshalJSON() ([]byte, error) {
+	tm := (time.Time)(t)
+	return glisp.Marshal(glisp.SexpStr(tm.Format(`2006-01-02 15:04:05`)))
+}
+
 func TimeNow(name string) glisp.GlispUserFunction {
 	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 0 {

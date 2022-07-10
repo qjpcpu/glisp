@@ -46,7 +46,7 @@ func testFile(t *testing.T, file string) {
 	if err != nil {
 		t.Fatalf("read file %s fail %v", file, err)
 	}
-	vm := loadAllExtensions(NewGlisp())
+	vm := registerTestingFunc(loadAllExtensions(NewGlisp()))
 	err = vm.LoadString(string(bytes))
 	if err != nil {
 		t.Fatalf("parse file %s fail %v", file, err)
@@ -75,6 +75,7 @@ func listScripts(t *testing.T) []string {
 
 func loadAllExtensions(vm *Glisp) *Glisp {
 	vm.ImportEval()
+	extensions.ImportJSON(vm)
 	extensions.ImportChannels(vm)
 	extensions.ImportCoreUtils(vm)
 	extensions.ImportCoroutines(vm)
@@ -83,4 +84,16 @@ func loadAllExtensions(vm *Glisp) *Glisp {
 	extensions.ImportTime(vm)
 	extensions.ImportString(vm)
 	return vm
+}
+
+func registerTestingFunc(vm *Glisp) *Glisp {
+	vm.AddFunctionByConstructor("test/read-file", testReadFile)
+	return vm
+}
+
+func testReadFile(name string) GlispUserFunction {
+	return func(env *Glisp, args []Sexp) (Sexp, error) {
+		bytes, _ := ioutil.ReadFile(string(args[0].(SexpStr)))
+		return SexpStr(string(bytes)), nil
+	}
 }

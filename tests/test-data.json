@@ -1,0 +1,294 @@
+{
+"number":100,
+"float":1.23,
+"string":"hello",
+"hash":{"a":true,"b":false},
+"nothing":null,
+"list":
+[
+  {
+    "_id": "5e7dbc9fd0cc8370c563a1d7",
+    "index": 0,
+    "guid": "e57307b4-a9b6-4919-b868-1790389fcba2",
+    "isActive": true,
+    "balance": "$3,475.53",
+    "picture": "ht\"t\/p://placehold.it/32x32",
+    "age": 34,
+    "eyeColor": "brown",
+    "name": {
+      "first": "Fuller",
+      "last": "Pugh"
+    },
+    "company": "COASH",
+    "email": "fuller.pugh@coash.ca",
+    "phone": "+1 (871) 483-3770",
+    "address": "465 Bowery Street, Springhill, Louisiana, 6233",
+    "about": "Duis id exercitation consequat laborum. Dolore laborum exercitation cillum duis velit duis commodo. Duis laboris voluptate sint cupidatat magna et sit aute est irure. Nostrud consequat ea voluptate quis deserunt. Pariatur pariatur sit ipsum irure amet tempor ex velit dolore cupidatat. Ut proident eu irure consectetur est. Tempor aliquip anim amet ut ut reprehenderit tempor consequat aliqua cillum do.",
+    "registered": "Sunday, March 19, 2017 4:38 AM",
+    "latitude": "37.208429",
+    "longitude": "112.891362",
+    "tags": [
+      "irure",
+      "et",
+      "esse",
+      "consectetur",
+      "eu"
+    ],
+    "range": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Carla Robles"
+      },
+      {
+        "id": 1,
+        "name": "Rush Patterson"
+      },
+      {
+        "id": 2,
+        "name": "Sweeney Lamb"
+      }
+    ],
+    "greeting": "Hello, Fuller! You have 8 unread messages.",
+    "favoriteFruit": "strawberry"
+  },
+  {
+    "_id": "5e7dbc9f0334374d830635f4",
+    "index": 1,
+    "guid": "bfb2fbfe-0c58-47cc-a0d8-3414d47f33e7",
+    "isActive": false,
+    "balance": "$3,956.35",
+    "picture": "http://placehold.it/32x32",
+    "age": 28,
+    "eyeColor": "blue",
+    "name": {
+      "first": "Butler",
+      "last": "Nelson"
+    },
+    "company": "CODAX",
+    "email": "butler.nelson@codax.info",
+    "phone": "+1 (936) 485-3782",
+    "address": "834 Hampton Avenue, Grayhawk, Michigan, 6766",
+    "about": "Velit aliqua fugiat esse voluptate consectetur qui. Ad eu cillum labore pariatur eiusmod consequat. Dolor aute tempor laboris aute deserunt magna occaecat eu et dolor aute irure cillum.",
+    "registered": "Friday, May 12, 2017 5:51 PM",
+    "latitude": "78.623819",
+    "longitude": "166.781025",
+    "tags": [
+      "do",
+      "cupidatat",
+      "id",
+      "ipsum",
+      "aute"
+    ],
+    "range": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Ferguson Conway"
+      },
+      {
+        "id": 1,
+        "name": "Moreno Charles"
+      },
+      {
+        "id": 2,
+        "name": "Rebekah Ramirez"
+      }
+    ],
+    "greeting": "Hello, Butler! You have 6 unread messages.",
+    "favoriteFruit": "apple"
+  },
+  {
+    "_id": "5e7dbc9f942dc25464348419",
+    "index": 2,
+    "guid": "cfd5e956-7b9a-42b9-ba87-9136bd7939ba",
+    "isActive": true,
+    "balance": "$1,910.47",
+    "picture": "http://placehold.it/32x32",
+    "age": 23,
+    "eyeColor": "blue",
+    "name": {
+      "first": "Strong",
+      "last": "Mcclure"
+    },
+    "company": "ZORK",
+    "email": "strong.mcclure@zork.tv",
+    "phone": "+1 (969) 485-3427",
+    "address": "715 Myrtle Avenue, Abrams, Tennessee, 4188",
+    "about": "Ipsum magna consectetur amet Lorem qui commodo Lorem aute magna nisi nostrud. Officia cillum id non in sint labore anim laborum aliqua ut qui velit et duis. Veniam ut qui aliquip fugiat. Nostrud sunt dolor ullamco laboris ullamco proident anim reprehenderit labore velit esse Lorem id nostrud.",
+    "registered": "Wednesday, December 12, 2018 7:13 AM",
+    "latitude": "76.804982",
+    "longitude": "-11.880026",
+    "tags": [
+      "consectetur",
+      "consectetur",
+      "reprehenderit",
+      "proident",
+      "ullamco"
+    ],
+    "range": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Mia Shelton"
+      },
+      {
+        "id": 1,
+        "name": "Kaye Porter"
+      },
+      {
+        "id": 2,
+        "name": "Lee Swanson"
+      }
+    ],
+    "greeting": "Hello, Strong! You have 8 unread messages.",
+    "favoriteFruit": "apple"
+  },
+  {
+    "_id": "5e7dbc9f57db3252a8eca023",
+    "index": 3,
+    "guid": "f255339b-410c-4d51-86d4-1a687dca9523",
+    "isActive": false,
+    "balance": "$3,425.11",
+    "picture": "http://placehold.it/32x32",
+    "age": 30,
+    "eyeColor": "blue",
+    "name": {
+      "first": "Mara",
+      "last": "Downs"
+    },
+    "company": "GEEKOLA",
+    "email": "mara.downs@geekola.org",
+    "phone": "+1 (970) 446-3818",
+    "address": "578 Doone Court, Southview, Kansas, 1792",
+    "about": "Mollit Lorem anim minim commodo consequat nisi reprehenderit non magna adipisicing voluptate. Ut sint sunt consequat sit voluptate commodo proident aliqua cillum ut elit pariatur aute qui. Fugiat esse et ullamco incididunt ex.",
+    "registered": "Sunday, September 18, 2016 11:25 PM",
+    "latitude": "-27.151781",
+    "longitude": "155.089743",
+    "tags": [
+      "mollit",
+      "voluptate",
+      "ut",
+      "ad",
+      "aute"
+    ],
+    "range": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Nannie Leblanc"
+      },
+      {
+        "id": 1,
+        "name": "Ellison Adkins"
+      },
+      {
+        "id": 2,
+        "name": "Christina Mullen"
+      }
+    ],
+    "greeting": "Hello, Mara! You have 7 unread messages.",
+    "favoriteFruit": "apple"
+  },
+  {
+    "_id": "5e7dbc9f5e358d6788cecfb0",
+    "index": 4,
+    "guid": "40705d4c-edfa-4bc7-bf88-a7d4825c5532",
+    "isActive": false,
+    "balance": "$3,806.85",
+    "picture": "http://placehold.it/32x32",
+    "age": 35,
+    "eyeColor": "blue",
+    "name": {
+      "first": "Marianne",
+      "last": "Park"
+    },
+    "company": "COGENTRY",
+    "email": "marianne.park@cogentry.us",
+    "phone": "+1 (915) 421-2250",
+    "address": "184 Raleigh Place, Lumberton, New Mexico, 2493",
+    "about": "Laborum eiusmod magna amet duis do ut officia ullamco aute fugiat reprehenderit. Voluptate qui ea elit sit sit nulla et veniam. Consequat id aliqua sunt minim. Labore ipsum quis proident consectetur do sunt in consequat sint consectetur. Fugiat sit incididunt do ex esse velit mollit sint id quis ullamco ut cillum.",
+    "registered": "Saturday, September 28, 2019 6:57 AM",
+    "latitude": "-65.792714",
+    "longitude": "-69.251337",
+    "tags": [
+      "sit",
+      "amet",
+      "mollit",
+      "laborum",
+      "pariatur"
+    ],
+    "range": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Gomez Herring"
+      },
+      {
+        "id": 1,
+        "name": "Dean Moran"
+      },
+      {
+        "id": 2,
+        "name": "Owens Ryan"
+      }
+    ],
+    "greeting": "Hello, Marianne! You have 5 unread messages.",
+    "favoriteFruit": "apple"
+  }
+]}
