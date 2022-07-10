@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/qjpcpu/glisp"
-	. "github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/glisp/extensions"
 
 	"io/ioutil"
@@ -24,7 +23,7 @@ func TestAllScripts(t *testing.T) {
 }
 
 func TestScope(t *testing.T) {
-	vm := NewGlisp()
+	vm := glisp.NewGlisp()
 	key := "aaa"
 	if err := vm.BindObject(key, glisp.NewSexpInt(1)); err != nil {
 		t.Fatal("bind object fail", err)
@@ -60,7 +59,7 @@ func TestScope(t *testing.T) {
 }
 
 func TestLoadAllFunction(t *testing.T) {
-	vm := loadAllExtensions(NewGlisp())
+	vm := loadAllExtensions(glisp.NewGlisp())
 	funcs := vm.GlobalFunctions()
 	sort.Strings(funcs)
 	t.Logf("all functions(%v)\n", len(funcs))
@@ -84,7 +83,7 @@ func testFile(t *testing.T, file string) {
 	if err != nil {
 		t.Fatalf("read file %s fail %v", file, err)
 	}
-	vm := registerTestingFunc(loadAllExtensions(NewGlisp()))
+	vm := registerTestingFunc(loadAllExtensions(glisp.NewGlisp()))
 	err = vm.LoadString(string(bytes))
 	if err != nil {
 		t.Fatalf("parse file %s fail %v", file, err)
@@ -111,7 +110,7 @@ func listScripts(t *testing.T) []string {
 	return scripts
 }
 
-func loadAllExtensions(vm *Glisp) *Glisp {
+func loadAllExtensions(vm *glisp.Glisp) *glisp.Glisp {
 	vm.ImportEval()
 	extensions.ImportJSON(vm)
 	extensions.ImportChannels(vm)
@@ -124,43 +123,43 @@ func loadAllExtensions(vm *Glisp) *Glisp {
 	return vm
 }
 
-func registerTestingFunc(vm *Glisp) *Glisp {
+func registerTestingFunc(vm *glisp.Glisp) *glisp.Glisp {
 	vm.AddFunctionByConstructor("test/read-file", testReadFile)
 	return vm
 }
 
-func testReadFile(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
-		bytes, _ := ioutil.ReadFile(string(args[0].(SexpStr)))
-		return SexpStr(string(bytes)), nil
+func testReadFile(name string) glisp.GlispUserFunction {
+	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+		bytes, _ := ioutil.ReadFile(string(args[0].(glisp.SexpStr)))
+		return glisp.SexpStr(string(bytes)), nil
 	}
 }
 
 func TestContextFunction(t *testing.T) {
 	vm := glisp.NewGlisp()
 	var value int
-	vm.AddFunction("test/echo", func(env *Glisp, args []Sexp) (Sexp, error) {
+	vm.AddFunction("test/echo", func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
 		val, ok := env.FindObject("ctx")
 		if !ok {
-			return SexpNull, errors.New("context lost")
+			return glisp.SexpNull, errors.New("context lost")
 		}
-		if !IsInt(val) {
-			return SexpNull, errors.New("context lost")
+		if !glisp.IsInt(val) {
+			return glisp.SexpNull, errors.New("context lost")
 		}
-		if val.(SexpInt).ToInt() != value {
-			return SexpNull, errors.New("context lost")
+		if val.(glisp.SexpInt).ToInt() != value {
+			return glisp.SexpNull, errors.New("context lost")
 		}
 		return val, nil
 	})
-	callEcho := func() (Sexp, error) {
+	callEcho := func() (glisp.Sexp, error) {
 		fn, ok := vm.FindObject("test/echo")
 		if !ok {
-			return SexpNull, errors.New("test/echo function not found")
+			return glisp.SexpNull, errors.New("test/echo function not found")
 		}
-		if !IsFunction(fn) {
-			return SexpNull, errors.New("test/echo function not found")
+		if !glisp.IsFunction(fn) {
+			return glisp.SexpNull, errors.New("test/echo function not found")
 		}
-		return vm.Apply(fn.(SexpFunction), nil)
+		return vm.Apply(fn.(glisp.SexpFunction), nil)
 	}
 	if _, err := callEcho(); err == nil {
 		t.Fatal("should not success")
@@ -168,21 +167,21 @@ func TestContextFunction(t *testing.T) {
 
 	vm.AddScope()
 	value = 1
-	vm.BindObject("ctx", NewSexpInt(value))
+	vm.BindObject("ctx", glisp.NewSexpInt(value))
 	if expr, err := callEcho(); err != nil {
 		t.Fatalf("call echo fail %v", err)
-	} else if expr.(SexpInt).ToInt() != value {
-		t.Fatalf("find bad context value %v != %v", expr.(SexpInt).ToInt(), value)
+	} else if expr.(glisp.SexpInt).ToInt() != value {
+		t.Fatalf("find bad context value %v != %v", expr.(glisp.SexpInt).ToInt(), value)
 	}
 	vm.PopScope()
 
 	vm.AddScope()
 	value = 2
-	vm.BindObject("ctx", NewSexpInt(value))
+	vm.BindObject("ctx", glisp.NewSexpInt(value))
 	if expr, err := callEcho(); err != nil {
 		t.Fatalf("call echo fail %v", err)
-	} else if expr.(SexpInt).ToInt() != value {
-		t.Fatalf("find bad context value %v != %v", expr.(SexpInt).ToInt(), value)
+	} else if expr.(glisp.SexpInt).ToInt() != value {
+		t.Fatalf("find bad context value %v != %v", expr.(glisp.SexpInt).ToInt(), value)
 	}
 	vm.PopScope()
 
