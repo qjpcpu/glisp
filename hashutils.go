@@ -30,7 +30,7 @@ func HashExpression(expr Sexp) (int, error) {
 		}
 		return int(hasher.Sum32()), nil
 	}
-	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
+	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
 
 func MakeHash(args []Sexp) (SexpHash, error) {

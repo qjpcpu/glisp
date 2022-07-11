@@ -400,7 +400,7 @@ func (env *Glisp) ImportEval() {
 func (env *Glisp) DumpFunctionByName(name string) error {
 	obj, found := env.FindObject(name)
 	if !found {
-		return errors.New(fmt.Sprintf("%q not found", name))
+		return fmt.Errorf("%q not found", name)
 	}
 
 	var fun GlispFunction

@@ -614,7 +614,7 @@ func MapFunction(string) GlispUserFunction {
 		case SexpFunction:
 			fun = e
 		default:
-			return SexpNull, errors.New(fmt.Sprint("first argument must be function had", fmt.Sprintf("%T", e), "  ", e))
+			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
 		}
 
 		switch e := args[1].(type) {
@@ -623,7 +623,7 @@ func MapFunction(string) GlispUserFunction {
 		case SexpPair:
 			return MapList(env, fun, e)
 		}
-		return SexpNull, errors.New("second argument must be array")
+		return SexpNull, errors.New("second argument ofr map must be array")
 	}
 }
 

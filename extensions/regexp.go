@@ -39,7 +39,7 @@ func GetRegexpFind(name string) glisp.GlispUserFunction {
 			haystack = string(t)
 		default:
 			return glisp.SexpNull,
-				errors.New(fmt.Sprintf("2nd argument of %v should be a string", name))
+				fmt.Errorf("2nd argument of %v should be a string", name)
 		}
 
 		var needle regexp.Regexp
@@ -48,7 +48,7 @@ func GetRegexpFind(name string) glisp.GlispUserFunction {
 			needle = regexp.Regexp(t)
 		default:
 			return glisp.SexpNull,
-				errors.New(fmt.Sprintf("1st argument of %v should be a compiled regular expression", name))
+				fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
 		}
 
 		switch name {

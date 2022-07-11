@@ -1,7 +1,6 @@
 package glisp
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -64,7 +63,7 @@ func (stack *Stack) Push(elem StackElem) {
 
 func (stack *Stack) Get(n int) (StackElem, error) {
 	if stack.tos-n < 0 {
-		return nil, errors.New(fmt.Sprint("invalid stack access asked for ", n, " Top was ", stack.tos))
+		return nil, fmt.Errorf("invalid stack access asked for %v Top was %v", n, stack.tos)
 	}
 	return stack.elements[stack.tos-n], nil
 }

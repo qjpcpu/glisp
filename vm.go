@@ -218,7 +218,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 		}
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
-	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
+	return fmt.Errorf("%s is not a function", c.sym.name)
 }
 
 type DispatchInstr struct {
