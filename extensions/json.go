@@ -36,16 +36,20 @@ func jsonUnmarshal(name string) glisp.GlispUserFunction {
 		if !glisp.IsString(args[0]) {
 			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string", name)
 		}
-		var v interface{}
 		rawBytes := []byte(string(args[0].(glisp.SexpStr)))
-		if len(rawBytes) == 0 {
-			return glisp.SexpNull, nil
-		}
-		if err := stdUnmarshal(rawBytes, &v); err != nil {
-			return glisp.SexpNull, fmt.Errorf("%s decode json fail %v", name, err)
-		}
-		return mapInterfaceToSexp(v), nil
+		return ParseJSON(rawBytes)
 	}
+}
+
+func ParseJSON(rawBytes []byte) (glisp.Sexp, error) {
+	var v interface{}
+	if len(rawBytes) == 0 {
+		return glisp.SexpNull, nil
+	}
+	if err := stdUnmarshal(rawBytes, &v); err != nil {
+		return glisp.SexpNull, fmt.Errorf("decode json fail %v", err)
+	}
+	return mapInterfaceToSexp(v), nil
 }
 
 func stdUnmarshal(data []byte, v interface{}) error {
