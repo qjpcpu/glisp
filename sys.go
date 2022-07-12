@@ -78,6 +78,8 @@ func GetTypeFunction(name string) GlispUserFunction {
 			case SexpMarker:
 				present = "<marker>"
 			}
+		case SexpBytes:
+			present = `bytes`
 		case ITypeName:
 			present = expr.TypeName()
 		default:

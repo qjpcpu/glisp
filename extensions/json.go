@@ -33,11 +33,15 @@ func jsonUnmarshal(name string) glisp.GlispUserFunction {
 		if len(args) != 1 {
 			return wrongNumberArguments(name, len(args), 1)
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string", name)
+		switch val := args[0].(type) {
+		case glisp.SexpStr:
+			rawBytes := []byte(string(val))
+			return ParseJSON(rawBytes)
+		case glisp.SexpBytes:
+			return ParseJSON(val.Bytes())
+		default:
+			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes", name)
 		}
-		rawBytes := []byte(string(args[0].(glisp.SexpStr)))
-		return ParseJSON(rawBytes)
 	}
 }
 

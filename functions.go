@@ -831,6 +831,8 @@ var builtinFunctions = map[string]GlispUserFunctionConstructor{
 	"gensym":     GenSymFunction,
 	"sym2str":    Sym2StrFunction,
 	"str2sym":    Str2SymFunction,
+	"str2bytes":  StringToBytes,
+	"bytes2str":  BytesToString,
 }
 
 func StringifyFunction(string) GlispUserFunction {
@@ -853,6 +855,32 @@ func StringToNumber(name string) GlispUserFunction {
 			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
 		}
 		return NewSexpIntStr(string(str))
+	}
+}
+
+func BytesToString(name string) GlispUserFunction {
+	return func(env *Glisp, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		str, ok := args[0].(SexpBytes)
+		if !ok {
+			return SexpNull, fmt.Errorf(`%s argument should be bytes`, name)
+		}
+		return SexpStr(string(str.bytes)), nil
+	}
+}
+
+func StringToBytes(name string) GlispUserFunction {
+	return func(env *Glisp, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		str, ok := args[0].(SexpStr)
+		if !ok {
+			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		}
+		return NewSexpBytes([]byte(str)), nil
 	}
 }
 

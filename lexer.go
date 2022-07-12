@@ -30,6 +30,7 @@ const (
 	TokenHex
 	TokenOct
 	TokenBinary
+	TokenBinaryStream
 	TokenFloat
 	TokenChar
 	TokenString
@@ -73,6 +74,8 @@ func (t Token) String() string {
 		return "0o" + t.str
 	case TokenBinary:
 		return "0b" + t.str
+	case TokenBinaryStream:
+		return "0B" + t.str
 	case TokenChar:
 		quoted := strconv.Quote(t.str)
 		return "#" + quoted[1:len(quoted)-1]
@@ -101,14 +104,15 @@ type Lexer struct {
 }
 
 var (
-	BoolRegex    = regexp.MustCompile("^(true|false)$")
-	DecimalRegex = regexp.MustCompile("^-?[0-9]+$")
-	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
-	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
-	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
-	SymbolRegex  = regexp.MustCompile("^[^'#]+$")
-	CharRegex    = regexp.MustCompile("^#\\\\?.$")
-	FloatRegex   = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	BoolRegex         = regexp.MustCompile("^(true|false)$")
+	DecimalRegex      = regexp.MustCompile("^-?[0-9]+$")
+	HexRegex          = regexp.MustCompile("^0x[0-9a-fA-F]+$")
+	OctRegex          = regexp.MustCompile("^0o[0-7]+$")
+	BinaryRegex       = regexp.MustCompile("^0b[01]+$")
+	BinaryStreamRegex = regexp.MustCompile("^0B[0-9a-z]+$")
+	SymbolRegex       = regexp.MustCompile("^[^'#]+$")
+	CharRegex         = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex        = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
 
 func StringToRunes(str string) []rune {
@@ -194,6 +198,9 @@ func DecodeAtom(atom string) (Token, error) {
 	}
 	if BinaryRegex.MatchString(atom) {
 		return Token{TokenBinary, atom[2:]}, nil
+	}
+	if BinaryStreamRegex.MatchString(atom) {
+		return Token{TokenBinaryStream, atom[2:]}, nil
 	}
 	if FloatRegex.MatchString(atom) {
 		return Token{TokenFloat, atom}, nil

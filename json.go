@@ -31,6 +31,8 @@ func Marshal(a Sexp) ([]byte, error) {
 		return expr.MarshalJSON()
 	case SexpSymbol:
 		return expr.MarshalJSON()
+	case SexpBytes:
+		return expr.MarshalJSON()
 	}
 	if m, ok := a.(json.Marshaler); ok {
 		return m.MarshalJSON()
@@ -48,6 +50,10 @@ func (a SexpFunction) MarshalJSON() ([]byte, error) {
 
 func (a SexpStackmark) MarshalJSON() ([]byte, error) {
 	return stdMarshal(a.SexpString())
+}
+
+func (a SexpBytes) MarshalJSON() ([]byte, error) {
+	return stdMarshal(a.bytes)
 }
 
 func (a SexpBool) MarshalJSON() ([]byte, error) {

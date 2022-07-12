@@ -87,6 +87,19 @@ func compareString(s SexpStr, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpStr:
 		return bytes.Compare([]byte(s), []byte(e)), nil
+	case SexpBytes:
+		return bytes.Compare([]byte(s), e.bytes), nil
+	}
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", s, s.SexpString(), expr, expr.SexpString())
+	return 0, errors.New(errmsg)
+}
+
+func compareBytes(s SexpBytes, expr Sexp) (int, error) {
+	switch e := expr.(type) {
+	case SexpBytes:
+		return bytes.Compare(s.bytes, e.bytes), nil
+	case SexpStr:
+		return bytes.Compare(s.bytes, []byte(e)), nil
 	}
 	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", s, s.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
@@ -196,6 +209,8 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		} else {
 			return -1, nil
 		}
+	case SexpBytes:
+		return compareBytes(at, b)
 	}
 	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 	return 0, errors.New(errmsg)

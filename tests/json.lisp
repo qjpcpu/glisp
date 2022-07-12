@@ -31,3 +31,10 @@
 (assert (= "5e7dbc9fd0cc8370c563a1d7" (hget item "_id")))
 (assert (hget item "isActive"))
 (assert (=  "\"Fuller\"" (json/stringify (hget (hget item "name") "first"))))
+
+
+;; json with bytes
+(def jb {'a 0B676c69737020697320636f6f6c})
+(assert (= "{\"a\":\"Z2xpc3AgaXMgY29vbA==\"}" (json/stringify jb)))
+(assert (= 0B676c69737020697320636f6f6c  (base64/decode "Z2xpc3AgaXMgY29vbA==")))
+(assert (= (base64/encode 0B676c69737020697320636f6f6c)  "Z2xpc3AgaXMgY29vbA=="))

@@ -194,6 +194,8 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 		return NewSexpIntStrWithBase(tok.str, 8)
 	case TokenBinary:
 		return NewSexpIntStrWithBase(tok.str, 2)
+	case TokenBinaryStream:
+		return NewSexpBytesByHex(tok.str)
 	case TokenChar:
 		return SexpChar(tok.str[0]), nil
 	case TokenString:
