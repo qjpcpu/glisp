@@ -31,7 +31,7 @@ func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	case SexpChar:
 		return signumFloat(f - SexpFloat(e)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", f, expr)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", f, f.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
 }
 
@@ -64,7 +64,7 @@ func compareInt(i SexpInt, expr Sexp) (int, error) {
 		si, _ := NewSexpIntStr(strconv.FormatInt(int64(byte(e)), 10))
 		return compareBetweenInt(i, si), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", i, expr)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", i, i.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
 }
 
@@ -79,7 +79,7 @@ func compareChar(c SexpChar, expr Sexp) (int, error) {
 		ei := NewSexpInt64(int64(byte(e)))
 		return compareBetweenInt(ci, ei), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", c, expr)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", c, c.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
 }
 
@@ -88,7 +88,7 @@ func compareString(s SexpStr, expr Sexp) (int, error) {
 	case SexpStr:
 		return bytes.Compare([]byte(s), []byte(e)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", s, expr)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", s, s.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
 }
 
@@ -97,7 +97,7 @@ func compareSymbol(sym SexpSymbol, expr Sexp) (int, error) {
 	case SexpSymbol:
 		return compareBetweenInt(NewSexpInt(sym.number), NewSexpInt(e.number)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", sym, expr)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", sym, sym.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
 }
 
@@ -107,7 +107,7 @@ func comparePair(a SexpPair, b Sexp) (int, error) {
 	case SexpPair:
 		bp = t
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 		return 0, errors.New(errmsg)
 	}
 	res, err := Compare(a.head, bp.head)
@@ -126,7 +126,7 @@ func compareArray(a SexpArray, b Sexp) (int, error) {
 	case SexpArray:
 		ba = t
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 		return 0, errors.New(errmsg)
 	}
 	var length int
@@ -155,7 +155,7 @@ func compareBool(a SexpBool, b Sexp) (int, error) {
 	case SexpBool:
 		bb = bt
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 		return 0, errors.New(errmsg)
 	}
 
@@ -197,7 +197,7 @@ func Compare(a Sexp, b Sexp) (int, error) {
 			return -1, nil
 		}
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 	return 0, errors.New(errmsg)
 }
 

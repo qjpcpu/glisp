@@ -21,7 +21,7 @@
 (assert (= 2 (str/count " abc cd" "c")))
 (assert (= 1 (str/count "abc cd" "b")))
 
-(assert (= 1024 (number "1024")))
+(assert (= 1024 (str2int "1024")))
 
 (assert (= "1024" (str 1024)))
 (assert (= "true" (str true)))
@@ -41,3 +41,5 @@
 (assert (str/title? "A"))
 (assert (not (str/title? "aBc")))
 (assert (not (str/title? "")))
+
+(assert (= 1.1 (str2float "1.1")))
