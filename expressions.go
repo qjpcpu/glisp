@@ -279,8 +279,8 @@ type SexpFunction struct {
 	user       bool
 	nargs      int
 	varargs    bool
-	fun        GlispFunction
-	userfun    GlispUserFunction
+	fun        Function
+	userfun    UserFunction
 	closeScope *Stack
 }
 

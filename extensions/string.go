@@ -7,7 +7,7 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportString(env *glisp.Glisp) {
+func ImportString(env *glisp.Environment) {
 	env.AddFunctionByConstructor("str/start-with?", StringPredict(strings.HasPrefix))
 	env.AddFunctionByConstructor("str/end-with?", StringPredict(strings.HasSuffix))
 	env.AddFunctionByConstructor("str/contains?", StringPredict(strings.Contains))
@@ -27,9 +27,9 @@ func ImportString(env *glisp.Glisp) {
 	env.AddFunctionByConstructor("str/title?", isTitle())
 }
 
-func StringPredict(fn func(string, string) bool) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringPredict(fn func(string, string) bool) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
 				return wrongNumberArguments(name, len(args), 2)
 			}
@@ -44,9 +44,9 @@ func StringPredict(fn func(string, string) bool) glisp.GlispUserFunctionConstruc
 	}
 }
 
-func StringSearch(fn func(string, string) int) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringSearch(fn func(string, string) int) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
 				return wrongNumberArguments(name, len(args), 2)
 			}
@@ -61,9 +61,9 @@ func StringSearch(fn func(string, string) int) glisp.GlispUserFunctionConstructo
 	}
 }
 
-func StringSplit(fn func(string, string) []string) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringSplit(fn func(string, string) []string) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
 				return wrongNumberArguments(name, len(args), 2)
 			}
@@ -83,9 +83,9 @@ func StringSplit(fn func(string, string) []string) glisp.GlispUserFunctionConstr
 	}
 }
 
-func StringMap(fn func(string) string) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringMap(fn func(string) string) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 1 {
 				return wrongNumberArguments(name, len(args), 1)
 			}
@@ -97,9 +97,9 @@ func StringMap(fn func(string) string) glisp.GlispUserFunctionConstructor {
 	}
 }
 
-func StringBool(fn func(string) bool) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringBool(fn func(string) bool) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 1 {
 				return wrongNumberArguments(name, len(args), 1)
 			}
@@ -111,9 +111,9 @@ func StringBool(fn func(string) bool) glisp.GlispUserFunctionConstructor {
 	}
 }
 
-func StringJoin(fn func([]string, string) string) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringJoin(fn func([]string, string) string) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
 				return wrongNumberArguments(name, len(args), 2)
 			}
@@ -136,9 +136,9 @@ func StringJoin(fn func([]string, string) string) glisp.GlispUserFunctionConstru
 	}
 }
 
-func StringMap2(fn func(string, string) string) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringMap2(fn func(string, string) string) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
 				return wrongNumberArguments(name, len(args), 2)
 			}
@@ -153,9 +153,9 @@ func StringMap2(fn func(string, string) string) glisp.GlispUserFunctionConstruct
 	}
 }
 
-func StringMap3(fn func(string, string, string) string) glisp.GlispUserFunctionConstructor {
-	return func(name string) glisp.GlispUserFunction {
-		return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StringMap3(fn func(string, string, string) string) glisp.UserFunctionConstructor {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 3 {
 				return wrongNumberArguments(name, len(args), 3)
 			}
@@ -173,7 +173,7 @@ func StringMap3(fn func(string, string, string) string) glisp.GlispUserFunctionC
 	}
 }
 
-func isDigit() glisp.GlispUserFunctionConstructor {
+func isDigit() glisp.UserFunctionConstructor {
 	return StringBool(func(s string) bool {
 		for _, b := range s {
 			if b < '0' || b > '9' {
@@ -184,7 +184,7 @@ func isDigit() glisp.GlispUserFunctionConstructor {
 	})
 }
 
-func isAlpha() glisp.GlispUserFunctionConstructor {
+func isAlpha() glisp.UserFunctionConstructor {
 	return StringBool(func(s string) bool {
 		for _, b := range s {
 			if ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z') {
@@ -196,7 +196,7 @@ func isAlpha() glisp.GlispUserFunctionConstructor {
 	})
 }
 
-func isTitle() glisp.GlispUserFunctionConstructor {
+func isTitle() glisp.UserFunctionConstructor {
 	return StringBool(func(s string) bool {
 		if len(s) == 0 || !('A' <= s[0] && s[0] <= 'Z') {
 			return false

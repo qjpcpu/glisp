@@ -23,8 +23,8 @@ func (t SexpTime) MarshalJSON() ([]byte, error) {
 	return glisp.Marshal(glisp.SexpStr(tm.Format(`2006-01-02 15:04:05`)))
 }
 
-func TimeNow(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func TimeNow(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 0 {
 			return wrongNumberArguments(name, len(args), 0)
 		}
@@ -38,8 +38,8 @@ func TimeNow(name string) glisp.GlispUserFunction {
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
 */
-func ParseTime(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func ParseTime(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		switch len(args) {
 		case 1:
 			arg := args[0]
@@ -87,8 +87,8 @@ func ParseTime(name string) glisp.GlispUserFunction {
   (time/format SexpTime 'timestamp-ms) => SexpTime to unix timestamp mills
   (time/format SexpTime "2006-01-02 15:04:05") => SexpTime to string by layout
 */
-func GetTimeFormatFunction(fname string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func GetTimeFormatFunction(fname string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.SexpNull, fmt.Errorf(`wrong argument number of function %s`, fname)
 		}
@@ -128,7 +128,7 @@ func readSymOrStr(s glisp.Sexp) (string, bool) {
 	return "", false
 }
 
-func ImportTime(env *glisp.Glisp) {
+func ImportTime(env *glisp.Environment) {
 	env.AddFunctionByConstructor("time/now", TimeNow)
 	env.AddFunctionByConstructor("time/format", GetTimeFormatFunction)
 	env.AddFunctionByConstructor("time/parse", ParseTime)

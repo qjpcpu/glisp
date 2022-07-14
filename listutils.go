@@ -29,7 +29,7 @@ func MakeList(expressions []Sexp) Sexp {
 	return Cons(expressions[0], MakeList(expressions[1:]))
 }
 
-func MapList(env *Glisp, fun SexpFunction, expr Sexp) (Sexp, error) {
+func MapList(env *Environment, fun SexpFunction, expr Sexp) (Sexp, error) {
 	if expr == SexpNull {
 		return SexpNull, nil
 	}

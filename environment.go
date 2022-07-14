@@ -10,10 +10,10 @@ import (
 	"strconv"
 )
 
-type PreHook func(*Glisp, string, []Sexp)
-type PostHook func(*Glisp, string, Sexp)
+type PreHook func(*Environment, string, []Sexp)
+type PostHook func(*Environment, string, Sexp)
 
-type Glisp struct {
+type Environment struct {
 	datastack   *Stack
 	scopestack  *Stack
 	addrstack   *Stack
@@ -35,8 +35,8 @@ const ScopeStackSize = 50
 const DataStackSize = 100
 const StackStackSize = 5
 
-func NewGlisp() *Glisp {
-	env := new(Glisp)
+func New() *Environment {
+	env := new(Environment)
 	env.datastack = NewStack(DataStackSize)
 	env.scopestack = NewStack(ScopeStackSize)
 	env.scopestack.PushScope()
@@ -63,8 +63,8 @@ func NewGlisp() *Glisp {
 	return env
 }
 
-func (env *Glisp) Clone() *Glisp {
-	dupenv := new(Glisp)
+func (env *Environment) Clone() *Environment {
+	dupenv := new(Environment)
 
 	dupenv.datastack = env.datastack.Clone()
 	dupenv.stackstack = env.stackstack.Clone()
@@ -87,8 +87,8 @@ func (env *Glisp) Clone() *Glisp {
 	return dupenv
 }
 
-func (env *Glisp) Duplicate() *Glisp {
-	dupenv := new(Glisp)
+func (env *Environment) Duplicate() *Environment {
+	dupenv := new(Environment)
 	dupenv.datastack = NewStack(DataStackSize)
 	dupenv.scopestack = NewStack(ScopeStackSize)
 	dupenv.stackstack = NewStack(StackStackSize)
@@ -109,7 +109,7 @@ func (env *Glisp) Duplicate() *Glisp {
 	return dupenv
 }
 
-func (env *Glisp) MakeSymbol(name string) SexpSymbol {
+func (env *Environment) MakeSymbol(name string) SexpSymbol {
 	symnum, ok := env.symtable[name]
 	if ok {
 		return SexpSymbol{name, symnum}
@@ -121,19 +121,19 @@ func (env *Glisp) MakeSymbol(name string) SexpSymbol {
 	return symbol
 }
 
-func (env *Glisp) GenSymbol(prefix string) SexpSymbol {
+func (env *Environment) GenSymbol(prefix string) SexpSymbol {
 	symname := prefix + strconv.Itoa(env.nextsymbol)
 	return env.MakeSymbol(symname)
 }
 
-func (env *Glisp) CurrentFunctionSize() int {
+func (env *Environment) CurrentFunctionSize() int {
 	if env.curfunc.user {
 		return 0
 	}
 	return len(env.curfunc.fun)
 }
 
-func (env *Glisp) wrangleOptargs(fnargs, nargs int) error {
+func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 	if nargs < fnargs {
 		return errors.New(
 			fmt.Sprintf("Expected >%d arguments, got %d",
@@ -151,7 +151,7 @@ func (env *Glisp) wrangleOptargs(fnargs, nargs int) error {
 	return nil
 }
 
-func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
+func (env *Environment) CallFunction(function SexpFunction, nargs int) error {
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
@@ -191,12 +191,12 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 	return nil
 }
 
-func (env *Glisp) BindObject(name string, expr Sexp) error {
+func (env *Environment) BindObject(name string, expr Sexp) error {
 	sym := env.MakeSymbol(name)
 	return env.scopestack.BindSymbol(sym, expr)
 }
 
-func (env *Glisp) ReturnFromFunction() error {
+func (env *Environment) ReturnFromFunction() error {
 	for _, posthook := range env.after {
 		retval, err := env.datastack.GetExpr(0)
 		if err != nil {
@@ -219,7 +219,7 @@ func (env *Glisp) ReturnFromFunction() error {
 	return nil
 }
 
-func (env *Glisp) CallUserFunction(
+func (env *Environment) CallUserFunction(
 	function SexpFunction, name string, nargs int) error {
 
 	for _, prehook := range env.before {
@@ -255,7 +255,7 @@ func (env *Glisp) CallUserFunction(
 	return nil
 }
 
-func (env *Glisp) ParseStream(in io.Reader) ([]Sexp, error) {
+func (env *Environment) ParseStream(in io.Reader) ([]Sexp, error) {
 	lexer := NewLexerFromStream(bufio.NewReader(in))
 
 	var err error
@@ -270,7 +270,7 @@ func (env *Glisp) ParseStream(in io.Reader) ([]Sexp, error) {
 }
 
 // ParseFile, used in the generator at read time to dynamiclly add more defs from other files
-func (env *Glisp) ParseFile(file string) ([]Sexp, error) {
+func (env *Environment) ParseFile(file string) ([]Sexp, error) {
 	in, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (env *Glisp) ParseFile(file string) ([]Sexp, error) {
 	return exp, err
 }
 
-func (env *Glisp) SourceExpressions(expressions []Sexp) error {
+func (env *Environment) SourceExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
 		gen.AddInstruction(PopInstr(0))
@@ -316,7 +316,7 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 }
 
 // SourceStream, load this in via a __source dynamic function, after it runs it no longer exists
-func (env *Glisp) SourceStream(stream io.Reader) error {
+func (env *Environment) SourceStream(stream io.Reader) error {
 	expressions, err := env.ParseStream(stream)
 
 	if err != nil {
@@ -326,11 +326,11 @@ func (env *Glisp) SourceStream(stream io.Reader) error {
 	return env.SourceExpressions(expressions)
 }
 
-func (env *Glisp) SourceFile(file *os.File) error {
+func (env *Environment) SourceFile(file *os.File) error {
 	return env.SourceStream(bufio.NewReader(file))
 }
 
-func (env *Glisp) LoadExpressions(expressions []Sexp) error {
+func (env *Environment) LoadExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
 		gen.AddInstruction(PopInstr(0))
@@ -347,7 +347,7 @@ func (env *Glisp) LoadExpressions(expressions []Sexp) error {
 }
 
 // LoadStream, load this in via running a __main function and setting main on the environment
-func (env *Glisp) LoadStream(stream io.Reader) error {
+func (env *Environment) LoadStream(stream io.Reader) error {
 	expressions, err := env.ParseStream(stream)
 
 	if err != nil {
@@ -357,7 +357,7 @@ func (env *Glisp) LoadStream(stream io.Reader) error {
 	return env.LoadExpressions(expressions)
 }
 
-func (env *Glisp) EvalString(str string) (Sexp, error) {
+func (env *Environment) EvalString(str string) (Sexp, error) {
 	err := env.LoadString(str)
 	if err != nil {
 		return SexpNull, err
@@ -366,44 +366,44 @@ func (env *Glisp) EvalString(str string) (Sexp, error) {
 	return env.Run()
 }
 
-func (env *Glisp) LoadFile(file *os.File) error {
+func (env *Environment) LoadFile(file *os.File) error {
 	return env.LoadStream(bufio.NewReader(file))
 }
 
-func (env *Glisp) LoadString(str string) error {
+func (env *Environment) LoadString(str string) error {
 	return env.LoadStream(bytes.NewBuffer([]byte(str)))
 }
 
-func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
+func (env *Environment) AddFunction(name string, function UserFunction) {
 	env.AddGlobal(name, MakeUserFunction(name, function))
 }
 
-func (env *Glisp) AddFunctionByConstructor(name string, function GlispUserFunctionConstructor) {
+func (env *Environment) AddFunctionByConstructor(name string, function UserFunctionConstructor) {
 	env.AddGlobal(name, MakeUserFunction(name, function(name)))
 }
 
-func (env *Glisp) AddGlobal(name string, obj Sexp) {
+func (env *Environment) AddGlobal(name string, obj Sexp) {
 	sym := env.MakeSymbol(name)
 	env.scopestack.elements[0].(Scope)[sym.number] = obj
 }
 
-func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
+func (env *Environment) AddMacro(name string, function UserFunction) {
 	sym := env.MakeSymbol(name)
 	env.macros[sym.number] = MakeUserFunction(name, function)
 }
 
-func (env *Glisp) ImportEval() {
+func (env *Environment) ImportEval() {
 	env.AddFunction("source-file", SourceFileFunction)
 	env.AddFunction("eval", EvalFunction)
 }
 
-func (env *Glisp) DumpFunctionByName(name string) error {
+func (env *Environment) DumpFunctionByName(name string) error {
 	obj, found := env.FindObject(name)
 	if !found {
 		return fmt.Errorf("%q not found", name)
 	}
 
-	var fun GlispFunction
+	var fun Function
 	switch t := obj.(type) {
 	case SexpFunction:
 		if !t.user {
@@ -418,13 +418,13 @@ func (env *Glisp) DumpFunctionByName(name string) error {
 	return nil
 }
 
-func DumpFunction(fun GlispFunction) {
+func DumpFunction(fun Function) {
 	for _, instr := range fun {
 		fmt.Println("\t" + instr.InstrString())
 	}
 }
 
-func (env *Glisp) DumpEnvironment() {
+func (env *Environment) DumpEnvironment() {
 	fmt.Println("Instructions:")
 	if !env.curfunc.user {
 		DumpFunction(env.curfunc.fun)
@@ -434,11 +434,11 @@ func (env *Glisp) DumpEnvironment() {
 	fmt.Printf("PC: %d\n", env.pc)
 }
 
-func (env *Glisp) ReachedEnd() bool {
+func (env *Environment) ReachedEnd() bool {
 	return env.pc == env.CurrentFunctionSize()
 }
 
-func (env *Glisp) GetStackTrace(err error) string {
+func (env *Environment) GetStackTrace(err error) string {
 	str := fmt.Sprintf("error in %s:%d: %v\n",
 		env.curfunc.name, env.pc, err)
 	for !env.addrstack.IsEmpty() {
@@ -448,7 +448,7 @@ func (env *Glisp) GetStackTrace(err error) string {
 	return str
 }
 
-func (env *Glisp) Clear() {
+func (env *Environment) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
@@ -457,7 +457,7 @@ func (env *Glisp) Clear() {
 	env.pc = 0
 }
 
-func (env *Glisp) FindObject(name string) (Sexp, bool) {
+func (env *Environment) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
 	obj, err := env.scopestack.LookupSymbol(sym)
 	if err != nil {
@@ -466,7 +466,7 @@ func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	return obj, true
 }
 
-func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
+func (env *Environment) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
 		return fun.userfun(env, args)
 	}
@@ -484,7 +484,7 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 	return env.Run()
 }
 
-func (env *Glisp) Run() (Sexp, error) {
+func (env *Environment) Run() (Sexp, error) {
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
 		err := instr.Execute(env)
@@ -501,15 +501,15 @@ func (env *Glisp) Run() (Sexp, error) {
 	return env.datastack.PopExpr()
 }
 
-func (env *Glisp) AddPreHook(fun PreHook) {
+func (env *Environment) AddPreHook(fun PreHook) {
 	env.before = append(env.before, fun)
 }
 
-func (env *Glisp) AddPostHook(fun PostHook) {
+func (env *Environment) AddPostHook(fun PostHook) {
 	env.after = append(env.after, fun)
 }
 
-func (env *Glisp) GlobalFunctions() []string {
+func (env *Environment) GlobalFunctions() []string {
 	var ret []string
 	for _, v := range env.scopestack.elements[0].(Scope) {
 		if fn, ok := v.(SexpFunction); ok {

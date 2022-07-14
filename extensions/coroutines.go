@@ -6,7 +6,7 @@ import (
 )
 
 type SexpCoroutine struct {
-	env *glisp.Glisp
+	env *glisp.Environment
 }
 
 func (coro SexpCoroutine) SexpString() string {
@@ -17,7 +17,7 @@ func (coro SexpCoroutine) TypeName() string {
 	return "coroutine"
 }
 
-func StartCoroutineFunction(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func StartCoroutineFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpCoroutine:
 		go t.env.Run()
@@ -27,7 +27,7 @@ func StartCoroutineFunction(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, er
 	return glisp.SexpNull, nil
 }
 
-func CreateCoroutineMacro(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func CreateCoroutineMacro(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	coroenv := env.Duplicate()
 	err := coroenv.LoadExpressions(args)
 	if err != nil {
@@ -41,6 +41,6 @@ func CreateCoroutineMacro(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, erro
 		glisp.SexpArray([]glisp.Sexp{coro})}), nil
 }
 
-func ImportCoroutines(env *glisp.Glisp) {
+func ImportCoroutines(env *glisp.Environment) {
 	env.AddMacro("go", CreateCoroutineMacro)
 }

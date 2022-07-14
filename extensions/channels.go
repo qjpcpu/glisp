@@ -16,7 +16,7 @@ func (ch SexpChannel) TypeName() string {
 	return "channel"
 }
 
-func MakeChanFunction(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func MakeChanFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) > 1 {
 		return glisp.SexpNull, glisp.WrongNargs
 	}
@@ -35,8 +35,8 @@ func MakeChanFunction(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
 	return SexpChannel(make(chan glisp.Sexp, size)), nil
 }
 
-func GetChanTxFunction(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func GetChanTxFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) < 1 {
 			return glisp.SexpNull, glisp.WrongNargs
 		}
@@ -61,7 +61,7 @@ func GetChanTxFunction(name string) glisp.GlispUserFunction {
 	}
 }
 
-func ImportChannels(env *glisp.Glisp) {
+func ImportChannels(env *glisp.Environment) {
 	env.AddFunction("make-chan", MakeChanFunction)
 	env.AddFunctionByConstructor("send!", GetChanTxFunction)
 	env.AddFunctionByConstructor("<!", GetChanTxFunction)

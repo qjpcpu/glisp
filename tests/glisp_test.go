@@ -22,7 +22,7 @@ func TestAllScripts(t *testing.T) {
 }
 
 func TestLoadAllFunction(t *testing.T) {
-	vm := loadAllExtensions(glisp.NewGlisp())
+	vm := loadAllExtensions(glisp.New())
 	funcs := vm.GlobalFunctions()
 	sort.Strings(funcs)
 	t.Logf("all functions(%v)\n", len(funcs))
@@ -46,7 +46,7 @@ func testFile(t *testing.T, file string) {
 	if err != nil {
 		t.Fatalf("read file %s fail %v", file, err)
 	}
-	vm := registerTestingFunc(loadAllExtensions(glisp.NewGlisp()))
+	vm := registerTestingFunc(loadAllExtensions(glisp.New()))
 	err = vm.LoadString(string(bytes))
 	if err != nil {
 		t.Fatalf("parse file %s fail %v", file, err)
@@ -73,7 +73,7 @@ func listScripts(t *testing.T) []string {
 	return scripts
 }
 
-func loadAllExtensions(vm *glisp.Glisp) *glisp.Glisp {
+func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	vm.ImportEval()
 	extensions.ImportJSON(vm)
 	extensions.ImportBase64(vm)
@@ -87,13 +87,13 @@ func loadAllExtensions(vm *glisp.Glisp) *glisp.Glisp {
 	return vm
 }
 
-func registerTestingFunc(vm *glisp.Glisp) *glisp.Glisp {
+func registerTestingFunc(vm *glisp.Environment) *glisp.Environment {
 	vm.AddFunctionByConstructor("test/read-file", testReadFile)
 	return vm
 }
 
-func testReadFile(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func testReadFile(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		bytes, _ := ioutil.ReadFile(string(args[0].(glisp.SexpStr)))
 		return glisp.SexpStr(string(bytes)), nil
 	}

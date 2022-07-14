@@ -11,12 +11,12 @@ import (
 
 var WrongNargs error = errors.New("wrong number of arguments")
 
-type GlispFunction []Instruction
-type GlispUserFunction func(*Glisp, []Sexp) (Sexp, error)
-type GlispUserFunctionConstructor func(string) GlispUserFunction
+type Function []Instruction
+type UserFunction func(*Environment, []Sexp) (Sexp, error)
+type UserFunctionConstructor func(string) UserFunction
 
-func GetCompareFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetCompareFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -46,8 +46,8 @@ func GetCompareFunction(name string) GlispUserFunction {
 	}
 }
 
-func GetBinaryIntFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetBinaryIntFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -68,8 +68,8 @@ func GetBinaryIntFunction(name string) GlispUserFunction {
 	}
 }
 
-func GetBitwiseFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetBitwiseFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -97,8 +97,8 @@ func GetBitwiseFunction(name string) GlispUserFunction {
 	}
 }
 
-func ComplementFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func ComplementFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -114,8 +114,8 @@ func ComplementFunction(string) GlispUserFunction {
 	}
 }
 
-func GetNumericFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetNumericFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 1 {
 			return SexpNull, WrongNargs
 		}
@@ -144,8 +144,8 @@ func GetNumericFunction(name string) GlispUserFunction {
 	}
 }
 
-func ConsFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func ConsFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -154,8 +154,8 @@ func ConsFunction(string) GlispUserFunction {
 	}
 }
 
-func FirstFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func FirstFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -171,8 +171,8 @@ func FirstFunction(string) GlispUserFunction {
 	}
 }
 
-func RestFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func RestFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -195,8 +195,8 @@ func RestFunction(string) GlispUserFunction {
 	}
 }
 
-func GetArrayAccessFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetArrayAccessFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 2 {
 			return SexpNull, WrongNargs
 		}
@@ -236,8 +236,8 @@ func GetArrayAccessFunction(name string) GlispUserFunction {
 	}
 }
 
-func SgetFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func SgetFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -264,8 +264,8 @@ func SgetFunction(string) GlispUserFunction {
 	}
 }
 
-func GetExistFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetExistFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -302,8 +302,8 @@ func GetExistFunction(name string) GlispUserFunction {
 	}
 }
 
-func GetHashAccessFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetHashAccessFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 2 || len(args) > 3 {
 			return SexpNull, WrongNargs
 		}
@@ -337,8 +337,8 @@ func GetHashAccessFunction(name string) GlispUserFunction {
 	}
 }
 
-func SliceFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func SliceFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
 		}
@@ -374,8 +374,8 @@ func SliceFunction(string) GlispUserFunction {
 	}
 }
 
-func LenFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func LenFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -402,8 +402,8 @@ func LenFunction(string) GlispUserFunction {
 	}
 }
 
-func AppendFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func AppendFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -419,8 +419,8 @@ func AppendFunction(string) GlispUserFunction {
 	}
 }
 
-func ConcatFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func ConcatFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -442,8 +442,8 @@ func ConcatFunction(string) GlispUserFunction {
 	}
 }
 
-func ReadFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func ReadFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -460,7 +460,7 @@ func ReadFunction(string) GlispUserFunction {
 	}
 }
 
-func EvalFunction(env *Glisp, args []Sexp) (Sexp, error) {
+func EvalFunction(env *Environment, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
@@ -473,8 +473,8 @@ func EvalFunction(env *Glisp, args []Sexp) (Sexp, error) {
 	return newenv.Run()
 }
 
-func GetTypeQueryFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetTypeQueryFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -512,8 +512,8 @@ func GetTypeQueryFunction(name string) GlispUserFunction {
 	}
 }
 
-func GetPrintFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetPrintFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) == 0 {
 			return SexpNull, WrongNargs
 		}
@@ -550,8 +550,8 @@ func GetPrintFunction(name string) GlispUserFunction {
 	}
 }
 
-func NotFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func NotFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -561,8 +561,8 @@ func NotFunction(string) GlispUserFunction {
 	}
 }
 
-func ApplyFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func ApplyFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -604,8 +604,8 @@ func ApplyFunction(string) GlispUserFunction {
 	}
 }
 
-func MapFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func MapFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -628,8 +628,8 @@ func MapFunction(string) GlispUserFunction {
 	}
 }
 
-func MakeArrayFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func MakeArrayFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 1 {
 			return SexpNull, WrongNargs
 		}
@@ -658,8 +658,8 @@ func MakeArrayFunction(string) GlispUserFunction {
 	}
 }
 
-func GetConstructorFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetConstructorFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		switch name {
 		case "array":
 			return SexpArray(args), nil
@@ -672,8 +672,8 @@ func GetConstructorFunction(name string) GlispUserFunction {
 	}
 }
 
-func SymnumFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func SymnumFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -686,7 +686,7 @@ func SymnumFunction(string) GlispUserFunction {
 	}
 }
 
-func SourceFileFunction(env *Glisp, args []Sexp) (Sexp, error) {
+func SourceFileFunction(env *Environment, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
@@ -741,7 +741,7 @@ func SourceFileFunction(env *Glisp, args []Sexp) (Sexp, error) {
 var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil, nil}
 
 func MakeFunction(name string, nargs int, varargs bool,
-	fun GlispFunction) SexpFunction {
+	fun Function) SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = false
@@ -751,7 +751,7 @@ func MakeFunction(name string, nargs int, varargs bool,
 	return sfun
 }
 
-func MakeUserFunction(name string, ufun GlispUserFunction) SexpFunction {
+func MakeUserFunction(name string, ufun UserFunction) SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = true
@@ -759,15 +759,15 @@ func MakeUserFunction(name string, ufun GlispUserFunction) SexpFunction {
 	return sfun
 }
 
-func BuiltinFunctions() map[string]GlispUserFunction {
-	ret := make(map[string]GlispUserFunction)
+func BuiltinFunctions() map[string]UserFunction {
+	ret := make(map[string]UserFunction)
 	for name, cons := range builtinFunctions {
 		ret[name] = cons(name)
 	}
 	return ret
 }
 
-var builtinFunctions = map[string]GlispUserFunctionConstructor{
+var builtinFunctions = map[string]UserFunctionConstructor{
 	"<":          GetCompareFunction,
 	">":          GetCompareFunction,
 	"<=":         GetCompareFunction,
@@ -835,8 +835,8 @@ var builtinFunctions = map[string]GlispUserFunctionConstructor{
 	"bytes2str":  BytesToString,
 }
 
-func StringifyFunction(string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func StringifyFunction(string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
@@ -845,8 +845,8 @@ func StringifyFunction(string) GlispUserFunction {
 	}
 }
 
-func StringToNumber(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func StringToNumber(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
@@ -858,8 +858,8 @@ func StringToNumber(name string) GlispUserFunction {
 	}
 }
 
-func BytesToString(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func BytesToString(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
@@ -871,8 +871,8 @@ func BytesToString(name string) GlispUserFunction {
 	}
 }
 
-func StringToBytes(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func StringToBytes(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
@@ -884,8 +884,8 @@ func StringToBytes(name string) GlispUserFunction {
 	}
 }
 
-func StringToFloat(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func StringToFloat(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}

@@ -9,8 +9,8 @@ type ITypeName interface {
 	TypeName() string
 }
 
-func GenSymFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GenSymFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 0 {
 			return SexpNull, fmt.Errorf(`%s expect 0 argument but got %v`, name, len(args))
 		}
@@ -18,8 +18,8 @@ func GenSymFunction(name string) GlispUserFunction {
 	}
 }
 
-func Str2SymFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func Str2SymFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
@@ -30,8 +30,8 @@ func Str2SymFunction(name string) GlispUserFunction {
 	}
 }
 
-func Sym2StrFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func Sym2StrFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
@@ -42,8 +42,8 @@ func Sym2StrFunction(name string) GlispUserFunction {
 	}
 }
 
-func GetTypeFunction(name string) GlispUserFunction {
-	return func(env *Glisp, args []Sexp) (Sexp, error) {
+func GetTypeFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}

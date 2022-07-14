@@ -28,8 +28,8 @@ func regexpFindIndex(
 	return glisp.SexpArray(arr), nil
 }
 
-func GetRegexpFind(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func GetRegexpFind(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.SexpNull, glisp.WrongNargs
 		}
@@ -66,7 +66,7 @@ func GetRegexpFind(name string) glisp.GlispUserFunction {
 	}
 }
 
-func RegexpCompile(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) < 1 {
 		return glisp.SexpNull, glisp.WrongNargs
 	}
@@ -90,7 +90,7 @@ func RegexpCompile(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
 	return glisp.Sexp(SexpRegexp(*r)), nil
 }
 
-func ImportRegex(env *glisp.Glisp) {
+func ImportRegex(env *glisp.Environment) {
 	env.AddFunction("regexp-compile", RegexpCompile)
 	env.AddFunctionByConstructor("regexp-find-index", GetRegexpFind)
 	env.AddFunctionByConstructor("regexp-find", GetRegexpFind)

@@ -6,7 +6,7 @@ import (
 )
 
 type Generator struct {
-	env          *Glisp
+	env          *Environment
 	funcname     string
 	tail         bool
 	scopes       int
@@ -23,7 +23,7 @@ type Loop struct {
 
 func (loop *Loop) IsStackElem() {}
 
-func NewGenerator(env *Glisp) *Generator {
+func NewGenerator(env *Environment) *Generator {
 	gen := new(Generator)
 	gen.env = env
 	gen.instructions = make([]Instruction, 0)
@@ -62,7 +62,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	return gen.Generate(expressions[size-1])
 }
 
-func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
+func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	funcbody []Sexp) (SexpFunction, error) {
 	gen := NewGenerator(env)
 	gen.tail = true
@@ -104,7 +104,7 @@ func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 	}
 	gen.AddInstruction(ReturnInstr{nil})
 
-	newfunc := GlispFunction(gen.instructions)
+	newfunc := Function(gen.instructions)
 	return MakeFunction(gen.funcname, nargs, varargs, newfunc), nil
 }
 

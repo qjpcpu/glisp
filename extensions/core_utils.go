@@ -12,6 +12,6 @@ var (
 	core_scripts string
 )
 
-func ImportCoreUtils(env *glisp.Glisp) error {
+func ImportCoreUtils(env *glisp.Environment) error {
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }

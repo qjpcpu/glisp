@@ -8,7 +8,7 @@ import (
 
 type Parser struct {
 	lexer *Lexer
-	env   *Glisp
+	env   *Environment
 }
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")
@@ -212,7 +212,7 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 	return SexpNull, fmt.Errorf("Invalid syntax, didn't know what to do with %v %v", tok.typ, tok)
 }
 
-func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {
+func ParseTokens(env *Environment, lexer *Lexer) ([]Sexp, error) {
 	expressions := make([]Sexp, 0, SliceDefaultCap)
 	parser := Parser{lexer, env}
 

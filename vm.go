@@ -7,7 +7,7 @@ import (
 
 type Instruction interface {
 	InstrString() string
-	Execute(env *Glisp) error
+	Execute(env *Environment) error
 }
 
 type JumpInstr struct {
@@ -20,7 +20,7 @@ func (j JumpInstr) InstrString() string {
 	return fmt.Sprintf("jump %d", j.location)
 }
 
-func (j JumpInstr) Execute(env *Glisp) error {
+func (j JumpInstr) Execute(env *Environment) error {
 	newpc := env.pc + j.location
 	if newpc < 0 || newpc > env.CurrentFunctionSize() {
 		return OutOfBounds
@@ -37,7 +37,7 @@ func (g GotoInstr) InstrString() string {
 	return fmt.Sprintf("goto %d", g.location)
 }
 
-func (g GotoInstr) Execute(env *Glisp) error {
+func (g GotoInstr) Execute(env *Environment) error {
 	if g.location < 0 || g.location > env.CurrentFunctionSize() {
 		return OutOfBounds
 	}
@@ -60,7 +60,7 @@ func (b BranchInstr) InstrString() string {
 	return fmt.Sprintf(format, b.location)
 }
 
-func (b BranchInstr) Execute(env *Glisp) error {
+func (b BranchInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (p PushInstrClosure) InstrString() string {
 	return "pushC " + p.expr.SexpString()
 }
 
-func (p PushInstrClosure) Execute(env *Glisp) error {
+func (p PushInstrClosure) Execute(env *Environment) error {
 	p.expr.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
 	env.datastack.PushExpr(p.expr)
 	env.pc++
@@ -95,7 +95,7 @@ func (p PushInstr) InstrString() string {
 	return "push " + p.expr.SexpString()
 }
 
-func (p PushInstr) Execute(env *Glisp) error {
+func (p PushInstr) Execute(env *Environment) error {
 	env.datastack.PushExpr(p.expr)
 	env.pc++
 	return nil
@@ -107,7 +107,7 @@ func (p PopInstr) InstrString() string {
 	return "pop"
 }
 
-func (p PopInstr) Execute(env *Glisp) error {
+func (p PopInstr) Execute(env *Environment) error {
 	_, err := env.datastack.PopExpr()
 	env.pc++
 	return err
@@ -119,7 +119,7 @@ func (d DupInstr) InstrString() string {
 	return "dup"
 }
 
-func (d DupInstr) Execute(env *Glisp) error {
+func (d DupInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.GetExpr(0)
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func (g GetInstr) InstrString() string {
 	return fmt.Sprintf("get %s", g.sym.name)
 }
 
-func (g GetInstr) Execute(env *Glisp) error {
+func (g GetInstr) Execute(env *Environment) error {
 	expr, err := env.scopestack.LookupSymbol(g.sym)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (p PutInstr) InstrString() string {
 	return fmt.Sprintf("put %s", p.sym.name)
 }
 
-func (p PutInstr) Execute(env *Glisp) error {
+func (p PutInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -172,7 +172,7 @@ func (p BindDynFunInstr) InstrString() string {
 	return "bind dynamic function"
 }
 
-func (p BindDynFunInstr) Execute(env *Glisp) error {
+func (p BindDynFunInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func (c CallInstr) InstrString() string {
 	return fmt.Sprintf("call %s %d", c.sym.name, c.nargs)
 }
 
-func (c CallInstr) Execute(env *Glisp) error {
+func (c CallInstr) Execute(env *Environment) error {
 	f, ok := env.builtins[c.sym.number]
 	if ok {
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
@@ -229,7 +229,7 @@ func (d DispatchInstr) InstrString() string {
 	return fmt.Sprintf("dispatch %d", d.nargs)
 }
 
-func (d DispatchInstr) Execute(env *Glisp) error {
+func (d DispatchInstr) Execute(env *Environment) error {
 	funcobj, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -249,7 +249,7 @@ type ReturnInstr struct {
 	err error
 }
 
-func (r ReturnInstr) Execute(env *Glisp) error {
+func (r ReturnInstr) Execute(env *Environment) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -269,7 +269,7 @@ func (a AddScopeInstr) InstrString() string {
 	return "add scope"
 }
 
-func (a AddScopeInstr) Execute(env *Glisp) error {
+func (a AddScopeInstr) Execute(env *Environment) error {
 	env.scopestack.PushScope()
 	env.pc++
 	return nil
@@ -281,7 +281,7 @@ func (a RemoveScopeInstr) InstrString() string {
 	return "rem scope"
 }
 
-func (a RemoveScopeInstr) Execute(env *Glisp) error {
+func (a RemoveScopeInstr) Execute(env *Environment) error {
 	env.pc++
 	return env.scopestack.PopScope()
 }
@@ -292,7 +292,7 @@ func (e ExplodeInstr) InstrString() string {
 	return "explode"
 }
 
-func (e ExplodeInstr) Execute(env *Glisp) error {
+func (e ExplodeInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -316,7 +316,7 @@ func (s SquashInstr) InstrString() string {
 	return "squash"
 }
 
-func (s SquashInstr) Execute(env *Glisp) error {
+func (s SquashInstr) Execute(env *Environment) error {
 	var list Sexp = SexpNull
 
 	for {
@@ -348,7 +348,7 @@ func (b BindlistInstr) InstrString() string {
 	return fmt.Sprintf("bindlist %s", joined)
 }
 
-func (b BindlistInstr) Execute(env *Glisp) error {
+func (b BindlistInstr) Execute(env *Environment) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -378,7 +378,7 @@ func (s VectorizeInstr) InstrString() string {
 	return "vectorize"
 }
 
-func (s VectorizeInstr) Execute(env *Glisp) error {
+func (s VectorizeInstr) Execute(env *Environment) error {
 	vec := make([]Sexp, 0)
 
 	for {
@@ -404,7 +404,7 @@ func (s HashizeInstr) InstrString() string {
 	return "hashize"
 }
 
-func (s HashizeInstr) Execute(env *Glisp) error {
+func (s HashizeInstr) Execute(env *Environment) error {
 	a := make([]Sexp, 0)
 
 	for {

@@ -10,13 +10,13 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportJSON(env *glisp.Glisp) {
+func ImportJSON(env *glisp.Environment) {
 	env.AddFunctionByConstructor("json/stringify", jsonMarshal)
 	env.AddFunctionByConstructor("json/parse", jsonUnmarshal)
 }
 
-func jsonMarshal(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func jsonMarshal(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 1 {
 			return wrongNumberArguments(name, len(args), 1)
 		}
@@ -28,8 +28,8 @@ func jsonMarshal(name string) glisp.GlispUserFunction {
 	}
 }
 
-func jsonUnmarshal(name string) glisp.GlispUserFunction {
-	return func(env *glisp.Glisp, args []glisp.Sexp) (glisp.Sexp, error) {
+func jsonUnmarshal(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 1 {
 			return wrongNumberArguments(name, len(args), 1)
 		}

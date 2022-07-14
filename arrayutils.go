@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-func MapArray(env *Glisp, fun SexpFunction, arr SexpArray) (SexpArray, error) {
+func MapArray(env *Environment, fun SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, len(arr))
 	var err error
 
