@@ -41,6 +41,20 @@ func TestLoadAllFunction(t *testing.T) {
 	}
 }
 
+func TestPrint(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	var buf bytes.Buffer
+	vm.AddFunctionByConstructor("print", extensions.GetPrintFunction(&buf))
+	vm.LoadString(`(print "hello")`)
+	_, err := vm.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ret := buf.String(); ret != "hello" {
+		t.Fatalf("(%s)!=(%s)", ret, "hello")
+	}
+}
+
 func testFile(t *testing.T, file string) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {

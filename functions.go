@@ -510,44 +510,6 @@ func GetTypeQueryFunction(name string) UserFunction {
 	}
 }
 
-func GetPrintFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) == 0 {
-			return SexpNull, fmt.Errorf("%s need at least one argument", name)
-		}
-		if name == `printf` {
-			if len(args) <= 1 {
-				return SexpNull, fmt.Errorf("%s need at least two argument", name)
-			}
-			if !IsString(args[0]) {
-				return SexpNull, fmt.Errorf("first argument of %s must be string", name)
-			}
-		}
-
-		var items []interface{}
-
-		for _, item := range args {
-			switch expr := item.(type) {
-			case SexpStr:
-				items = append(items, string(expr))
-			default:
-				items = append(items, expr.SexpString())
-			}
-		}
-
-		switch name {
-		case "println":
-			fmt.Println(items...)
-		case "print":
-			fmt.Print(items...)
-		case "printf":
-			fmt.Printf(items[0].(string), items[1:]...)
-		}
-
-		return SexpNull, nil
-	}
-}
-
 func NotFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
@@ -800,9 +762,6 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"string?":    GetTypeQueryFunction,
 	"zero?":      GetTypeQueryFunction,
 	"empty?":     GetTypeQueryFunction,
-	"println":    GetPrintFunction,
-	"print":      GetPrintFunction,
-	"printf":     GetPrintFunction,
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
