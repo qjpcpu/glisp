@@ -47,6 +47,178 @@ func TimeNow(name string) glisp.UserFunction {
 	}
 }
 
+func TimeYearOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Year())), nil
+	}
+}
+
+func TimeMonthOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Month())), nil
+	}
+}
+
+func TimeDayOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Day())), nil
+	}
+}
+
+func TimeHourOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Hour())), nil
+	}
+}
+
+func TimeMinuteOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Minute())), nil
+	}
+}
+
+func TimeSecondOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Second())), nil
+	}
+}
+
+func TimeWeekdayOf(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
+		}
+		tm := time.Time(stm)
+		return glisp.NewSexpInt64(int64(tm.Weekday())), nil
+	}
+}
+
+// TimeSub t1-t2 in seconds
+func TimeSub(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2)
+		}
+		for i, v := range args {
+			if _, ok := v.(SexpTime); !ok {
+				return glisp.SexpNull, fmt.Errorf(`the %v argument of function %s must be time`, i+1, name)
+			}
+		}
+		t1, t2 := time.Time(args[0].(SexpTime)), time.Time(args[1].(SexpTime))
+		return glisp.NewSexpInt64(int64(t1.Sub(t2).Seconds())), nil
+	}
+}
+
+// (time/add time number uint)
+func TimeAdd(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 3 {
+			return glisp.WrongNumberArguments(name, len(args), 3)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`first argument of function %s must be time`, name)
+		}
+		if !glisp.IsInt(args[1]) {
+			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be integer`, name)
+		}
+		number := args[1].(glisp.SexpInt).ToInt()
+		kind, ok := readSymOrStr(args[2])
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be string/symbol`, name)
+		}
+		tm := time.Time(stm)
+		switch kind {
+		case "year":
+			return SexpTime(tm.AddDate(number, 0, 0)), nil
+		case "month":
+			return SexpTime(tm.AddDate(0, number, 0)), nil
+		case "day":
+			return SexpTime(tm.AddDate(0, 0, number)), nil
+		case "hour":
+			return SexpTime(tm.Add(time.Hour * time.Duration(number))), nil
+		case "minute":
+			return SexpTime(tm.Add(time.Minute * time.Duration(number))), nil
+		case "second":
+			return SexpTime(tm.Add(time.Second * time.Duration(number))), nil
+		default:
+			return glisp.SexpNull, fmt.Errorf("not support time add kind %s", kind)
+		}
+	}
+}
+
+// (time/add-date time year month day)
+func TimeAddDate(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 4 {
+			return glisp.WrongNumberArguments(name, len(args), 4)
+		}
+		stm, ok := args[0].(SexpTime)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`first argument of function %s must be time`, name)
+		}
+		for i := 1; i < len(args); i++ {
+			if !glisp.IsInt(args[i]) {
+				return glisp.SexpNull, fmt.Errorf(`the %v argument of function %s must be integer`, i+1, name)
+			}
+		}
+		tm := time.Time(stm)
+		return SexpTime(tm.AddDate(args[1].(glisp.SexpInt).ToInt(), args[2].(glisp.SexpInt).ToInt(), args[3].(glisp.SexpInt).ToInt())), nil
+	}
+}
+
 /*
   (time/parse 1655967400280) => parse unix timestamp to SexpTime
   (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
@@ -154,4 +326,14 @@ func ImportTime(env *glisp.Environment) {
 	env.AddFunctionByConstructor("time/now", TimeNow)
 	env.AddFunctionByConstructor("time/format", GetTimeFormatFunction)
 	env.AddFunctionByConstructor("time/parse", ParseTime)
+	env.AddFunctionByConstructor("time/add-date", TimeAddDate)
+	env.AddFunctionByConstructor("time/add", TimeAdd)
+	env.AddFunctionByConstructor("time/sub", TimeSub)
+	env.AddFunctionByConstructor("time/year", TimeYearOf)
+	env.AddFunctionByConstructor("time/month", TimeMonthOf)
+	env.AddFunctionByConstructor("time/day", TimeDayOf)
+	env.AddFunctionByConstructor("time/hour", TimeHourOf)
+	env.AddFunctionByConstructor("time/minute", TimeMinuteOf)
+	env.AddFunctionByConstructor("time/second", TimeSecondOf)
+	env.AddFunctionByConstructor("time/weekday", TimeWeekdayOf)
 }
