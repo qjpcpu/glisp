@@ -202,13 +202,13 @@ func (c CallInstr) InstrString() string {
 }
 
 func (c CallInstr) Execute(env *Environment) error {
+	f, ok := env.builtins[c.sym.number]
+	if ok {
+		return env.CallUserFunction(f, c.sym.name, c.nargs)
+	}
+
 	funcobj, err := env.scopestack.LookupSymbol(c.sym)
 	if err != nil {
-		/* call builtin function */
-		f, ok := env.builtins[c.sym.number]
-		if ok {
-			return env.CallUserFunction(f, c.sym.name, c.nargs)
-		}
 		return err
 	}
 	switch f := funcobj.(type) {
@@ -216,11 +216,6 @@ func (c CallInstr) Execute(env *Environment) error {
 		if !f.user {
 			return env.CallFunction(f, c.nargs)
 		}
-		return env.CallUserFunction(f, c.sym.name, c.nargs)
-	}
-	/* call builtin function */
-	f, ok := env.builtins[c.sym.number]
-	if ok {
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
 	return fmt.Errorf("%s is not a function", c.sym.name)
