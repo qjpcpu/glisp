@@ -41,6 +41,28 @@ func TestLoadAllFunction(t *testing.T) {
 	}
 }
 
+func TestOverwriteBuiltinFunction(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.AddFunction("+", func(e *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		a := args[0].(glisp.SexpInt)
+		b := args[1].(glisp.SexpInt)
+		return a.Add(b).Add(glisp.NewSexpInt(100)), nil
+	})
+	if err := vm.LoadString(`(+ 2 3)`); err != nil {
+		t.Fatal(err)
+	}
+	ret, err := vm.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !glisp.IsInt(ret) {
+		t.Fatalf("result is not int %s", ret.SexpString())
+	}
+	if ret.(glisp.SexpInt).ToInt() != 105 {
+		t.Fatalf("result should be 105 but got %v", ret.SexpString())
+	}
+}
+
 func testFile(t *testing.T, file string) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
