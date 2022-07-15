@@ -31,7 +31,7 @@ func regexpFindIndex(
 func GetRegexpFind(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
-			return glisp.SexpNull, glisp.WrongNargs
+			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
 		var haystack string
 		switch t := args[1].(type) {
@@ -68,7 +68,7 @@ func GetRegexpFind(name string) glisp.UserFunction {
 
 func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) < 1 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return glisp.WrongNumberArguments("regexp-compile", len(args), 1)
 	}
 
 	var re string

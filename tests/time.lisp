@@ -9,3 +9,7 @@
      (assert (= "2001-10-01" (time/format (time/parse 1001865600) "2006-01-02")))
      (assert (= "2001-10-01" (time/format (time/parse "2006-01-02 15:04:05" "2001-10-01 00:00:00") "2006-01-02")))
      )
+
+(assert (> (time/now) (time/parse "2001-10-01 00:00:00")))
+(assert (> (time/parse 1656988237) (time/parse 1656988236)))
+(assert (= (time/parse 1656988237) (time/parse 1656988237)))

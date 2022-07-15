@@ -23,10 +23,25 @@ func (t SexpTime) MarshalJSON() ([]byte, error) {
 	return glisp.Marshal(glisp.SexpStr(tm.Format(`2006-01-02 15:04:05`)))
 }
 
+func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
+	if _, ok := b.(SexpTime); !ok {
+		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", t, t.SexpString(), b, b.SexpString())
+	}
+	t1 := time.Time(t)
+	t2 := time.Time(b.(SexpTime))
+	if t1.Equal(t2) {
+		return 0, nil
+	} else if t1.Before(t2) {
+		return -1, nil
+	} else {
+		return 1, nil
+	}
+}
+
 func TimeNow(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 0 {
-			return wrongNumberArguments(name, len(args), 0)
+			return glisp.WrongNumberArguments(name, len(args), 0)
 		}
 		return SexpTime(time.Now()), nil
 	}
@@ -34,6 +49,7 @@ func TimeNow(name string) glisp.UserFunction {
 
 /*
   (time/parse 1655967400280) => parse unix timestamp to SexpTime
+  (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
@@ -43,9 +59,15 @@ func ParseTime(name string) glisp.UserFunction {
 		switch len(args) {
 		case 1:
 			arg := args[0]
-			switch arg.(type) {
+			switch val := arg.(type) {
 			case glisp.SexpInt:
 				return SexpTime(time.Unix(arg.(glisp.SexpInt).ToInt64(), 0)), nil
+			case glisp.SexpStr:
+				tm, err := time.Parse(`2006-01-02 15:04:05`, string(val))
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				return SexpTime(tm), nil
 			default:
 				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
 			}
@@ -78,7 +100,7 @@ func ParseTime(name string) glisp.UserFunction {
 			}
 			return SexpTime(tm), nil
 		}
-		return wrongNumberArguments(name, len(args), 1, 2)
+		return glisp.WrongNumberArguments(name, len(args), 1, 2)
 	}
 }
 

@@ -121,3 +121,8 @@ func IsEmpty(expr Sexp) bool {
 
 	return false
 }
+
+func isComparable(v Sexp) bool {
+	_, ok := v.(Comparable)
+	return ok
+}

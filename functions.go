@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var WrongNargs error = errors.New("wrong number of arguments")
-
 type Function []Instruction
 type UserFunction func(*Environment, []Sexp) (Sexp, error)
 type UserFunctionConstructor func(string) UserFunction
@@ -18,7 +16,7 @@ type UserFunctionConstructor func(string) UserFunction
 func GetCompareFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		res, err := Compare(args[0], args[1])
@@ -49,7 +47,7 @@ func GetCompareFunction(name string) UserFunction {
 func GetBinaryIntFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		var op IntegerOp
@@ -71,7 +69,7 @@ func GetBinaryIntFunction(name string) UserFunction {
 func GetBitwiseFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		var op IntegerOp
@@ -97,10 +95,10 @@ func GetBitwiseFunction(name string) UserFunction {
 	}
 }
 
-func ComplementFunction(string) UserFunction {
+func ComplementFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		switch t := args[0].(type) {
@@ -117,7 +115,7 @@ func ComplementFunction(string) UserFunction {
 func GetNumericFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		var err error
@@ -144,20 +142,20 @@ func GetNumericFunction(name string) UserFunction {
 	}
 }
 
-func ConsFunction(string) UserFunction {
+func ConsFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		return Cons(args[0], args[1]), nil
 	}
 }
 
-func FirstFunction(string) UserFunction {
+func FirstFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		switch expr := args[0].(type) {
@@ -171,10 +169,10 @@ func FirstFunction(string) UserFunction {
 	}
 }
 
-func RestFunction(string) UserFunction {
+func RestFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		switch expr := args[0].(type) {
@@ -198,7 +196,7 @@ func RestFunction(string) UserFunction {
 func GetArrayAccessFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2, 3)
 		}
 
 		var arr SexpArray
@@ -228,7 +226,7 @@ func GetArrayAccessFunction(name string) UserFunction {
 		}
 
 		if len(args) != 3 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 3)
 		}
 		arr[i] = args[2]
 
@@ -236,10 +234,10 @@ func GetArrayAccessFunction(name string) UserFunction {
 	}
 }
 
-func SgetFunction(string) UserFunction {
+func SgetFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		var str SexpStr
@@ -267,7 +265,7 @@ func SgetFunction(string) UserFunction {
 func GetExistFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 		switch expr := args[0].(type) {
 		case SexpHash:
@@ -305,7 +303,7 @@ func GetExistFunction(name string) UserFunction {
 func GetHashAccessFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 2 || len(args) > 3 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2, 3)
 		}
 
 		var hash SexpHash
@@ -327,7 +325,7 @@ func GetHashAccessFunction(name string) UserFunction {
 			return SexpNull, err
 		case "hdel!":
 			if len(args) != 2 {
-				return SexpNull, WrongNargs
+				return WrongNumberArguments(name, len(args), 2)
 			}
 			err := hash.HashDelete(args[1])
 			return SexpNull, err
@@ -337,10 +335,10 @@ func GetHashAccessFunction(name string) UserFunction {
 	}
 }
 
-func SliceFunction(string) UserFunction {
+func SliceFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 3 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 3)
 		}
 
 		var start int
@@ -374,10 +372,10 @@ func SliceFunction(string) UserFunction {
 	}
 }
 
-func LenFunction(string) UserFunction {
+func LenFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		switch t := args[0].(type) {
@@ -402,10 +400,10 @@ func LenFunction(string) UserFunction {
 	}
 }
 
-func AppendFunction(string) UserFunction {
+func AppendFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		switch t := args[0].(type) {
@@ -419,10 +417,10 @@ func AppendFunction(string) UserFunction {
 	}
 }
 
-func ConcatFunction(string) UserFunction {
+func ConcatFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 
 		switch t := args[0].(type) {
@@ -442,10 +440,10 @@ func ConcatFunction(string) UserFunction {
 	}
 }
 
-func ReadFunction(string) UserFunction {
+func ReadFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 		str := ""
 		switch t := args[0].(type) {
@@ -462,7 +460,7 @@ func ReadFunction(string) UserFunction {
 
 func EvalFunction(env *Environment, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return SexpNull, WrongNargs
+		return WrongNumberArguments("eval", len(args), 1)
 	}
 	newenv := env.Duplicate()
 	err := newenv.LoadExpressions(args)
@@ -476,7 +474,7 @@ func EvalFunction(env *Environment, args []Sexp) (Sexp, error) {
 func GetTypeQueryFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		var result bool
@@ -515,11 +513,11 @@ func GetTypeQueryFunction(name string) UserFunction {
 func GetPrintFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) == 0 {
-			return SexpNull, WrongNargs
+			return SexpNull, fmt.Errorf("%s need at least one argument", name)
 		}
 		if name == `printf` {
 			if len(args) <= 1 {
-				return SexpNull, WrongNargs
+				return SexpNull, fmt.Errorf("%s need at least two argument", name)
 			}
 			if !IsString(args[0]) {
 				return SexpNull, fmt.Errorf("first argument of %s must be string", name)
@@ -550,10 +548,10 @@ func GetPrintFunction(name string) UserFunction {
 	}
 }
 
-func NotFunction(string) UserFunction {
+func NotFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		result := SexpBool(!IsTruthy(args[0]))
@@ -561,10 +559,10 @@ func NotFunction(string) UserFunction {
 	}
 }
 
-func ApplyFunction(string) UserFunction {
+func ApplyFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 		var fun SexpFunction
 		var funargs SexpArray
@@ -604,10 +602,10 @@ func ApplyFunction(string) UserFunction {
 	}
 }
 
-func MapFunction(string) UserFunction {
+func MapFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 2)
 		}
 		var fun SexpFunction
 
@@ -628,10 +626,10 @@ func MapFunction(string) UserFunction {
 	}
 }
 
-func MakeArrayFunction(string) UserFunction {
+func MakeArrayFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) < 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1, 2)
 		}
 
 		var size int
@@ -672,10 +670,10 @@ func GetConstructorFunction(name string) UserFunction {
 	}
 }
 
-func SymnumFunction(string) UserFunction {
+func SymnumFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		switch t := args[0].(type) {
@@ -688,7 +686,7 @@ func SymnumFunction(string) UserFunction {
 
 func SourceFileFunction(env *Environment, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
-		return SexpNull, WrongNargs
+		return WrongNumberArguments("source", len(args), 1)
 	}
 
 	var sourceItem func(item Sexp) error
@@ -835,10 +833,10 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"bytes2str":  BytesToString,
 }
 
-func StringifyFunction(string) UserFunction {
+func StringifyFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, WrongNargs
+			return WrongNumberArguments(name, len(args), 1)
 		}
 
 		return SexpStr(args[0].SexpString()), nil

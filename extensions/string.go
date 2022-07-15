@@ -31,7 +31,7 @@ func StringPredict(fn func(string, string) bool) glisp.UserFunctionConstructor {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
-				return wrongNumberArguments(name, len(args), 2)
+				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -48,7 +48,7 @@ func StringSearch(fn func(string, string) int) glisp.UserFunctionConstructor {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
-				return wrongNumberArguments(name, len(args), 2)
+				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -65,7 +65,7 @@ func StringSplit(fn func(string, string) []string) glisp.UserFunctionConstructor
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
-				return wrongNumberArguments(name, len(args), 2)
+				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -87,7 +87,7 @@ func StringMap(fn func(string) string) glisp.UserFunctionConstructor {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 1 {
-				return wrongNumberArguments(name, len(args), 1)
+				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -101,7 +101,7 @@ func StringBool(fn func(string) bool) glisp.UserFunctionConstructor {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 1 {
-				return wrongNumberArguments(name, len(args), 1)
+				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -115,7 +115,7 @@ func StringJoin(fn func([]string, string) string) glisp.UserFunctionConstructor 
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
-				return wrongNumberArguments(name, len(args), 2)
+				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			list, ok := args[0].(glisp.SexpArray)
 			if !ok {
@@ -140,7 +140,7 @@ func StringMap2(fn func(string, string) string) glisp.UserFunctionConstructor {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 2 {
-				return wrongNumberArguments(name, len(args), 2)
+				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -157,7 +157,7 @@ func StringMap3(fn func(string, string, string) string) glisp.UserFunctionConstr
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) != 3 {
-				return wrongNumberArguments(name, len(args), 3)
+				return glisp.WrongNumberArguments(name, len(args), 3)
 			}
 			if !isSexpStr(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)

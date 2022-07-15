@@ -8,6 +8,50 @@ import (
 	"strconv"
 )
 
+type Comparable interface {
+	Sexp
+	// Cmp compares x and y and returns:
+	//
+	//   -1 if x <  y
+	//    0 if x == y
+	//   +1 if x >  y
+	//
+	Cmp(Comparable) (int, error)
+}
+
+func Compare(a Sexp, b Sexp) (int, error) {
+	switch at := a.(type) {
+	case SexpInt:
+		return compareInt(at, b)
+	case SexpChar:
+		return compareChar(at, b)
+	case SexpFloat:
+		return compareFloat(at, b)
+	case SexpBool:
+		return compareBool(at, b)
+	case SexpStr:
+		return compareString(at, b)
+	case SexpSymbol:
+		return compareSymbol(at, b)
+	case SexpPair:
+		return comparePair(at, b)
+	case SexpArray:
+		return compareArray(at, b)
+	case SexpSentinel:
+		if at == SexpNull && b == SexpNull {
+			return 0, nil
+		} else {
+			return -1, nil
+		}
+	case SexpBytes:
+		return compareBytes(at, b)
+	}
+	if isComparable(a) && isComparable(b) {
+		return a.(Comparable).Cmp(b.(Comparable))
+	}
+	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
+}
+
 func signumFloat(f SexpFloat) int {
 	if f > 0 {
 		return 1
@@ -183,37 +227,6 @@ func compareBool(a SexpBool, b Sexp) (int, error) {
 		return -1, nil
 	}
 	return 0, nil
-}
-
-func Compare(a Sexp, b Sexp) (int, error) {
-	switch at := a.(type) {
-	case SexpInt:
-		return compareInt(at, b)
-	case SexpChar:
-		return compareChar(at, b)
-	case SexpFloat:
-		return compareFloat(at, b)
-	case SexpBool:
-		return compareBool(at, b)
-	case SexpStr:
-		return compareString(at, b)
-	case SexpSymbol:
-		return compareSymbol(at, b)
-	case SexpPair:
-		return comparePair(at, b)
-	case SexpArray:
-		return compareArray(at, b)
-	case SexpSentinel:
-		if at == SexpNull && b == SexpNull {
-			return 0, nil
-		} else {
-			return -1, nil
-		}
-	case SexpBytes:
-		return compareBytes(at, b)
-	}
-	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
-	return 0, errors.New(errmsg)
 }
 
 func existInList(a Sexp, element Sexp) (bool, error) {

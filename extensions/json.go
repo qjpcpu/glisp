@@ -18,7 +18,7 @@ func ImportJSON(env *glisp.Environment) {
 func jsonMarshal(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 1 {
-			return wrongNumberArguments(name, len(args), 1)
+			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
 		bytes, err := glisp.Marshal(args[0])
 		if err != nil {
@@ -31,7 +31,7 @@ func jsonMarshal(name string) glisp.UserFunction {
 func jsonUnmarshal(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 1 {
-			return wrongNumberArguments(name, len(args), 1)
+			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
 		switch val := args[0].(type) {
 		case glisp.SexpStr:

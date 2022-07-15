@@ -238,7 +238,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 
 func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if len(args) != 1 {
-		return WrongNargs
+		return WrongGeneratorNumberArguments("macexpand", len(args), 1)
 	}
 
 	var list SexpPair
@@ -424,7 +424,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 
 func (gen *Generator) GenerateAssert(args []Sexp) error {
 	if len(args) != 1 {
-		return WrongNargs
+		return WrongGeneratorNumberArguments("assert", len(args), 1)
 	}
 	err := gen.Generate(args[0])
 	if err != nil {
@@ -441,7 +441,7 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 
 func (gen *Generator) GenerateInclude(args []Sexp) error {
 	if len(args) < 1 {
-		return WrongNargs
+		return WrongGeneratorNumberArguments("include", len(args), 1)
 	}
 
 	var err error
