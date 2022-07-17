@@ -770,7 +770,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	gen.AddInstruction(PushInstr{SexpMarker})
 	for i := 0; i < n; i++ {
 		// must reverse order here to preserve order on rebuild
-		key := (*hash.KeyOrder)[(n-i)-1]
+		key := hash.KeyOrder[(n-i)-1]
 		val, err := hash.HashGet(key)
 		if err != nil {
 			return err

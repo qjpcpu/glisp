@@ -29,23 +29,27 @@ func HashExpression(expr Sexp) (int, error) {
 			return 0, err
 		}
 		return int(hasher.Sum32()), nil
+	case SexpBool:
+		if bool(e) {
+			return 1, nil
+		}
+		return 0, nil
 	}
 	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
 
 func MakeHash(args []Sexp) (SexpHash, error) {
 	if len(args)%2 != 0 {
-		return SexpHash{},
+		return &sexpHash{},
 			errors.New("hash requires even number of arguments")
 	}
 
 	var memberCount int
-	hash := SexpHash{
+	hash := &sexpHash{
 		Map:      make(map[int][]SexpPair),
-		KeyOrder: &[]Sexp{},
-		NumKeys:  &memberCount,
+		KeyOrder: []Sexp{},
+		NumKeys:  memberCount,
 	}
-	k := 0
 	for i := 0; i < len(args); i += 2 {
 		key := args[i]
 		val := args[i+1]
@@ -53,12 +57,11 @@ func MakeHash(args []Sexp) (SexpHash, error) {
 		if err != nil {
 			return hash, err
 		}
-		k++
 	}
 	return hash, nil
 }
 
-func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
+func (hash SexpHash) HashGet(key Sexp) (Sexp, error) {
 	// this is kind of a hack
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
@@ -75,7 +78,7 @@ func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	return val, nil
 }
 
-func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
+func (hash SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return SexpNull, err
@@ -95,7 +98,7 @@ func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 	return defaultval, nil
 }
 
-func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
+func (hash SexpHash) HashSet(key Sexp, val Sexp) error {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
@@ -104,8 +107,8 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
-		(*hash.NumKeys)++
+		hash.KeyOrder = append(hash.KeyOrder, key)
+		(hash.NumKeys)++
 		return nil
 	}
 
@@ -120,8 +123,8 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	if !found {
 		arr = append(arr, Cons(key, val))
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
-		(*hash.NumKeys)++
+		hash.KeyOrder = append(hash.KeyOrder, key)
+		(hash.NumKeys)++
 	}
 
 	hash.Map[hashval] = arr
@@ -129,7 +132,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	return nil
 }
 
-func (hash *SexpHash) HashDelete(key Sexp) error {
+func (hash SexpHash) HashDelete(key Sexp) error {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
@@ -141,14 +144,14 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 		return nil
 	}
 
-	(*hash.NumKeys)--
+	(hash.NumKeys)--
 	for i, pair := range arr {
 		res, err := Compare(pair.head, key)
 		if err == nil && res == 0 {
 			if len(arr) == 1 {
-				for j, k := range *hash.KeyOrder {
+				for j, k := range hash.KeyOrder {
 					if kr, kerr := Compare(k, key); kerr == nil && kr == 0 {
-						*hash.KeyOrder = append((*hash.KeyOrder)[0:j], (*hash.KeyOrder)[j+1:]...)
+						hash.KeyOrder = append((hash.KeyOrder)[0:j], (hash.KeyOrder)[j+1:]...)
 						break
 					}
 				}
@@ -166,8 +169,8 @@ func HashCountKeys(hash SexpHash) int {
 	for _, arr := range hash.Map {
 		num += len(arr)
 	}
-	if num != (*hash.NumKeys) {
-		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, (*hash.NumKeys)))
+	if num != hash.NumKeys {
+		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, hash.NumKeys))
 	}
 	return num
 }
@@ -179,19 +182,4 @@ func HashIsEmpty(hash SexpHash) bool {
 		}
 	}
 	return true
-}
-
-func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
-	// truncate down to zero, then build back up correctly.
-	*(*hash).KeyOrder = (*(*hash).KeyOrder)[:0]
-
-	keys, isArr := keyOrd.(SexpArray)
-	if !isArr {
-		return fmt.Errorf("must have SexpArray for keyOrd, but instead we have: %T with value='%#v'", keyOrd, keyOrd)
-	}
-	for _, key := range keys {
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
-	}
-
-	return nil
 }

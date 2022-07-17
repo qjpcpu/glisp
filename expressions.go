@@ -76,11 +76,14 @@ func (pair SexpPair) SexpString() string {
 }
 
 type SexpArray []Sexp
-type SexpHash struct {
+
+type sexpHash struct {
 	Map      map[int][]SexpPair
-	KeyOrder *[]Sexp // must user pointers here, else hset! will fail to update.
-	NumKeys  *int
+	KeyOrder []Sexp // must user pointers here, else hset! will fail to update.
+	NumKeys  int
 }
+
+type SexpHash = *sexpHash
 
 type SexpInt struct {
 	v *big.Int

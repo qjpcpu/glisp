@@ -35,3 +35,11 @@
 (assert (not (exist? {1 "a"} 2)))
 (assert (not (exist? {} 2)))
 (assert (exist? {1 '()} 1))
+
+(assert (= 1 (len {'a 1})))
+
+(def h2 {true false false true})
+(assert (exist? h2 true))
+(assert (exist? h2 false))
+(assert (= false (hget h2 true)))
+(assert (= true (hget h2 false)))

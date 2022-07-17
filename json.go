@@ -110,7 +110,7 @@ func (a SexpPair) MarshalJSON() ([]byte, error) {
 func (a SexpHash) MarshalJSON() ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	buffer.WriteByte('{')
-	keys := *a.KeyOrder
+	keys := a.KeyOrder
 	var addComma bool
 	for _, key := range keys {
 		val, _ := a.HashGet(key)
