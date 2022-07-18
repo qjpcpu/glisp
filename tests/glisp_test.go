@@ -55,6 +55,27 @@ func TestPrint(t *testing.T) {
 	}
 }
 
+type testSexp struct{}
+
+func (*testSexp) SexpString() string { return "xxxx" }
+
+type testSexp2 struct{}
+
+func (testSexp2) SexpString() string { return "yyyy" }
+
+func TestCustomType(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	fn, _ := vm.FindObject("typestr")
+	ret, _ := vm.Apply(fn.(glisp.SexpFunction), []glisp.Sexp{&testSexp{}})
+	if string(ret.(glisp.SexpStr)) != "*tests.testSexp" {
+		t.Fatal("bad type", ret.SexpString())
+	}
+	ret, _ = vm.Apply(fn.(glisp.SexpFunction), []glisp.Sexp{testSexp2{}})
+	if string(ret.(glisp.SexpStr)) != "tests.testSexp2" {
+		t.Fatal("bad type", ret.SexpString())
+	}
+}
+
 func testFile(t *testing.T, file string) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {

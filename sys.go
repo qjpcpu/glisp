@@ -83,7 +83,7 @@ func GetTypeFunction(name string) UserFunction {
 		case ITypeName:
 			present = expr.TypeName()
 		default:
-			present = reflect.Indirect(reflect.ValueOf(args[0])).Type().Name()
+			present = reflect.TypeOf(args[0]).String()
 		}
 		return SexpStr(present), nil
 	}
