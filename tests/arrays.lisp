@@ -21,3 +21,5 @@
 
 (assert (= [2 3] (slice [1 2 3 4] 1 3)))
 (assert (= ["b" "c"] (slice ["a" "b" "c"] 1 3)))
+
+(assert (= 0B676c6973 (slice (str2bytes "hello glisp") 6 10)))

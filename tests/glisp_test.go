@@ -55,6 +55,31 @@ func TestPrint(t *testing.T) {
 	}
 }
 
+func TestPrintf(t *testing.T) {
+	testPrintf(t, `(printf "%d" 10)`, `10`)
+	testPrintf(t, `(printf "%v" 0.2)`, `0.2`)
+	testPrintf(t, `(printf "%s" "hello")`, `hello`)
+	testPrintf(t, `(printf "%v" #a)`, `97`)
+	testPrintf(t, `(printf "%v" 0B37)`, `0B37`)
+	testPrintf(t, `(printf "%v" '(1 2 3))`, `(1 2 3)`)
+	testPrintf(t, `(printf "%v" [1 2 3])`, `[1 2 3]`)
+	testPrintf(t, `(printf "%v" {'a 1})`, `{a 1}`)
+}
+
+func testPrintf(t *testing.T, script string, expect string) {
+	vm := loadAllExtensions(glisp.New())
+	var buf bytes.Buffer
+	vm.AddFunctionByConstructor("printf", extensions.GetPrintFunction(&buf))
+	vm.LoadString(script)
+	_, err := vm.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out := buf.String(); out != expect {
+		t.Fatalf("[test printf] expect %s but got %s", expect, out)
+	}
+}
+
 type testSexp struct{}
 
 func (*testSexp) SexpString() string { return "xxxx" }

@@ -39,14 +39,8 @@ func GetPrintFunction(w io.Writer) glisp.UserFunctionConstructor {
 			}
 
 			var items []interface{}
-
 			for _, item := range args {
-				switch expr := item.(type) {
-				case glisp.SexpStr:
-					items = append(items, string(expr))
-				default:
-					items = append(items, expr.SexpString())
-				}
+				items = append(items, mapSexpToGoPrintableInterface(item))
 			}
 
 			switch name {
@@ -60,5 +54,33 @@ func GetPrintFunction(w io.Writer) glisp.UserFunctionConstructor {
 
 			return glisp.SexpNull, nil
 		}
+	}
+}
+
+func mapSexpToGoPrintableInterface(sexp glisp.Sexp) interface{} {
+	if sexp == glisp.SexpNull {
+		return nil
+	}
+	switch expr := sexp.(type) {
+	case glisp.SexpStr:
+		return string(expr)
+	case glisp.SexpBool:
+		return bool(expr)
+	case glisp.SexpInt:
+		if expr.IsInt64() {
+			return expr.ToInt64()
+		} else if expr.IsUint64() {
+			return expr.ToUint64()
+		} else {
+			return expr.SexpString()
+		}
+	case glisp.SexpFloat:
+		return float64(expr)
+	case glisp.SexpSymbol:
+		return expr.Name()
+	case glisp.SexpChar:
+		return rune(expr)
+	default:
+		return expr.SexpString()
 	}
 }

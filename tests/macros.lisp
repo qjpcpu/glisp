@@ -24,3 +24,20 @@
 (assert (= 'a (if true 'a 'b)))
 
 (assert (= 'b (if (> 1 2) 'a 'b)))
+
+(defmac unless [predicate & body]
+ `(cond (not ~predicate)
+     (begin
+       ~@body) '()))
+
+(assert (= 'a (unless false 'a)))
+(assert (= 'a (unless (< 2 1) 'a)))
+
+(defn test-begin-in-condition []
+  (cond true
+        (begin
+         (+ 1 2)
+         (* 2 3))
+        '()))
+
+(assert (= 6 (test-begin-in-condition)))

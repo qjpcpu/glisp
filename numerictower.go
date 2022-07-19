@@ -8,9 +8,10 @@ import (
 type IntegerOp int
 
 const (
-	ShiftLeft IntegerOp = iota
+	ShiftLeftArith IntegerOp = iota
 	ShiftRightArith
-	ShiftRightLog
+	ShiftLeftLogical
+	ShiftRightLogical
 	Modulo
 	BitAnd
 	BitOr
@@ -42,11 +43,9 @@ func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
 	}
 
 	switch op {
-	case ShiftLeft:
+	case ShiftLeftArith:
 		return ia.ShiftLeft(ib), nil
 	case ShiftRightArith:
-		return ia.ShiftRight(ib), nil
-	case ShiftRightLog:
 		return ia.ShiftRight(ib), nil
 	case Modulo:
 		return ia.Mod(ib), nil

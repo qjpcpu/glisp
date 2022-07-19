@@ -4,9 +4,9 @@
 (assert (= 13 0b1101))
 
 ; test shift operations
-(assert (= 4 (sll 1 2)))
+(assert (= 4 (sla 1 2)))
 (assert (= -1 (sra -4 2)))
-(assert (= 2 (srl 4 1)))
+(assert (= 2 (sra 4 1)))
 
 ; bitwise operations
 (assert (= 0b0001 (bit-and 0b0011 0b0101)))

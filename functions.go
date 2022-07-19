@@ -36,7 +36,7 @@ func GetCompareFunction(name string) UserFunction {
 			cond = res >= 0
 		case "=":
 			cond = res == 0
-		case "not=":
+		case "not=", "!=":
 			cond = res != 0
 		}
 
@@ -52,12 +52,10 @@ func GetBinaryIntFunction(name string) UserFunction {
 
 		var op IntegerOp
 		switch name {
-		case "sll":
-			op = ShiftLeft
+		case "sla":
+			op = ShiftLeftArith
 		case "sra":
 			op = ShiftRightArith
-		case "srl":
-			op = ShiftRightLog
 		case "mod":
 			op = Modulo
 		}
@@ -366,9 +364,11 @@ func SliceFunction(name string) UserFunction {
 			return SexpArray(t[start:end]), nil
 		case SexpStr:
 			return SexpStr(t[start:end]), nil
+		case SexpBytes:
+			return NewSexpBytes(t.Bytes()[start:end]), nil
 		}
 
-		return SexpNull, errors.New("First argument of slice must be array or string")
+		return SexpNull, errors.New("First argument of slice must be array or string or bytes")
 	}
 }
 
@@ -734,9 +734,9 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	">=":         GetCompareFunction,
 	"=":          GetCompareFunction,
 	"not=":       GetCompareFunction,
-	"sll":        GetBinaryIntFunction,
+	"!=":         GetCompareFunction,
+	"sla":        GetBinaryIntFunction,
 	"sra":        GetBinaryIntFunction,
-	"srl":        GetBinaryIntFunction,
 	"mod":        GetBinaryIntFunction,
 	"+":          GetNumericFunction,
 	"-":          GetNumericFunction,

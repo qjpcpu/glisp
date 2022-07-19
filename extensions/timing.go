@@ -223,7 +223,6 @@ func TimeAddDate(name string) glisp.UserFunction {
   (time/parse 1655967400280) => parse unix timestamp to SexpTime
   (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
-  (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
 */
 func ParseTime(name string) glisp.UserFunction {

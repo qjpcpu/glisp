@@ -43,3 +43,11 @@
 (assert (not (str/title? "")))
 
 (assert (= 1.1 (str2float "1.1")))
+
+(assert (= "51225783c75fde283cf746a2904c7920" (str/md5 "glisp")))
+
+(assert (= "语言*" (str/mask "语言学" 2 1 "*")))
+(assert (= "语言*" (str/mask "语言学" 2 100 "*")))
+(assert (= "语言*" (str/mask "语言学" 2 -1 "*")))
+(assert (= "语言学" (str/mask "语言学" 20 1 "*")))
+(assert (= "语l**学" (str/mask "语lan学" 2 2 "*")))

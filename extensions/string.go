@@ -1,6 +1,7 @@
 package extensions
 
 import (
+	"crypto/md5"
 	"fmt"
 	"strings"
 
@@ -25,6 +26,8 @@ func ImportString(env *glisp.Environment) {
 	env.AddFunctionByConstructor("str/digit?", isDigit())
 	env.AddFunctionByConstructor("str/alpha?", isAlpha())
 	env.AddFunctionByConstructor("str/title?", isTitle())
+	env.AddFunctionByConstructor("str/md5", strMD5())
+	env.AddFunctionByConstructor("str/mask", strMask)
 }
 
 func StringPredict(fn func(string, string) bool) glisp.UserFunctionConstructor {
@@ -33,10 +36,10 @@ func StringPredict(fn func(string, string) bool) glisp.UserFunctionConstructor {
 			if len(args) != 2 {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			return glisp.SexpBool(fn(toStr(args[0]), toStr(args[1]))), nil
@@ -50,10 +53,10 @@ func StringSearch(fn func(string, string) int) glisp.UserFunctionConstructor {
 			if len(args) != 2 {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			return glisp.NewSexpInt((fn(toStr(args[0]), toStr(args[1])))), nil
@@ -67,10 +70,10 @@ func StringSplit(fn func(string, string) []string) glisp.UserFunctionConstructor
 			if len(args) != 2 {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			list := fn(toStr(args[0]), toStr(args[1]))
@@ -89,7 +92,7 @@ func StringMap(fn func(string) string) glisp.UserFunctionConstructor {
 			if len(args) != 1 {
 				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
 			return glisp.SexpStr((fn(toStr(args[0])))), nil
@@ -103,7 +106,7 @@ func StringBool(fn func(string) bool) glisp.UserFunctionConstructor {
 			if len(args) != 1 {
 				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
 			return glisp.SexpBool((fn(toStr(args[0])))), nil
@@ -121,12 +124,12 @@ func StringJoin(fn func([]string, string) string) glisp.UserFunctionConstructor 
 			if !ok {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be array`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			var items []string
 			for _, v := range list {
-				if !isSexpStr(v) {
+				if !glisp.IsString(v) {
 					return glisp.SexpNull, fmt.Errorf(`%s first argument should be array of string`, name)
 				}
 				items = append(items, string(v.(glisp.SexpStr)))
@@ -142,10 +145,10 @@ func StringMap2(fn func(string, string) string) glisp.UserFunctionConstructor {
 			if len(args) != 2 {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			return glisp.SexpStr(fn(toStr(args[0]), toStr(args[1]))), nil
@@ -159,13 +162,13 @@ func StringMap3(fn func(string, string, string) string) glisp.UserFunctionConstr
 			if len(args) != 3 {
 				return glisp.WrongNumberArguments(name, len(args), 3)
 			}
-			if !isSexpStr(args[0]) {
+			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
-			if !isSexpStr(args[1]) {
+			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
-			if !isSexpStr(args[2]) {
+			if !glisp.IsString(args[2]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
 			return glisp.SexpStr(fn(toStr(args[0]), toStr(args[1]), toStr(args[2]))), nil
@@ -173,6 +176,51 @@ func StringMap3(fn func(string, string, string) string) glisp.UserFunctionConstr
 	}
 }
 
+func strMask(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 4 {
+			return glisp.WrongNumberArguments(name, len(args), 4)
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+		}
+		if !glisp.IsInt(args[1]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer`, name)
+		}
+		if !glisp.IsInt(args[2]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer`, name)
+		}
+		if !glisp.IsString(args[3]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+		}
+		str := []rune(args[0].(glisp.SexpStr))
+		index := args[1].(glisp.SexpInt).ToInt()
+		length := args[2].(glisp.SexpInt).ToInt()
+		mask := string(args[3].(glisp.SexpStr))
+		if index < 0 || index >= len(str) {
+			/* mask nothing */
+			return args[0], nil
+		}
+		if length <= 0 && length != -1 {
+			return glisp.SexpNull, fmt.Errorf(`%s length must greater than 0 or equal -1`, name)
+		}
+		if mask == "" {
+			return glisp.SexpNull, fmt.Errorf(`%s blank mask`, name)
+		}
+		end := index + length
+		if end > len(str) {
+			end = len(str)
+		}
+		if length == -1 {
+			end = len(str)
+		}
+		var ret strings.Builder
+		ret.WriteString(string(str[0:index]))
+		ret.WriteString(strings.Repeat(mask, len(str[index:end])))
+		ret.WriteString(string(str[end:]))
+		return glisp.SexpStr(ret.String()), nil
+	}
+}
 func isDigit() glisp.UserFunctionConstructor {
 	return StringBool(func(s string) bool {
 		for _, b := range s {
@@ -212,9 +260,10 @@ func isTitle() glisp.UserFunctionConstructor {
 	})
 }
 
-func isSexpStr(e glisp.Sexp) bool {
-	_, ok := e.(glisp.SexpStr)
-	return ok
+func strMD5() glisp.UserFunctionConstructor {
+	return StringMap(func(s string) string {
+		return fmt.Sprintf("%x", md5.Sum([]byte(s)))
+	})
 }
 
 func toStr(e glisp.Sexp) string {
