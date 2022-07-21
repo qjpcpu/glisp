@@ -13,6 +13,71 @@ type Function []Instruction
 type UserFunction func(*Environment, []Sexp) (Sexp, error)
 type UserFunctionConstructor func(string) UserFunction
 
+var builtinFunctions = map[string]UserFunctionConstructor{
+	"<":          GetCompareFunction,
+	">":          GetCompareFunction,
+	"<=":         GetCompareFunction,
+	">=":         GetCompareFunction,
+	"=":          GetCompareFunction,
+	"not=":       GetCompareFunction,
+	"!=":         GetCompareFunction,
+	"sla":        GetBinaryIntFunction,
+	"sra":        GetBinaryIntFunction,
+	"mod":        GetBinaryIntFunction,
+	"+":          GetNumericFunction,
+	"-":          GetNumericFunction,
+	"*":          GetNumericFunction,
+	"/":          GetNumericFunction,
+	"bit-and":    GetBitwiseFunction,
+	"bit-or":     GetBitwiseFunction,
+	"bit-xor":    GetBitwiseFunction,
+	"bit-not":    ComplementFunction,
+	"read":       ReadFunction,
+	"cons":       ConsFunction,
+	"car":        FirstFunction,
+	"cdr":        RestFunction,
+	"list?":      GetTypeQueryFunction,
+	"null?":      GetTypeQueryFunction,
+	"array?":     GetTypeQueryFunction,
+	"hash?":      GetTypeQueryFunction,
+	"number?":    GetTypeQueryFunction,
+	"int?":       GetTypeQueryFunction,
+	"float?":     GetTypeQueryFunction,
+	"char?":      GetTypeQueryFunction,
+	"symbol?":    GetTypeQueryFunction,
+	"string?":    GetTypeQueryFunction,
+	"zero?":      GetTypeQueryFunction,
+	"empty?":     GetTypeQueryFunction,
+	"not":        NotFunction,
+	"apply":      ApplyFunction,
+	"map":        MapFunction,
+	"make-array": MakeArrayFunction,
+	"aget":       GetArrayAccessFunction,
+	"aset!":      GetArrayAccessFunction,
+	"sget":       SgetFunction,
+	"hget":       GetHashAccessFunction,
+	"hset!":      GetHashAccessFunction,
+	"hdel!":      GetHashAccessFunction,
+	"exist?":     GetExistFunction,
+	"slice":      SliceFunction,
+	"len":        LenFunction,
+	"append":     AppendFunction,
+	"concat":     ConcatFunction,
+	"array":      GetConstructorFunction,
+	"list":       GetConstructorFunction,
+	"hash":       GetConstructorFunction,
+	"symnum":     SymnumFunction,
+	"str":        StringifyFunction,
+	"str2int":    StringToNumber,
+	"str2float":  StringToFloat,
+	"typestr":    GetTypeFunction,
+	"gensym":     GenSymFunction,
+	"sym2str":    Sym2StrFunction,
+	"str2sym":    Str2SymFunction,
+	"str2bytes":  StringToBytes,
+	"bytes2str":  BytesToString,
+}
+
 func GetCompareFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
@@ -419,25 +484,30 @@ func AppendFunction(name string) UserFunction {
 
 func ConcatFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+		if len(args) < 2 {
+			return WrongNumberArguments(name, len(args), 2, Many)
 		}
-
-		switch t := args[0].(type) {
-		case SexpArray:
-			return ConcatArray(t, args[1])
-		case SexpStr:
-			return ConcatStr(t, args[1])
-		case SexpPair:
-			return ConcatList(t, args[1])
-		case SexpSentinel:
-			if t == SexpNull {
-				return args[1], nil
-			}
-		}
-
-		return SexpNull, errors.New("expected strings or arrays")
+		return concatSexp(args)
 	}
+}
+
+func concatSexp(args []Sexp) (Sexp, error) {
+	if len(args) == 0 {
+		return SexpNull, nil
+	}
+	switch t := args[0].(type) {
+	case SexpArray:
+		return ConcatArray(t, args[1:]...)
+	case SexpStr:
+		return ConcatStr(t, args[1:]...)
+	case SexpPair:
+		return ConcatList(t, args[1:]...)
+	case SexpSentinel:
+		if t == SexpNull {
+			return concatSexp(args[1:])
+		}
+	}
+	return SexpNull, errors.New("expected strings or arrays or lists")
 }
 
 func ReadFunction(name string) UserFunction {
@@ -725,71 +795,6 @@ func BuiltinFunctions() map[string]UserFunction {
 		ret[name] = cons(name)
 	}
 	return ret
-}
-
-var builtinFunctions = map[string]UserFunctionConstructor{
-	"<":          GetCompareFunction,
-	">":          GetCompareFunction,
-	"<=":         GetCompareFunction,
-	">=":         GetCompareFunction,
-	"=":          GetCompareFunction,
-	"not=":       GetCompareFunction,
-	"!=":         GetCompareFunction,
-	"sla":        GetBinaryIntFunction,
-	"sra":        GetBinaryIntFunction,
-	"mod":        GetBinaryIntFunction,
-	"+":          GetNumericFunction,
-	"-":          GetNumericFunction,
-	"*":          GetNumericFunction,
-	"/":          GetNumericFunction,
-	"bit-and":    GetBitwiseFunction,
-	"bit-or":     GetBitwiseFunction,
-	"bit-xor":    GetBitwiseFunction,
-	"bit-not":    ComplementFunction,
-	"read":       ReadFunction,
-	"cons":       ConsFunction,
-	"car":        FirstFunction,
-	"cdr":        RestFunction,
-	"list?":      GetTypeQueryFunction,
-	"null?":      GetTypeQueryFunction,
-	"array?":     GetTypeQueryFunction,
-	"hash?":      GetTypeQueryFunction,
-	"number?":    GetTypeQueryFunction,
-	"int?":       GetTypeQueryFunction,
-	"float?":     GetTypeQueryFunction,
-	"char?":      GetTypeQueryFunction,
-	"symbol?":    GetTypeQueryFunction,
-	"string?":    GetTypeQueryFunction,
-	"zero?":      GetTypeQueryFunction,
-	"empty?":     GetTypeQueryFunction,
-	"not":        NotFunction,
-	"apply":      ApplyFunction,
-	"map":        MapFunction,
-	"make-array": MakeArrayFunction,
-	"aget":       GetArrayAccessFunction,
-	"aset!":      GetArrayAccessFunction,
-	"sget":       SgetFunction,
-	"hget":       GetHashAccessFunction,
-	"hset!":      GetHashAccessFunction,
-	"hdel!":      GetHashAccessFunction,
-	"exist?":     GetExistFunction,
-	"slice":      SliceFunction,
-	"len":        LenFunction,
-	"append":     AppendFunction,
-	"concat":     ConcatFunction,
-	"array":      GetConstructorFunction,
-	"list":       GetConstructorFunction,
-	"hash":       GetConstructorFunction,
-	"symnum":     SymnumFunction,
-	"str":        StringifyFunction,
-	"str2int":    StringToNumber,
-	"str2float":  StringToFloat,
-	"typestr":    GetTypeFunction,
-	"gensym":     GenSymFunction,
-	"sym2str":    Sym2StrFunction,
-	"str2sym":    Str2SymFunction,
-	"str2bytes":  StringToBytes,
-	"bytes2str":  BytesToString,
 }
 
 func StringifyFunction(name string) UserFunction {

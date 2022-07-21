@@ -59,7 +59,18 @@ func MapList(env *Environment, fun SexpFunction, expr Sexp) (Sexp, error) {
 	return list, nil
 }
 
-func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
+func ConcatList(a SexpPair, b ...Sexp) (Sexp, error) {
+	for _, expr := range b {
+		ret, err := concatList(a, expr)
+		if err != nil {
+			return ret, err
+		}
+		a = ret.(SexpPair)
+	}
+	return a, nil
+}
+
+func concatList(a SexpPair, b Sexp) (Sexp, error) {
 	if !IsList(b) {
 		return SexpNull, NotAList
 	}

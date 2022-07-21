@@ -8,6 +8,8 @@
 (assert (= [3 4] (slice testarr 2 4)))
 (assert (= [1 2 3] (append [1 2] 3)))
 (assert (= [0 1 2 3] (concat [0 1] [2 3])))
+(assert (= [0 1 2 3 4] (concat [0 1] [2 3] [4])))
+(assert (= [0 1] (concat [] [] [0 1])))
 (assert (= 6 (len testarr)))
 (assert (= ['() '() '()] (make-array 3)))
 (assert (= [0 0 0] (make-array 3 0)))

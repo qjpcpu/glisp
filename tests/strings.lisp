@@ -1,5 +1,6 @@
 (assert (= "abc" (append "ab" #c)))
 (assert (= "abcd" (concat "ab" "cd")))
+(assert (= "abcdef" (concat "ab" "cd" "ef")))
 (assert (= "bc" (slice "abcd" 1 3)))
 (assert (= #c (sget "abcd" 2)))
 (assert (= 3 (len "abc")))

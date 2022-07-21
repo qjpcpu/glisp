@@ -18,14 +18,17 @@ func MapArray(env *Environment, fun SexpFunction, arr SexpArray) (SexpArray, err
 	return SexpArray(result), nil
 }
 
-func ConcatArray(arr SexpArray, expr Sexp) (SexpArray, error) {
-	var arr2 SexpArray
-	switch t := expr.(type) {
-	case SexpArray:
-		arr2 = t
-	default:
-		return arr, errors.New("second argument is not an array")
+func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
+	ret := make(SexpArray, len(arr))
+	copy(ret, arr)
+	for _, expr := range exprs {
+		switch t := expr.(type) {
+		case SexpArray:
+			ret = append(ret, t...)
+		default:
+			return arr, errors.New("second argument is not an array")
+		}
 	}
 
-	return append(arr, arr2...), nil
+	return ret, nil
 }
