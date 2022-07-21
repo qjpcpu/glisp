@@ -48,6 +48,7 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"string?":    GetTypeQueryFunction,
 	"zero?":      GetTypeQueryFunction,
 	"empty?":     GetTypeQueryFunction,
+	"bytes?":     GetTypeFunction,
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
@@ -459,6 +460,8 @@ func LenFunction(name string) UserFunction {
 			if t == SexpNull {
 				return NewSexpInt(0), nil
 			}
+		case SexpBytes:
+			return NewSexpInt(len(t.bytes)), nil
 		}
 
 		return NewSexpInt(0), fmt.Errorf("argument must be string or array but got %s", args[0])
@@ -574,6 +577,8 @@ func GetTypeQueryFunction(name string) UserFunction {
 			result = IsZero(args[0])
 		case "empty?":
 			result = IsEmpty(args[0])
+		case "bytes?":
+			result = IsBytes(args[0])
 		}
 
 		return SexpBool(result), nil

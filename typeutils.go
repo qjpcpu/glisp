@@ -19,14 +19,6 @@ func IsList(expr Sexp) bool {
 	return false
 }
 
-func IsBinary(expr Sexp) bool {
-	switch expr.(type) {
-	case SexpBytes:
-		return true
-	}
-	return false
-}
-
 func IsFloat(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpFloat:
@@ -82,6 +74,14 @@ func IsSymbol(expr Sexp) bool {
 func IsHash(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpHash:
+		return true
+	}
+	return false
+}
+
+func IsBytes(expr Sexp) bool {
+	switch expr.(type) {
+	case SexpBytes:
 		return true
 	}
 	return false
