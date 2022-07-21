@@ -133,6 +133,7 @@ func main() {
 	env := glisp.New()
 	env.ImportEval()
 	extensions.ImportRandom(env)
+	extensions.ImportMathUtils(env)
 	extensions.ImportTime(env)
 	extensions.ImportChannels(env)
 	extensions.ImportCoroutines(env)

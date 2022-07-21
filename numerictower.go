@@ -5,59 +5,7 @@ import (
 	"strconv"
 )
 
-type IntegerOp int
-
-const (
-	ShiftLeftArith IntegerOp = iota
-	ShiftRightArith
-	ShiftLeftLogical
-	ShiftRightLogical
-	Modulo
-	BitAnd
-	BitOr
-	BitXor
-)
-
 var WrongType error = errors.New("operands have invalid type")
-
-func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
-	var ia SexpInt
-	var ib SexpInt
-
-	switch i := a.(type) {
-	case SexpInt:
-		ia = i
-	case SexpChar:
-		ia = NewSexpInt(int(i))
-	default:
-		return SexpNull, WrongType
-	}
-
-	switch i := b.(type) {
-	case SexpInt:
-		ib = i
-	case SexpChar:
-		ib = NewSexpInt(int(i))
-	default:
-		return SexpNull, WrongType
-	}
-
-	switch op {
-	case ShiftLeftArith:
-		return ia.ShiftLeft(ib), nil
-	case ShiftRightArith:
-		return ia.ShiftRight(ib), nil
-	case Modulo:
-		return ia.Mod(ib), nil
-	case BitAnd:
-		return ia.And(ib), nil
-	case BitOr:
-		return ia.Or(ib), nil
-	case BitXor:
-		return ia.Xor(ib), nil
-	}
-	return SexpNull, errors.New("unrecognized shift operation")
-}
 
 type NumericOp int
 

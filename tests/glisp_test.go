@@ -136,6 +136,7 @@ func listScripts(t *testing.T) []string {
 func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	vm.ImportEval()
 	extensions.ImportJSON(vm)
+	extensions.ImportMathUtils(vm)
 	extensions.ImportBase64(vm)
 	extensions.ImportChannels(vm)
 	extensions.ImportCoreUtils(vm)

@@ -21,17 +21,10 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"=":          GetCompareFunction,
 	"not=":       GetCompareFunction,
 	"!=":         GetCompareFunction,
-	"sla":        GetBinaryIntFunction,
-	"sra":        GetBinaryIntFunction,
-	"mod":        GetBinaryIntFunction,
 	"+":          GetNumericFunction,
 	"-":          GetNumericFunction,
 	"*":          GetNumericFunction,
 	"/":          GetNumericFunction,
-	"bit-and":    GetBitwiseFunction,
-	"bit-or":     GetBitwiseFunction,
-	"bit-xor":    GetBitwiseFunction,
-	"bit-not":    ComplementFunction,
 	"read":       ReadFunction,
 	"cons":       ConsFunction,
 	"car":        FirstFunction,
@@ -107,72 +100,6 @@ func GetCompareFunction(name string) UserFunction {
 		}
 
 		return SexpBool(cond), nil
-	}
-}
-
-func GetBinaryIntFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
-		}
-
-		var op IntegerOp
-		switch name {
-		case "sla":
-			op = ShiftLeftArith
-		case "sra":
-			op = ShiftRightArith
-		case "mod":
-			op = Modulo
-		}
-
-		return IntegerDo(op, args[0], args[1])
-	}
-}
-
-func GetBitwiseFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
-		}
-
-		var op IntegerOp
-		switch name {
-		case "bit-and":
-			op = BitAnd
-		case "bit-or":
-			op = BitOr
-		case "bit-xor":
-			op = BitXor
-		}
-
-		accum := args[0]
-		var err error
-
-		for _, expr := range args[1:] {
-			accum, err = IntegerDo(op, accum, expr)
-			if err != nil {
-				return SexpNull, err
-			}
-		}
-		return accum, nil
-	}
-}
-
-func ComplementFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
-		}
-
-		switch t := args[0].(type) {
-		case SexpInt:
-			return t.BitNot(), nil
-		case SexpChar:
-			return ^t, nil
-		}
-
-		return SexpNull, errors.New("Argument to bit-not should be integer")
 	}
 }
 
