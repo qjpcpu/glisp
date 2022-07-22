@@ -228,7 +228,7 @@ func isDigit() glisp.UserFunctionConstructor {
 				return false
 			}
 		}
-		return true
+		return len(s) > 0
 	})
 }
 
@@ -240,7 +240,7 @@ func isAlpha() glisp.UserFunctionConstructor {
 				return false
 			}
 		}
-		return true
+		return len(s) > 0
 	})
 }
 

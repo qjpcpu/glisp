@@ -90,3 +90,58 @@ func concatList(a SexpPair, b Sexp) (Sexp, error) {
 
 	return SexpNull, NotAList
 }
+
+func FoldlList(env *Environment, fun SexpFunction, lst, acc Sexp) (Sexp, error) {
+	if lst == SexpNull {
+		return acc, nil
+	}
+
+	var list SexpPair
+	switch e := lst.(type) {
+	case SexpPair:
+		list = e
+	default:
+		return SexpNull, NotAList
+	}
+
+	var err error
+	if acc, err = env.Apply(fun, []Sexp{list.head, acc}); err != nil {
+		return SexpNull, err
+	}
+
+	return FoldlList(env, fun, list.tail, acc)
+}
+
+func FilterList(env *Environment, fun SexpFunction, list SexpPair) (Sexp, error) {
+	var head *SexpPair
+	var last *SexpPair
+	for {
+		if ret, err := env.Apply(fun, []Sexp{list.head}); err != nil {
+			return SexpNull, err
+		} else if !IsBool(ret) {
+			return SexpNull, errors.New("filter function must return boolean")
+		} else if bool(ret.(SexpBool)) {
+			if head == nil {
+				head = &SexpPair{head: list.head, tail: SexpNull}
+				last = head
+			} else {
+				cell := Cons(list.head, SexpNull)
+				last.tail = cell
+				last = &cell
+			}
+		}
+		if list.tail == SexpNull {
+			break
+		}
+		if next, ok := list.tail.(SexpPair); ok {
+			list = next
+		} else {
+			break
+		}
+	}
+
+	if head == nil {
+		return SexpNull, nil
+	}
+	return *head, nil
+}

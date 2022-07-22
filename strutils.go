@@ -1,6 +1,7 @@
 package glisp
 
 import (
+	"bytes"
 	"errors"
 	"strings"
 )
@@ -33,4 +34,18 @@ func AppendStr(str SexpStr, exprs ...Sexp) (SexpStr, error) {
 	}
 
 	return SexpStr(sb.String()), nil
+}
+
+func ConcatBytes(str SexpBytes, exprs ...Sexp) (SexpBytes, error) {
+	var sb bytes.Buffer
+	sb.Write(str.Bytes())
+	for _, expr := range exprs {
+		switch t := expr.(type) {
+		case SexpBytes:
+			sb.Write(t.Bytes())
+		default:
+			return NewSexpBytes(nil), errors.New("second argument is not a char")
+		}
+	}
+	return NewSexpBytes(sb.Bytes()), nil
 }

@@ -1,20 +1,19 @@
-(defn foldl [lst fun acc]
-    (cond
-        (empty? lst) acc
-        (foldl (cdr lst) fun (fun (car lst) acc))
-		))
+;; (defn foldl [lst fun acc]
+;;     (cond
+;;         (empty? lst) acc
+;;         (foldl (cdr lst) fun (fun (car lst) acc))
+;; 		))
         
-(defn filter [lst fun]
-    (foldl lst
-            (fn [x l]
-                (cond
-                    (fun x) (append l x)
-                    l))
-            [])
-)
+;; (defn filter [lst fun]
+;;     (foldl (fn [x l]
+;;                 (cond
+;;                     (fun x) (append l x)
+;;                     l))
+;;             [] lst)
+;; )
 
 (defn g-map [fun lst]
-	(foldl lst (fn [x l] (fun x)) []))
+	(foldl (fn [x l] (fun x)) [] lst))
 
 (defn even? [x]
     (cond
@@ -43,7 +42,7 @@
 
 (map (fn [x]
 		(assert (= x (evens))))
-    (filter [1 2 3 4 5 6 7 8 9 10] even?)
+    (filter even? [1 2 3 4 5 6 7 8 9 10])
 )
 
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))

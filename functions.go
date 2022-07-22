@@ -45,6 +45,8 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
+	"foldl":      FoldlFunction,
+	"filter":     FilterFunction,
 	"make-array": MakeArrayFunction,
 	"aget":       GetArrayAccessFunction,
 	"aset!":      GetArrayAccessFunction,
@@ -432,6 +434,8 @@ func concatSexp(args []Sexp) (Sexp, error) {
 		return ConcatStr(t, args[1:]...)
 	case SexpPair:
 		return ConcatList(t, args[1:]...)
+	case SexpBytes:
+		return ConcatBytes(t, args[1:]...)
 	case SexpSentinel:
 		if t == SexpNull {
 			return concatSexp(args[1:])
@@ -586,7 +590,7 @@ func MapFunction(name string) UserFunction {
 		case SexpPair:
 			return MapList(env, fun, e)
 		}
-		return SexpNull, errors.New("second argument ofr map must be array")
+		return SexpNull, errors.New("second argument of map must be array/list")
 	}
 }
 
@@ -792,5 +796,63 @@ func StringToFloat(name string) UserFunction {
 			return SexpNull, err
 		}
 		return SexpFloat(f), nil
+	}
+}
+
+/* (foldl function accumulate list/array) */
+func FoldlFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 3 {
+			return WrongNumberArguments(name, len(args), 3)
+		}
+		var fun SexpFunction
+
+		switch e := args[0].(type) {
+		case SexpFunction:
+			fun = e
+		default:
+			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+		}
+
+		switch e := args[2].(type) {
+		case SexpArray:
+			return FoldlArray(env, fun, e, args[1])
+		case SexpPair:
+			return FoldlList(env, fun, e, args[1])
+		case SexpSentinel:
+			if e == SexpNull {
+				return args[1], nil
+			}
+		}
+		return SexpNull, fmt.Errorf("third argument of %s must be array/list", name)
+	}
+}
+
+/* (filter function list/array) */
+func FilterFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return WrongNumberArguments(name, len(args), 2)
+		}
+		var fun SexpFunction
+
+		switch e := args[0].(type) {
+		case SexpFunction:
+			fun = e
+		default:
+			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+		}
+
+		switch e := args[1].(type) {
+		case SexpArray:
+			return FilterArray(env, fun, e)
+		case SexpPair:
+			return FilterList(env, fun, e)
+		case SexpSentinel:
+			if e == SexpNull {
+				return e, nil
+			}
+		}
+		return SexpNull, fmt.Errorf("second argument of %s must be array/list", name)
 	}
 }

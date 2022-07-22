@@ -67,6 +67,9 @@ func IntegerDo(op IntegerOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 	case ShiftRightArith:
 		return ia.ShiftRight(ib), nil
 	case Modulo:
+		if ib.IsZero() {
+			return glisp.SexpNull, errors.New(`division by zero`)
+		}
 		return ia.Mod(ib), nil
 	case BitAnd:
 		return ia.And(ib), nil

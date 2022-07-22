@@ -76,6 +76,9 @@ func NumericMatchInt(op NumericOp, a SexpInt, b Sexp) (Sexp, error) {
 		}
 		return NumericFloatDo(op, SexpFloat(f), tb), nil
 	case SexpInt:
+		if tb.IsZero() && op == Div {
+			return SexpNull, errors.New(`division by zero`)
+		}
 		return NumericIntDo(op, a, tb), nil
 	case SexpChar:
 		return NumericIntDo(op, a, NewSexpInt(int(tb))), nil

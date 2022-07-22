@@ -71,6 +71,14 @@ func IsSymbol(expr Sexp) bool {
 	return false
 }
 
+func IsBool(expr Sexp) bool {
+	switch expr.(type) {
+	case SexpBool:
+		return true
+	}
+	return false
+}
+
 func IsHash(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpHash:
