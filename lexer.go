@@ -167,6 +167,14 @@ func DecodeChar(atom string) (string, error) {
 		atom = `#~`
 	case "#\\`":
 		atom = "#`"
+	case `#\{`:
+		atom = "#{"
+	case `#\}`:
+		atom = "#}"
+	case `#\;`:
+		atom = "#;"
+	case `#\\`:
+		atom = `#\`
 	}
 	runes := StringToRunes(atom)
 	if len(runes) == 3 {

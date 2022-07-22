@@ -397,15 +397,15 @@ func LenFunction(name string) UserFunction {
 
 func AppendFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+		if len(args) < 2 {
+			return WrongNumberArguments(name, len(args), 2, Many)
 		}
 
 		switch t := args[0].(type) {
 		case SexpArray:
-			return SexpArray(append(t, args[1])), nil
+			return SexpArray(append(t, args[1:]...)), nil
 		case SexpStr:
-			return AppendStr(t, args[1])
+			return AppendStr(t, args[1:]...)
 		}
 
 		return SexpNull, errors.New("First argument of append must be array or string")

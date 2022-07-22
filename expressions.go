@@ -249,9 +249,34 @@ func (f SexpFloat) SexpString() string {
 }
 
 func (c SexpChar) SexpString() string {
-	/* char is ' */
-	if int32(c) == 39 {
-		return `#'`
+	switch int32(c) {
+	case 39:
+		/* char is ' */
+		return `#\'`
+	case '"':
+		return `#\"`
+	case '(':
+		return `#\(`
+	case ')':
+		return `#\)`
+	case '[':
+		return `#\[`
+	case ']':
+		return `#\]`
+	case '#':
+		return `#\#`
+	case '~':
+		return `#\~`
+	case '`':
+		return "#\\`"
+	case '{':
+		return `#\{`
+	case '}':
+		return `#\}`
+	case ';':
+		return `#\;`
+	case '\\':
+		return `#\\`
 	}
 	return "#" + strings.Trim(strconv.QuoteRune(rune(c)), "'")
 }

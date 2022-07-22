@@ -20,14 +20,17 @@ func ConcatStr(str SexpStr, exprs ...Sexp) (SexpStr, error) {
 	return SexpStr(sb.String()), nil
 }
 
-func AppendStr(str SexpStr, expr Sexp) (SexpStr, error) {
-	var chr SexpChar
-	switch t := expr.(type) {
-	case SexpChar:
-		chr = t
-	default:
-		return SexpStr(""), errors.New("second argument is not a char")
+func AppendStr(str SexpStr, exprs ...Sexp) (SexpStr, error) {
+	var sb strings.Builder
+	sb.WriteString(string(str))
+	for _, expr := range exprs {
+		switch t := expr.(type) {
+		case SexpChar:
+			sb.WriteRune(rune(t))
+		default:
+			return SexpStr(""), errors.New("second argument is not a char")
+		}
 	}
 
-	return str + SexpStr(chr), nil
+	return SexpStr(sb.String()), nil
 }
