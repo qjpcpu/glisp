@@ -2,7 +2,6 @@ package glisp
 
 import (
 	"errors"
-	"strconv"
 )
 
 var WrongType error = errors.New("operands have invalid type")
@@ -19,13 +18,13 @@ const (
 func NumericFloatDo(op NumericOp, a, b SexpFloat) Sexp {
 	switch op {
 	case Add:
-		return a + b
+		return a.Add(b)
 	case Sub:
-		return a - b
+		return a.Sub(b)
 	case Mult:
-		return a * b
+		return a.Mul(b)
 	case Div:
-		return a / b
+		return a.Div(b)
 	}
 	return SexpNull
 }
@@ -42,7 +41,7 @@ func NumericIntDo(op NumericOp, a, b SexpInt) Sexp {
 		if a.Mod(b).ToInt() == 0 {
 			return a.Div(b)
 		} else {
-			return SexpFloat(float64(a.ToInt64())) / SexpFloat(float64(b.ToInt64()))
+			return NewSexpFloatInt(a).Div(NewSexpFloatInt(b))
 		}
 	}
 	return SexpNull
@@ -54,13 +53,9 @@ func NumericMatchFloat(op NumericOp, a SexpFloat, b Sexp) (Sexp, error) {
 	case SexpFloat:
 		fb = tb
 	case SexpInt:
-		i, err := strconv.ParseFloat(tb.v.String(), 64)
-		if err != nil {
-			return SexpNull, err
-		}
-		fb = SexpFloat(i)
+		fb = NewSexpFloatInt(tb)
 	case SexpChar:
-		fb = SexpFloat(tb)
+		fb = NewSexpFloat(float64(tb))
 	default:
 		return SexpNull, WrongType
 	}
@@ -70,11 +65,7 @@ func NumericMatchFloat(op NumericOp, a SexpFloat, b Sexp) (Sexp, error) {
 func NumericMatchInt(op NumericOp, a SexpInt, b Sexp) (Sexp, error) {
 	switch tb := b.(type) {
 	case SexpFloat:
-		f, err := a.ToFloat64()
-		if err != nil {
-			return SexpNull, err
-		}
-		return NumericFloatDo(op, SexpFloat(f), tb), nil
+		return NumericFloatDo(op, NewSexpFloatInt(a), tb), nil
 	case SexpInt:
 		if tb.IsZero() && op == Div {
 			return SexpNull, errors.New(`division by zero`)
@@ -90,7 +81,7 @@ func NumericMatchChar(op NumericOp, a SexpChar, b Sexp) (Sexp, error) {
 	var res Sexp
 	switch tb := b.(type) {
 	case SexpFloat:
-		res = NumericFloatDo(op, SexpFloat(a), tb)
+		res = NumericFloatDo(op, NewSexpFloat(float64(a)), tb)
 	case SexpInt:
 		res = NumericIntDo(op, NewSexpInt(int(a)), tb)
 	case SexpChar:

@@ -3,7 +3,6 @@ package glisp
 import (
 	"errors"
 	"fmt"
-	"strconv"
 )
 
 type Parser struct {
@@ -201,11 +200,7 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 	case TokenString:
 		return SexpStr(tok.str), nil
 	case TokenFloat:
-		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
-		if err != nil {
-			return SexpNull, err
-		}
-		return SexpFloat(f), nil
+		return NewSexpFloatStr(tok.str)
 	case TokenEnd:
 		return SexpEnd, nil
 	}

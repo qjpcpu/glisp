@@ -112,7 +112,7 @@ func IsZero(expr Sexp) bool {
 	case SexpChar:
 		return int(e) == 0
 	case SexpFloat:
-		return float64(e) == 0.0
+		return e.Cmp(NewSexpFloat(0)) == 0
 	}
 	return false
 }

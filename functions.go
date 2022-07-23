@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -66,6 +66,8 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"str":        StringifyFunction,
 	"str2int":    StringToNumber,
 	"str2float":  StringToFloat,
+	"float2int":  FloatToInt,
+	"round":      RoundFloat,
 	"typestr":    GetTypeFunction,
 	"gensym":     GenSymFunction,
 	"sym2str":    Sym2StrFunction,
@@ -487,7 +489,7 @@ func GetTypeQueryFunction(name string) UserFunction {
 		case "list?":
 			result = IsList(args[0])
 		case "null?":
-			result = (args[0] == SexpNull)
+			result = args[0] == SexpNull
 		case "array?":
 			result = IsArray(args[0])
 		case "number?":
@@ -791,11 +793,39 @@ func StringToFloat(name string) UserFunction {
 		if !ok {
 			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
 		}
-		f, err := strconv.ParseFloat(string(str), 64)
-		if err != nil {
-			return SexpNull, err
+		return NewSexpFloatStr(string(str))
+	}
+}
+
+func FloatToInt(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
-		return SexpFloat(f), nil
+		switch val := args[0].(type) {
+		case SexpFloat:
+			integer := new(big.Int)
+			val.v.Int(integer)
+			return SexpInt{v: integer}, nil
+		case SexpInt:
+			return val, nil
+		}
+		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
+	}
+}
+
+func RoundFloat(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		switch val := args[0].(type) {
+		case SexpFloat:
+			return val.Round(), nil
+		case SexpInt:
+			return val, nil
+		}
+		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
 	}
 }
 

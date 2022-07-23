@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"math/big"
 	"strconv"
 )
 
@@ -52,16 +51,6 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
 }
 
-func signumFloat(f SexpFloat) int {
-	if f > 0 {
-		return 1
-	}
-	if f < 0 {
-		return -1
-	}
-	return 0
-}
-
 func signumInt(i SexpInt) int {
 	return i.Sign()
 }
@@ -71,9 +60,9 @@ func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	case SexpInt:
 		return compareFloatAndInt(f, e), nil
 	case SexpFloat:
-		return signumFloat(f - e), nil
+		return f.Cmp(e), nil
 	case SexpChar:
-		return signumFloat(f - SexpFloat(e)), nil
+		return f.Cmp(NewSexpFloat(float64(e))), nil
 	}
 	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", f, f.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)
@@ -84,14 +73,7 @@ func compareIntAndFloat(e SexpInt, f SexpFloat) int {
 }
 
 func compareFloatAndInt(f SexpFloat, e SexpInt) int {
-	if e.IsInt64() {
-		return signumFloat(f - SexpFloat(e.ToInt64()))
-	} else if e.IsUint64() {
-		return signumFloat(f - SexpFloat(e.ToUint64()))
-	} else {
-		ev, _ := big.NewFloat(0).SetString(e.v.String())
-		return big.NewFloat(float64(f)).Cmp(ev)
-	}
+	return f.Cmp(NewSexpFloatInt(e))
 }
 
 func compareBetweenInt(f, e SexpInt) int {
@@ -117,7 +99,7 @@ func compareChar(c SexpChar, expr Sexp) (int, error) {
 	case SexpInt:
 		return compareBetweenInt(NewSexpInt(int(c)), e), nil
 	case SexpFloat:
-		return signumFloat(SexpFloat(c) - e), nil
+		return NewSexpFloat(float64(c)).Cmp(e), nil
 	case SexpChar:
 		ci := NewSexpInt64(int64(byte(c)))
 		ei := NewSexpInt64(int64(byte(e)))

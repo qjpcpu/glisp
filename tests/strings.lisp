@@ -44,6 +44,7 @@
 (assert (not (str/title? "")))
 
 (assert (= 1.1 (str2float "1.1")))
+(assert (= 1 (str2float "1")))
 
 (assert (= "51225783c75fde283cf746a2904c7920" (str/md5 "glisp")))
 

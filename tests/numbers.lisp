@@ -27,3 +27,22 @@
 (assert (= '(true false true false) (map int? selection)))
 (assert (= '(false true false true) (map float? selection)))
 (assert (= '(false false true true) (map zero? selection)))
+
+(assert (= 1.2 (+ 1.1 0.1)))
+(assert (= 1.0 (- 1.1 0.1)))
+(assert (= 0.11 (* 1.1 0.1)))
+(assert (= 1 (- 1.1 0.1)))
+(assert (= 5.5 (/ 1.1 0.2)))
+
+(assert (= 1.2 (* 0.2 6)))
+(assert (= 1 (float2int (* 0.2 6))))
+(assert (= 2 (float2int (* 0.4 6))))
+
+(assert (= -0.1 (- 0 0.1)))
+
+(assert (= 2 (round 1.7)))
+(assert (= 2 (round 2.4)))
+(assert (= 1 (round 0.5)))
+
+(assert (zero? 0.0000000001))
+(assert (not (zero? 0.000000001)))

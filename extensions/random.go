@@ -9,7 +9,7 @@ import (
 var defaultRand = rand.New(rand.NewSource(time.Now().Unix()))
 
 func RandomFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-	return glisp.SexpFloat(defaultRand.Float64()), nil
+	return glisp.NewSexpFloat(defaultRand.Float64()), nil
 }
 
 func ImportRandom(env *glisp.Environment) {

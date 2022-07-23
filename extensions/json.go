@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/qjpcpu/glisp"
@@ -89,16 +88,16 @@ func mapInterfaceToSexp(v interface{}) glisp.Sexp {
 		expr, _ := glisp.NewSexpIntStrWithBase(fmt.Sprint(val), 10)
 		return expr
 	case float32:
-		return glisp.SexpFloat(float64(val))
+		return glisp.NewSexpFloat(float64(val))
 	case float64:
-		return glisp.SexpFloat(val)
+		return glisp.NewSexpFloat(val)
 	case string:
 		return glisp.SexpStr(val)
 	case json.Number:
 		str := val.String()
 		if strings.Contains(str, ".") {
-			num, _ := strconv.ParseFloat(str, 64)
-			return glisp.SexpFloat(num)
+			num, _ := glisp.NewSexpFloatStr(str)
+			return num
 		}
 		expr, _ := glisp.NewSexpIntStrWithBase(str, 10)
 		return expr

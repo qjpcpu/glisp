@@ -75,7 +75,7 @@ func mapSexpToGoPrintableInterface(sexp glisp.Sexp) interface{} {
 			return expr.SexpString()
 		}
 	case glisp.SexpFloat:
-		return float64(expr)
+		return expr.ToFloat64()
 	case glisp.SexpSymbol:
 		return expr.Name()
 	case glisp.SexpChar:
