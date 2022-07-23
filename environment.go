@@ -28,7 +28,7 @@ type Environment struct {
 	nextsymbol       int
 	before           []PreHook
 	after            []PostHook
-	extraGlobolCount int
+	extraGlobalCount int
 }
 
 const CallStackSize = 25
@@ -81,7 +81,7 @@ func (env *Environment) Clone() *Environment {
 	dupenv.after = env.after
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
-	dupenv.extraGlobolCount = env.extraGlobolCount
+	dupenv.extraGlobalCount = env.extraGlobalCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -104,7 +104,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.after = env.after
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
-	dupenv.extraGlobolCount = env.extraGlobolCount
+	dupenv.extraGlobalCount = env.extraGlobalCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -200,30 +200,30 @@ func (env *Environment) Bind(name string, expr Sexp) error {
 }
 
 func (env *Environment) PushGlobalScope() error {
-	if env.scopestack.Top() != env.extraGlobolCount {
+	if env.scopestack.Top() != env.extraGlobalCount {
 		return errors.New("not in global scope")
 	}
 	env.scopestack.PushScope()
-	env.extraGlobolCount++
+	env.extraGlobalCount++
 	return nil
 }
 
 func (env *Environment) PopGlobalScope() error {
-	if env.scopestack.Top() != env.extraGlobolCount {
+	if env.scopestack.Top() != env.extraGlobalCount {
 		return errors.New("not in global scope")
 	}
-	if env.extraGlobolCount <= 0 {
+	if env.extraGlobalCount <= 0 {
 		return errors.New("no extra global scope")
 	}
 	if err := env.scopestack.PopScope(); err != nil {
 		return err
 	}
-	env.extraGlobolCount--
+	env.extraGlobalCount--
 	return nil
 }
 
 func (env *Environment) globalScopes() []StackElem {
-	return env.scopestack.elements[0 : env.extraGlobolCount+1]
+	return env.scopestack.elements[0 : env.extraGlobalCount+1]
 }
 
 func (env *Environment) ReturnFromFunction() error {
@@ -477,7 +477,7 @@ func (env *Environment) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
-	env.extraGlobolCount = 0
+	env.extraGlobalCount = 0
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
 	env.pc = 0
