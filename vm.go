@@ -73,7 +73,7 @@ func (b BranchInstr) Execute(env *Environment) error {
 }
 
 type PushInstrClosure struct {
-	expr SexpFunction
+	expr *SexpFunction
 }
 
 func (p PushInstrClosure) InstrString() string {
@@ -81,8 +81,9 @@ func (p PushInstrClosure) InstrString() string {
 }
 
 func (p PushInstrClosure) Execute(env *Environment) error {
-	p.expr.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
-	env.datastack.PushExpr(p.expr)
+	fn := p.expr.Clone()
+	fn.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
+	env.datastack.PushExpr(fn)
 	env.pc++
 	return nil
 }
@@ -212,7 +213,7 @@ func (c CallInstr) Execute(env *Environment) error {
 		return err
 	}
 	switch f := funcobj.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		if !f.user {
 			return env.CallFunction(f, c.nargs)
 		}
@@ -236,7 +237,7 @@ func (d DispatchInstr) Execute(env *Environment) error {
 	}
 
 	switch f := funcobj.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		if !f.user {
 			return env.CallFunction(f, d.nargs)
 		}

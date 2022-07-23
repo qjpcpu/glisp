@@ -532,17 +532,17 @@ func ApplyFunction(name string) UserFunction {
 		if len(args) != 2 {
 			return WrongNumberArguments(name, len(args), 2)
 		}
-		var fun SexpFunction
+		var fun *SexpFunction
 		var funargs SexpArray
 
 		switch e := args[0].(type) {
-		case SexpFunction:
+		case *SexpFunction:
 			fun = e
 		case SexpSymbol:
 			var foundFn bool
 			if rfn, ok := env.FindObject(e.Name()); ok {
 				if IsFunction(rfn) {
-					fun = rfn.(SexpFunction)
+					fun = rfn.(*SexpFunction)
 					foundFn = true
 				}
 			}
@@ -575,10 +575,10 @@ func MapFunction(name string) UserFunction {
 		if len(args) != 2 {
 			return WrongNumberArguments(name, len(args), 2)
 		}
-		var fun SexpFunction
+		var fun *SexpFunction
 
 		switch e := args[0].(type) {
-		case SexpFunction:
+		case *SexpFunction:
 			fun = e
 		default:
 			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
@@ -704,11 +704,11 @@ func SourceFileFunction(env *Environment, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
-var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil, nil}
+var MissingFunction = &SexpFunction{"__missing", true, 0, false, nil, nil, nil}
 
 func MakeFunction(name string, nargs int, varargs bool,
-	fun Function) SexpFunction {
-	var sfun SexpFunction
+	fun Function) *SexpFunction {
+	var sfun = &SexpFunction{}
 	sfun.name = name
 	sfun.user = false
 	sfun.nargs = nargs
@@ -717,8 +717,8 @@ func MakeFunction(name string, nargs int, varargs bool,
 	return sfun
 }
 
-func MakeUserFunction(name string, ufun UserFunction) SexpFunction {
-	var sfun SexpFunction
+func MakeUserFunction(name string, ufun UserFunction) *SexpFunction {
+	var sfun = &SexpFunction{}
 	sfun.name = name
 	sfun.user = true
 	sfun.userfun = ufun
@@ -805,10 +805,10 @@ func FoldlFunction(name string) UserFunction {
 		if len(args) != 3 {
 			return WrongNumberArguments(name, len(args), 3)
 		}
-		var fun SexpFunction
+		var fun *SexpFunction
 
 		switch e := args[0].(type) {
-		case SexpFunction:
+		case *SexpFunction:
 			fun = e
 		default:
 			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
@@ -834,10 +834,10 @@ func FilterFunction(name string) UserFunction {
 		if len(args) != 2 {
 			return WrongNumberArguments(name, len(args), 2)
 		}
-		var fun SexpFunction
+		var fun *SexpFunction
 
 		switch e := args[0].(type) {
-		case SexpFunction:
+		case *SexpFunction:
 			fun = e
 		default:
 			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)

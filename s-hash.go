@@ -6,6 +6,28 @@ import (
 	"hash/fnv"
 )
 
+type sexpHash struct {
+	Map      map[int][]SexpPair
+	KeyOrder []Sexp // must user pointers here, else hset! will fail to update.
+	NumKeys  int
+}
+
+type SexpHash = *sexpHash
+
+func (hash SexpHash) SexpString() string {
+	str := "{"
+	for _, arr := range hash.Map {
+		for _, pair := range arr {
+			str += pair.head.SexpString() + " "
+			str += pair.tail.SexpString() + " "
+		}
+	}
+	if len(str) > 1 {
+		return str[:len(str)-1] + "}"
+	}
+	return str + "}"
+}
+
 func HashExpression(expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpInt:

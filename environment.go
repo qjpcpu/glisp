@@ -20,10 +20,10 @@ type Environment struct {
 	stackstack       *Stack
 	symtable         map[string]int
 	revsymtable      map[int]string
-	builtins         map[int]SexpFunction
-	macros           map[int]SexpFunction
-	curfunc          SexpFunction
-	mainfunc         SexpFunction
+	builtins         map[int]*SexpFunction
+	macros           map[int]*SexpFunction
+	curfunc          *SexpFunction
+	mainfunc         *SexpFunction
 	pc               int
 	nextsymbol       int
 	before           []PreHook
@@ -43,8 +43,8 @@ func New() *Environment {
 	env.scopestack.PushScope()
 	env.stackstack = NewStack(StackStackSize)
 	env.addrstack = NewStack(CallStackSize)
-	env.builtins = make(map[int]SexpFunction)
-	env.macros = make(map[int]SexpFunction)
+	env.builtins = make(map[int]*SexpFunction)
+	env.macros = make(map[int]*SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = 1
@@ -154,7 +154,7 @@ func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 	return nil
 }
 
-func (env *Environment) CallFunction(function SexpFunction, nargs int) error {
+func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
@@ -250,7 +250,7 @@ func (env *Environment) ReturnFromFunction() error {
 }
 
 func (env *Environment) CallUserFunction(
-	function SexpFunction, name string, nargs int) error {
+	function *SexpFunction, name string, nargs int) error {
 
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
@@ -430,7 +430,7 @@ func (env *Environment) DumpFunctionByName(name string) error {
 
 	var fun Function
 	switch t := obj.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		if !t.user {
 			fun = t.fun
 		} else {
@@ -497,14 +497,14 @@ func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 	if !ok {
 		return SexpNull, fmt.Errorf("function %s not found", fun)
 	}
-	fn, ok := f.(SexpFunction)
+	fn, ok := f.(*SexpFunction)
 	if !ok {
 		return SexpNull, fmt.Errorf("%s(%T) is not a function", fun, f)
 	}
 	return env.Apply(fn, args)
 }
 
-func (env *Environment) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
+func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
 		return fun.userfun(env, args)
 	}
@@ -551,7 +551,7 @@ func (env *Environment) GlobalFunctions() []string {
 	var ret []string
 	for _, scope := range env.globalScopes() {
 		for _, v := range scope.(Scope) {
-			if fn, ok := v.(SexpFunction); ok {
+			if fn, ok := v.(*SexpFunction); ok {
 				ret = append(ret, fn.name)
 			}
 		}

@@ -61,7 +61,7 @@ func GetTypeFunction(name string) UserFunction {
 			present = `char`
 		case SexpFloat:
 			present = `float`
-		case SexpFunction:
+		case *SexpFunction:
 			present = `function`
 		case SexpHash:
 			present = `hash`

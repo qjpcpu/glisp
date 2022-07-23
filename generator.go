@@ -63,7 +63,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 }
 
 func buildSexpFun(env *Environment, name string, funcargs SexpArray,
-	funcbody []Sexp) (SexpFunction, error) {
+	funcbody []Sexp) (*SexpFunction, error) {
 	gen := NewGenerator(env)
 	gen.tail = true
 
@@ -255,7 +255,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 		islist = false
 	}
 
-	var macro SexpFunction
+	var macro *SexpFunction
 	if islist {
 		switch t := list.head.(type) {
 		case SexpSymbol:

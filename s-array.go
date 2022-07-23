@@ -4,7 +4,22 @@ import (
 	"errors"
 )
 
-func MapArray(env *Environment, fun SexpFunction, arr SexpArray) (SexpArray, error) {
+type SexpArray []Sexp
+
+func (arr SexpArray) SexpString() string {
+	if len(arr) == 0 {
+		return "[]"
+	}
+
+	str := "[" + arr[0].SexpString()
+	for _, sexp := range arr[1:] {
+		str += " " + sexp.SexpString()
+	}
+	str += "]"
+	return str
+}
+
+func MapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, len(arr))
 	var err error
 
@@ -18,7 +33,7 @@ func MapArray(env *Environment, fun SexpFunction, arr SexpArray) (SexpArray, err
 	return SexpArray(result), nil
 }
 
-func FilterArray(env *Environment, fun SexpFunction, arr SexpArray) (SexpArray, error) {
+func FilterArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, 0, len(arr))
 
 	for i := range arr {
@@ -53,7 +68,7 @@ func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
 	return ret, nil
 }
 
-func FoldlArray(env *Environment, fun SexpFunction, lst Sexp, acc Sexp) (Sexp, error) {
+func FoldlArray(env *Environment, fun *SexpFunction, lst Sexp, acc Sexp) (Sexp, error) {
 	if lst == SexpNull {
 		return acc, nil
 	}

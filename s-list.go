@@ -6,6 +6,47 @@ import (
 
 var NotAList = errors.New("not a list")
 
+type SexpPair struct {
+	head Sexp
+	tail Sexp
+}
+
+func Cons(a Sexp, b Sexp) SexpPair {
+	return SexpPair{a, b}
+}
+
+func (pair SexpPair) Head() Sexp {
+	return pair.head
+}
+
+func (pair SexpPair) Tail() Sexp {
+	return pair.tail
+}
+
+func (pair SexpPair) SexpString() string {
+	str := "("
+
+	for {
+		switch pair.tail.(type) {
+		case SexpPair:
+			str += pair.head.SexpString() + " "
+			pair = pair.tail.(SexpPair)
+			continue
+		}
+		break
+	}
+
+	str += pair.head.SexpString()
+
+	if pair.tail == SexpNull {
+		str += ")"
+	} else {
+		str += " . " + pair.tail.SexpString() + ")"
+	}
+
+	return str
+}
+
 func ListToArray(expr Sexp) ([]Sexp, error) {
 	if !IsList(expr) {
 		return nil, NotAList
@@ -29,7 +70,7 @@ func MakeList(expressions []Sexp) Sexp {
 	return Cons(expressions[0], MakeList(expressions[1:]))
 }
 
-func MapList(env *Environment, fun SexpFunction, expr Sexp) (Sexp, error) {
+func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	if expr == SexpNull {
 		return SexpNull, nil
 	}
@@ -91,7 +132,7 @@ func concatList(a SexpPair, b Sexp) (Sexp, error) {
 	return SexpNull, NotAList
 }
 
-func FoldlList(env *Environment, fun SexpFunction, lst, acc Sexp) (Sexp, error) {
+func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error) {
 	if lst == SexpNull {
 		return acc, nil
 	}
@@ -112,7 +153,7 @@ func FoldlList(env *Environment, fun SexpFunction, lst, acc Sexp) (Sexp, error) 
 	return FoldlList(env, fun, list.tail, acc)
 }
 
-func FilterList(env *Environment, fun SexpFunction, list SexpPair) (Sexp, error) {
+func FilterList(env *Environment, fun *SexpFunction, list SexpPair) (Sexp, error) {
 	var head *SexpPair
 	var last *SexpPair
 	for {

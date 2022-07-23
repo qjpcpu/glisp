@@ -19,13 +19,11 @@ func Marshal(a Sexp) ([]byte, error) {
 		return expr.MarshalJSON()
 	case SexpChar:
 		return expr.MarshalJSON()
-	case SexpFunction:
+	case *SexpFunction:
 		return expr.MarshalJSON()
 	case SexpHash:
 		return expr.MarshalJSON()
 	case SexpPair:
-		return expr.MarshalJSON()
-	case SexpStackmark:
 		return expr.MarshalJSON()
 	case SexpStr:
 		return expr.MarshalJSON()
@@ -44,11 +42,7 @@ func (a SexpInt) MarshalJSON() ([]byte, error) {
 	return []byte(a.SexpString()), nil
 }
 
-func (a SexpFunction) MarshalJSON() ([]byte, error) {
-	return stdMarshal(a.SexpString())
-}
-
-func (a SexpStackmark) MarshalJSON() ([]byte, error) {
+func (a *SexpFunction) MarshalJSON() ([]byte, error) {
 	return stdMarshal(a.SexpString())
 }
 

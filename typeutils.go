@@ -1,5 +1,7 @@
 package glisp
 
+import "math/big"
+
 func IsArray(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpArray:
@@ -97,7 +99,7 @@ func IsBytes(expr Sexp) bool {
 
 func IsFunction(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		return true
 	}
 	return false
@@ -133,4 +135,18 @@ func IsEmpty(expr Sexp) bool {
 func isComparable(v Sexp) bool {
 	_, ok := v.(Comparable)
 	return ok
+}
+
+func IsTruthy(expr Sexp) bool {
+	switch e := expr.(type) {
+	case SexpBool:
+		return bool(e)
+	case SexpInt:
+		return e.v.Cmp(big.NewInt(0)) != 0
+	case SexpChar:
+		return e != 0
+	case SexpSentinel:
+		return e != SexpNull
+	}
+	return true
 }
