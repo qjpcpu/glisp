@@ -39,11 +39,6 @@ func (stack *Stack) LookupSymbol(sym SexpSymbol) (Sexp, error) {
 	return stack.lookupSymbol(sym, 0)
 }
 
-// LookupSymbolNonGlobal  - closures use this to only find symbols below the global scope, to avoid copying globals it'll always be-able to ref
-func (stack *Stack) LookupSymbolNonGlobal(sym SexpSymbol) (Sexp, error) {
-	return stack.lookupSymbol(sym, 1)
-}
-
 func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 	if stack.IsEmpty() {
 		return errors.New("no scope available")

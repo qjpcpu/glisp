@@ -51,6 +51,12 @@ func (stack *Stack) IsEmpty() bool {
 	return stack.tos < 0
 }
 
+func (stack *Stack) PushMulti(elems ...StackElem) {
+	for i := range elems {
+		stack.Push(elems[i])
+	}
+}
+
 func (stack *Stack) Push(elem StackElem) {
 	stack.tos++
 

@@ -14,20 +14,21 @@ type PreHook func(*Environment, string, []Sexp)
 type PostHook func(*Environment, string, Sexp)
 
 type Environment struct {
-	datastack   *Stack
-	scopestack  *Stack
-	addrstack   *Stack
-	stackstack  *Stack
-	symtable    map[string]int
-	revsymtable map[int]string
-	builtins    map[int]SexpFunction
-	macros      map[int]SexpFunction
-	curfunc     SexpFunction
-	mainfunc    SexpFunction
-	pc          int
-	nextsymbol  int
-	before      []PreHook
-	after       []PostHook
+	datastack        *Stack
+	scopestack       *Stack
+	addrstack        *Stack
+	stackstack       *Stack
+	symtable         map[string]int
+	revsymtable      map[int]string
+	builtins         map[int]SexpFunction
+	macros           map[int]SexpFunction
+	curfunc          SexpFunction
+	mainfunc         SexpFunction
+	pc               int
+	nextsymbol       int
+	before           []PreHook
+	after            []PostHook
+	extraGlobolCount int
 }
 
 const CallStackSize = 25
@@ -79,7 +80,8 @@ func (env *Environment) Clone() *Environment {
 	dupenv.before = env.before
 	dupenv.after = env.after
 
-	dupenv.scopestack.Push(env.scopestack.elements[0])
+	dupenv.scopestack.PushMulti(env.globalScopes()...)
+	dupenv.extraGlobolCount = env.extraGlobolCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -101,7 +103,8 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.before = env.before
 	dupenv.after = env.after
 
-	dupenv.scopestack.Push(env.scopestack.elements[0])
+	dupenv.scopestack.PushMulti(env.globalScopes()...)
+	dupenv.extraGlobolCount = env.extraGlobolCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -174,10 +177,10 @@ func (env *Environment) CallFunction(function SexpFunction, nargs int) error {
 	if env.scopestack.IsEmpty() {
 		panic("where's the global scope?")
 	}
-	globalScope := env.scopestack.elements[0]
+	globalScopes := env.globalScopes()
 	env.stackstack.Push(env.scopestack)
 	env.scopestack = NewStack(ScopeStackSize)
-	env.scopestack.Push(globalScope)
+	env.scopestack.PushMulti(globalScopes...)
 
 	if function.closeScope != nil {
 		function.closeScope.PushAllTo(env.scopestack)
@@ -191,9 +194,36 @@ func (env *Environment) CallFunction(function SexpFunction, nargs int) error {
 	return nil
 }
 
-func (env *Environment) BindObject(name string, expr Sexp) error {
+func (env *Environment) Bind(name string, expr Sexp) error {
 	sym := env.MakeSymbol(name)
 	return env.scopestack.BindSymbol(sym, expr)
+}
+
+func (env *Environment) PushGlobalScope() error {
+	if env.scopestack.Top() != env.extraGlobolCount {
+		return errors.New("not in global scope")
+	}
+	env.scopestack.PushScope()
+	env.extraGlobolCount++
+	return nil
+}
+
+func (env *Environment) PopGlobalScope() error {
+	if env.scopestack.Top() != env.extraGlobolCount {
+		return errors.New("not in global scope")
+	}
+	if env.extraGlobolCount <= 0 {
+		return errors.New("no extra global scope")
+	}
+	if err := env.scopestack.PopScope(); err != nil {
+		return err
+	}
+	env.extraGlobolCount--
+	return nil
+}
+
+func (env *Environment) globalScopes() []StackElem {
+	return env.scopestack.elements[0 : env.extraGlobolCount+1]
 }
 
 func (env *Environment) ReturnFromFunction() error {
@@ -375,16 +405,11 @@ func (env *Environment) LoadString(str string) error {
 }
 
 func (env *Environment) AddFunction(name string, function UserFunction) {
-	env.AddGlobal(name, MakeUserFunction(name, function))
+	env.Bind(name, MakeUserFunction(name, function))
 }
 
 func (env *Environment) AddFunctionByConstructor(name string, function UserFunctionConstructor) {
-	env.AddGlobal(name, MakeUserFunction(name, function(name)))
-}
-
-func (env *Environment) AddGlobal(name string, obj Sexp) {
-	sym := env.MakeSymbol(name)
-	env.scopestack.elements[0].(Scope)[sym.number] = obj
+	env.Bind(name, MakeUserFunction(name, function(name)))
 }
 
 func (env *Environment) AddMacro(name string, function UserFunction) {
@@ -452,6 +477,7 @@ func (env *Environment) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
+	env.extraGlobolCount = 0
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
 	env.pc = 0
@@ -464,6 +490,18 @@ func (env *Environment) FindObject(name string) (Sexp, bool) {
 		return SexpNull, false
 	}
 	return obj, true
+}
+
+func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
+	f, ok := env.FindObject(fun)
+	if !ok {
+		return SexpNull, fmt.Errorf("function %s not found", fun)
+	}
+	fn, ok := f.(SexpFunction)
+	if !ok {
+		return SexpNull, fmt.Errorf("%s(%T) is not a function", fun, f)
+	}
+	return env.Apply(fn, args)
 }
 
 func (env *Environment) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
@@ -511,9 +549,11 @@ func (env *Environment) AddPostHook(fun PostHook) {
 
 func (env *Environment) GlobalFunctions() []string {
 	var ret []string
-	for _, v := range env.scopestack.elements[0].(Scope) {
-		if fn, ok := v.(SexpFunction); ok {
-			ret = append(ret, fn.name)
+	for _, scope := range env.globalScopes() {
+		for _, v := range scope.(Scope) {
+			if fn, ok := v.(SexpFunction); ok {
+				ret = append(ret, fn.name)
+			}
 		}
 	}
 	for _, fn := range env.macros {

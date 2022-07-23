@@ -159,3 +159,23 @@ func testReadFile(name string) glisp.UserFunction {
 		return glisp.SexpStr(string(bytes)), nil
 	}
 }
+
+func TestSandBox(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.PushGlobalScope()
+	if _, err := vm.EvalString(`(defn sb [a b ] (+ a b))`); err != nil {
+		t.Fatal(err)
+	}
+	ret, err := vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !glisp.IsInt(ret) {
+		t.Fatal(ret.SexpString() + " is not =3")
+	}
+	vm.PopGlobalScope()
+	_, err = vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	if err == nil {
+		t.Fatal("should not found function")
+	}
+}
