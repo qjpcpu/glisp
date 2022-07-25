@@ -46,3 +46,11 @@
 
 (assert (zero? 0.0000000001))
 (assert (not (zero? 0.000000001)))
+
+
+;; 14.285714285714286
+(assert (= "14.286" (float2str 14.285714285714286 3)))
+(assert (= "14" (float2str 14.285714285714286 0)))
+(assert (= "14" (float2str 14.00000000001 3)))
+(assert (= "0" (float2str 0.00000000001 3)))
+(assert (= "0" (float2str 0.0 3)))

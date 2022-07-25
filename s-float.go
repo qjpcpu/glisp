@@ -29,6 +29,22 @@ func (f SexpFloat) SexpString() string {
 	return f.v.String()
 }
 
+func (f SexpFloat) ToString(prec int) string {
+	if prec < 0 {
+		return f.SexpString()
+	}
+	s := f.v.Text('f', prec)
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] != '0' {
+			if s[i] == '.' {
+				return s[:i]
+			}
+			return s[:i+1]
+		}
+	}
+	return s
+}
+
 func (f SexpFloat) Div(f2 SexpFloat) SexpFloat {
 	return SexpFloat{v: new(big.Float).Quo(f.v, f2.v)}
 }

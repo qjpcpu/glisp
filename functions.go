@@ -67,6 +67,7 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"str2int":    StringToNumber,
 	"str2float":  StringToFloat,
 	"float2int":  FloatToInt,
+	"float2str":  FloatToString,
 	"round":      RoundFloat,
 	"typestr":    GetTypeFunction,
 	"gensym":     GenSymFunction,
@@ -809,6 +810,27 @@ func FloatToInt(name string) UserFunction {
 			return SexpInt{v: integer}, nil
 		case SexpInt:
 			return val, nil
+		}
+		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
+	}
+}
+
+func FloatToString(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 && len(args) != 2 {
+			return SexpNull, fmt.Errorf(`%s expect 1/2 argument but got %v`, name, len(args))
+		}
+		switch val := args[0].(type) {
+		case SexpFloat:
+			if len(args) == 2 {
+				if !IsInt(args[1]) {
+					return SexpNull, errors.New("prec should be integer")
+				}
+				return SexpStr(val.ToString(args[1].(SexpInt).ToInt())), nil
+			}
+			return SexpStr(val.SexpString()), nil
+		case SexpInt:
+			return SexpStr(val.SexpString()), nil
 		}
 		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
 	}
