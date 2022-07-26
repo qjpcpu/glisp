@@ -13,3 +13,9 @@
 (defn currying [function arg_count & args]
   (__gen_curry function arg_count args '())
 )
+
+;; partial
+(defn partial [function & args]
+  (fn [& extra]
+      (let [all (concat args extra)]
+           (apply function all))))

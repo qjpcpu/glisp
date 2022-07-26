@@ -4,3 +4,4 @@
 *.out
 .idea
 /repl/repl
+/repl/*.lisp

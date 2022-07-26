@@ -31,3 +31,11 @@
 (def c1 (currying sum3 3 10 100))
 (assert (= 111 (c1 1)))
 (assert (= 112 (c1 2)))
+
+(def double (partial * 2))
+(assert (= 2 (double 1)))
+(assert (= 4 (double 2)))
+
+(def add3 (partial + 1 1 1))
+(assert (= 4 (add3 1)))
+(assert (= 10 (add3 7)))
