@@ -7,7 +7,11 @@ import (
 
 var Float64EqualityThreshold = 1e-10
 
-type SexpFloat struct{ v *big.Float }
+type SexpFloat struct {
+	v *big.Float
+	/* well, sometimes we want SexpString show it's original string value */
+	rawStr string
+}
 
 func NewSexpFloat(c float64) SexpFloat {
 	return SexpFloat{v: big.NewFloat(c)}
@@ -18,7 +22,7 @@ func NewSexpFloatStr(str string) (SexpFloat, error) {
 	if !ok {
 		return SexpFloat{v: new(big.Float)}, fmt.Errorf("%s not float", str)
 	}
-	return SexpFloat{v: f}, nil
+	return SexpFloat{v: f, rawStr: str}, nil
 }
 
 func NewSexpFloatInt(i SexpInt) SexpFloat {
@@ -26,6 +30,9 @@ func NewSexpFloatInt(i SexpInt) SexpFloat {
 }
 
 func (f SexpFloat) SexpString() string {
+	if f.rawStr != "" {
+		return f.rawStr
+	}
 	return f.v.String()
 }
 

@@ -129,7 +129,22 @@ func runScript(env *glisp.Environment, fname string) {
 	}
 }
 
+func fmtScript(env *glisp.Environment, fname string) {
+	expressions, err := env.ParseFile(fname)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	fmt.Println(glisp.FormatPretty(expressions))
+}
+
+var (
+	fmtFile string
+)
+
 func main() {
+	flag.StringVar(&fmtFile, "f", "", "format file")
+
 	env := glisp.New()
 	env.ImportEval()
 	extensions.ImportRandom(env)
@@ -145,9 +160,13 @@ func main() {
 
 	flag.Parse()
 
-	args := flag.Args()
-	if len(args) > 0 {
-		runScript(env, args[0])
+	if fmtFile != "" {
+		fmtScript(env, fmtFile)
+		return
+	}
+
+	if args := os.Args; len(args) > 1 {
+		runScript(env, args[1])
 	} else {
 		repl(env)
 	}

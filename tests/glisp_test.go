@@ -21,6 +21,12 @@ func TestAllScripts(t *testing.T) {
 	}
 }
 
+func TestAllScriptsAgain(t *testing.T) {
+	for _, script := range listScripts(t) {
+		testFileAgain(t, script)
+	}
+}
+
 func TestLoadAllFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	funcs := vm.GlobalFunctions()
@@ -116,6 +122,29 @@ func testFile(t *testing.T, file string) {
 		t.Fatalf("run file %s fail %v", file, err)
 	}
 	t.Logf("TEST %s OK", file)
+}
+
+func testFileAgain(t *testing.T, file string) {
+	testit := func(fn func([]glisp.Sexp) string, expressions []glisp.Sexp) {
+		vm := registerTestingFunc(loadAllExtensions(glisp.New()))
+		err := vm.LoadString(fn(expressions))
+		if err != nil {
+			t.Fatalf("parse file %s fail %v", file, err)
+		}
+		_, err = vm.Run()
+		if err != nil {
+			t.Log("==========", file, "============\n", fn(expressions))
+			t.Fatalf("run file %s fail %v", file, err)
+		}
+		t.Logf("TEST %s OK", file)
+	}
+	vm := registerTestingFunc(loadAllExtensions(glisp.New()))
+	expressions, err := vm.ParseFile(file)
+	if err != nil {
+		t.Fatalf("read file %s fail %v", file, err)
+	}
+	testit(glisp.FormatCompact, expressions)
+	testit(glisp.FormatPretty, expressions)
 }
 
 func listScripts(t *testing.T) []string {
