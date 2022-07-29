@@ -25,3 +25,8 @@
 (assert (= ["b" "c"] (slice ["a" "b" "c"] 1 3)))
 
 (assert (= 0B676c6973 (slice (str2bytes "hello glisp") 6 10)))
+
+(assert (< [1] [1 2]))
+(assert (< [1] [2]))
+(assert (empty? (cdr [])))
+(assert (= "a" (slice "a" 0 100)))

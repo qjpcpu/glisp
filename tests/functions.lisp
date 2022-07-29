@@ -38,3 +38,6 @@
 
 ; testing anonymous dispatch
 ((fn [a] (assert (= a 0))) 0)
+
+(assert (= "list" (typestr (read "()"))))
+(assert (= 2 (apply '+ [1 1])))

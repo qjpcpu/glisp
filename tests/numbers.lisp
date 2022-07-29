@@ -54,3 +54,12 @@
 (assert (= "14" (float2str 14.00000000001 3)))
 (assert (= "0" (float2str 0.00000000001 3)))
 (assert (= "0" (float2str 0.0 3)))
+
+(assert (= 1.0 1))
+(assert (= 97.0 #a))
+(assert (= 1 (float2int 1)))
+(assert (= "1" (float2str 1)))
+(assert (= "1.00" (float2str 1.00)))
+(assert (= 1 (round 1)))
+(assert (= 2 (/ 10 5)))
+(assert (= 18446744073709551614 (- 18446744073709551615 1)))

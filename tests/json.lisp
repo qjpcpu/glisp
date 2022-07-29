@@ -40,3 +40,6 @@
 (assert (= (base64/encode 0B676c69737020697320636f6f6c)  "Z2xpc3AgaXMgY29vbA=="))
 
 (assert (= [1] (json/parse "[1]")))
+
+(assert (= "\"fn [+]\"" (json/stringify +)))
+(assert (= "97" (json/stringify #a)))

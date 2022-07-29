@@ -3,7 +3,6 @@ package glisp
 import (
 	"fmt"
 	"math/big"
-	"strconv"
 )
 
 type SexpInt struct {
@@ -114,10 +113,6 @@ func (i SexpInt) ToInt() int {
 
 func (i SexpInt) ToUint64() uint64 {
 	return i.v.Uint64()
-}
-
-func (i SexpInt) ToFloat64() (float64, error) {
-	return strconv.ParseFloat(i.v.String(), 64)
 }
 
 func (i SexpInt) Sign() int {

@@ -16,3 +16,4 @@
 (assert (= (bytes2str 0B676c69737020697320636f6f6c) "glisp is cool"))
 (assert (= (str2bytes "glisp is cool") 0B676c69737020697320636f6f6c))
 (assert (= 0B676c69737020697320636f6f6c (str2bytes "glisp is cool") ))
+(assert (bytes? 0B6869))

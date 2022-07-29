@@ -44,7 +44,7 @@ func ConcatBytes(str SexpBytes, exprs ...Sexp) (SexpBytes, error) {
 		case SexpBytes:
 			sb.Write(t.Bytes())
 		default:
-			return NewSexpBytes(nil), errors.New("second argument is not a char")
+			return NewSexpBytes(nil), errors.New("second argument is not bytes")
 		}
 	}
 	return NewSexpBytes(sb.Bytes()), nil

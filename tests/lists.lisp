@@ -22,3 +22,4 @@
 (assert (list? '(1 2 3)))
 (assert (empty? '()))
 (assert (not (empty? '(1 2))))
+(assert (empty? (cdr '())))

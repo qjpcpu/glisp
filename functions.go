@@ -41,7 +41,7 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"string?":    GetTypeQueryFunction,
 	"zero?":      GetTypeQueryFunction,
 	"empty?":     GetTypeQueryFunction,
-	"bytes?":     GetTypeFunction,
+	"bytes?":     GetTypeQueryFunction,
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
@@ -254,6 +254,10 @@ func SgetFunction(name string) UserFunction {
 			return SexpNull, errors.New("Second argument of sget must be integer")
 		}
 
+		if i < 0 || i >= len(string(str)) {
+			return SexpNull, errors.New("string index out of bounds")
+		}
+
 		return SexpChar(str[i]), nil
 	}
 }
@@ -357,12 +361,30 @@ func SliceFunction(name string) UserFunction {
 			return SexpNull, errors.New("Third argument of slice must be integer")
 		}
 
+		min := func(i, j int) int {
+			if i > j {
+				return j
+			}
+			return i
+		}
 		switch t := args[0].(type) {
 		case SexpArray:
+			if start < 0 || start >= len(t) || end < start {
+				return SexpNull, errors.New("index out of range")
+			}
+			end = min(end, len(t))
 			return SexpArray(t[start:end]), nil
 		case SexpStr:
+			if start < 0 || start >= len(t) || end < start {
+				return SexpNull, errors.New("index out of range")
+			}
+			end = min(end, len(t))
 			return SexpStr(t[start:end]), nil
 		case SexpBytes:
+			if start < 0 || start >= len(t.Bytes()) || end < start {
+				return SexpNull, errors.New("index out of range")
+			}
+			end = min(end, len(t.Bytes()))
 			return NewSexpBytes(t.Bytes()[start:end]), nil
 		}
 
@@ -396,7 +418,7 @@ func LenFunction(name string) UserFunction {
 			return NewSexpInt(len(t.bytes)), nil
 		}
 
-		return NewSexpInt(0), fmt.Errorf("argument must be string or array but got %s", args[0])
+		return NewSexpInt(0), fmt.Errorf("argument must be string/array/list/hash/bytes but got %s", args[0])
 	}
 }
 
@@ -444,7 +466,7 @@ func concatSexp(args []Sexp) (Sexp, error) {
 			return concatSexp(args[1:])
 		}
 	}
-	return SexpNull, errors.New("expected strings or arrays or lists")
+	return SexpNull, errors.New("expected strings/arrays/lists/bytes or lists")
 }
 
 func ReadFunction(name string) UserFunction {

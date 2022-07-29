@@ -94,8 +94,7 @@ func (hash SexpHash) HashGet(key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		msg := fmt.Sprintf("key %s not found", key.SexpString())
-		return SexpNull, errors.New(msg)
+		return SexpNull, fmt.Errorf("key %s not found", key.SexpString())
 	}
 	return val, nil
 }
