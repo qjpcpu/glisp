@@ -32,7 +32,7 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		return compareString(at, b)
 	case SexpSymbol:
 		return compareSymbol(at, b)
-	case SexpPair:
+	case *SexpPair:
 		return comparePair(at, b)
 	case SexpArray:
 		return compareArray(at, b)
@@ -131,10 +131,10 @@ func compareSymbol(sym SexpSymbol, expr Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func comparePair(a SexpPair, b Sexp) (int, error) {
-	var bp SexpPair
+func comparePair(a *SexpPair, b Sexp) (int, error) {
+	var bp *SexpPair
 	switch t := b.(type) {
-	case SexpPair:
+	case *SexpPair:
 		bp = t
 	default:
 		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
@@ -204,7 +204,7 @@ func existInList(a Sexp, element Sexp) (bool, error) {
 		if a == SexpNull {
 			return false, nil
 		}
-		expr := a.(SexpPair)
+		expr := a.(*SexpPair)
 		eq, err := Compare(expr.head, element)
 		if err != nil {
 			return false, err

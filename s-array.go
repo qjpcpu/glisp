@@ -33,6 +33,27 @@ func MapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, er
 	return SexpArray(result), nil
 }
 
+func FlatMapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
+	result := make([]Sexp, 0, len(arr))
+
+	for i := range arr {
+		res, err := env.Apply(fun, arr[i:i+1])
+		if err != nil {
+			return SexpArray(result), err
+		}
+		if res == SexpNull {
+			continue
+		}
+		if !IsArray(res) {
+			return SexpArray(result), errors.New("flatmap function must return array")
+		}
+		arr := res.(SexpArray)
+		result = append(result, arr...)
+	}
+
+	return SexpArray(result), nil
+}
+
 func FilterArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, 0, len(arr))
 

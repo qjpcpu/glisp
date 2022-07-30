@@ -8,73 +8,148 @@ import (
 )
 
 func TestCompareFloatWithString(t *testing.T) {
-	scritp := `(= 1.0 "a")`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpFloat(1.0) to glisp.SexpStr("a")`)
+	script := `(= 1.0 "a")`
+	expectErrorContains(t, script, `cannot compare glisp.SexpFloat(1.0) to glisp.SexpStr("a")`)
+}
+
+func TestMapListFail(t *testing.T) {
+	script := `(map (fn [a] (+ a 1)) '("a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(map (fn [a] (+ a 1)) '(1 "a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(map (fn [a] (+ a 1)) 1)`
+	expectErrorContains(t, script, `second argument of map must be array/list`)
+}
+
+func TestFlatMapListFail(t *testing.T) {
+	script := `(flatmap (fn [a] (+ a 1)) '("a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(flatmap (fn [a] (+ a 1)) '(1))`
+	expectErrorContains(t, script, `flatmap function must return list but got 2`)
+	script = `(flatmap (fn [a] (list (+ a 1))) '(1 "a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+}
+
+func TestFilterListFail(t *testing.T) {
+	script := `(filter (fn [a] (+ "3" 1)) '("a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(filter (fn [a] (+ 3 1)) '("a"))`
+	expectErrorContains(t, script, `filter function must return boolean`)
+}
+
+func TestFoldlListFail(t *testing.T) {
+	script := `(foldl + 0 '("a"))`
+	expectErrorContains(t, script, `operands have invalid type`)
+}
+
+func TestMapArrayFail(t *testing.T) {
+	script := `(map (fn [a] (+ a 1)) ["a"])`
+	expectErrorContains(t, script, `operands have invalid type`)
+}
+
+func TestFilterArrayFail(t *testing.T) {
+	script := `(filter (fn [a] (+ "a" 1)) ["a"])`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(filter (fn [a] (+ 1 1)) ["a"])`
+	expectErrorContains(t, script, `filter function must return boolean`)
+}
+
+func TestFlatMapArrayFail(t *testing.T) {
+	script := `(flatmap (fn [a] (+ "a" 1)) ["a"])`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(flatmap (fn [a] (+ 1 1)) ["a"])`
+	expectErrorContains(t, script, `flatmap function must return array`)
+}
+
+type AnyStruct struct{ Number int }
+
+func (AnyStruct) SexpString() string { return "" }
+
+func TestMarshalAny(t *testing.T) {
+	env := newFullEnv()
+	env.Bind("g_var", AnyStruct{Number: 1024})
+	script := `(= "{\"Number\":1024}" (json/stringify g_var))`
+	ret, err := env.EvalString(script)
+	if err != nil || !bool(ret.(glisp.SexpBool)) {
+		t.Fatal("marshal any")
+	}
 }
 
 func TestCompareIntWithString(t *testing.T) {
-	scritp := `(= 1 "a")`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+	script := `(= 1 "a")`
+	expectErrorContains(t, script, `cannot compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+}
+
+func TestIsZero(t *testing.T) {
+	if !glisp.IsZero(glisp.SexpChar(0)) {
+		t.Fatal("zero char")
+	}
+	if glisp.IsTruthy(glisp.SexpChar(0)) {
+		t.Fatal("zero char")
+	}
+	if !glisp.IsNumber(glisp.SexpChar(0)) {
+		t.Fatal("zero char")
+	}
 }
 
 func TestCompareStringWithInt(t *testing.T) {
-	scritp := `(= "a" 1)`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	script := `(= "a" 1)`
+	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareCharWithHash(t *testing.T) {
-	scritp := `(= #a {})`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpChar(#a) to *glisp.sexpHash({})`)
+	script := `(= #a {})`
+	expectErrorContains(t, script, `cannot compare glisp.SexpChar(#a) to *glisp.SexpHash({})`)
 }
 
 func TestCompareBytesWithHash(t *testing.T) {
-	scritp := `(= 0B6869 {})`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpBytes(0B6869) to *glisp.sexpHash({})`)
+	script := `(= 0B6869 {})`
+	expectErrorContains(t, script, `cannot compare glisp.SexpBytes(0B6869) to *glisp.SexpHash({})`)
 }
 
 func TestCompareHashWithList(t *testing.T) {
-	scritp := `(=  {} '(1))`
-	expectErrorContains(t, scritp, `cannot compare *glisp.sexpHash({}) to glisp.SexpPair((1))`)
+	script := `(=  {} '(1))`
+	expectErrorContains(t, script, `cannot compare *glisp.SexpHash({}) to *glisp.SexpPair((1))`)
 }
 
 func TestCompareListWithHash(t *testing.T) {
-	scritp := `(= '(1) {})`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpPair((1)) to *glisp.sexpHash({})`)
+	script := `(= '(1) {})`
+	expectErrorContains(t, script, `cannot compare *glisp.SexpPair((1)) to *glisp.SexpHash({})`)
 }
 
 func TestCompareBoolWithInt(t *testing.T) {
-	scritp := `(= true 1)`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpBool(true) to glisp.SexpInt(1)`)
+	script := `(= true 1)`
+	expectErrorContains(t, script, `cannot compare glisp.SexpBool(true) to glisp.SexpInt(1)`)
 }
 
 func TestCompareListStringWithListInt(t *testing.T) {
-	scritp := `(= '("a") '(1))`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	script := `(= '("a") '(1))`
+	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareArrayStringWithArrayInt(t *testing.T) {
-	scritp := `(= ["a"] [1])`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	script := `(= ["a"] [1])`
+	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareArrayWithInt(t *testing.T) {
-	scritp := `(= [] 1)`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
+	script := `(= [] 1)`
+	expectErrorContains(t, script, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
 }
 
 func TestDiv0(t *testing.T) {
-	scritp := `(/ 1 0)`
-	expectErrorContains(t, scritp, `division by zero`)
+	script := `(/ 1 0)`
+	expectErrorContains(t, script, `division by zero`)
 }
 
 func TestNotComparable(t *testing.T) {
-	scritp := `(= (make-chan) 1)`
-	expectErrorContains(t, scritp, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
+	script := `(= (make-chan) 1)`
+	expectErrorContains(t, script, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
 }
 
 func TestErrorExistInList(t *testing.T) {
-	scritp := `(exist? '("a") 1)`
-	expectErrorContains(t, scritp, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	script := `(exist? '("a") 1)`
+	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestConcatStringErr(t *testing.T) {
@@ -94,7 +169,7 @@ func TestAppendStringErr(t *testing.T) {
 
 func TestHashKey(t *testing.T) {
 	script := `(exist? {} {})`
-	expectErrorContains(t, script, `cannot hash type *glisp.sexpHash`)
+	expectErrorContains(t, script, `cannot hash type *glisp.SexpHash`)
 }
 
 func TestEvalNothing(t *testing.T) {
@@ -110,6 +185,11 @@ func TestExistArrayNotCompare(t *testing.T) {
 func TestApplySymbolNotFound(t *testing.T) {
 	script := `(apply 'not-found-symbol "a")`
 	expectErrorContains(t, script, `can't find function by symbol not-found-symbol`)
+}
+
+func TestJSONParse(t *testing.T) {
+	script := `(json/parse (time/now))`
+	expectErrorContains(t, script, `the first argument of json/parse must be`)
 }
 
 func TestApplyArgMustBeList(t *testing.T) {
@@ -261,6 +341,8 @@ func TestWrongArgumentNumber(t *testing.T) {
 	mustErr(`(rand "")`)
 	mustErr(`(rand 0)`)
 	mustErr(`(randf 1)`)
+	mustErr(`(json/stringify)`)
+	mustErr(`(json/parse)`)
 }
 
 func expectErrorContains(t *testing.T, script string, keyword string) {

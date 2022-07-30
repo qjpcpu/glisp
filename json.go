@@ -21,9 +21,9 @@ func Marshal(a Sexp) ([]byte, error) {
 		return expr.MarshalJSON()
 	case *SexpFunction:
 		return expr.MarshalJSON()
-	case SexpHash:
+	case *SexpHash:
 		return expr.MarshalJSON()
-	case SexpPair:
+	case *SexpPair:
 		return expr.MarshalJSON()
 	case SexpStr:
 		return expr.MarshalJSON()
@@ -77,7 +77,7 @@ func (a SexpSentinel) MarshalJSON() ([]byte, error) {
 	return []byte(`null`), nil
 }
 
-func (a SexpPair) MarshalJSON() ([]byte, error) {
+func (a *SexpPair) MarshalJSON() ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	buffer.WriteByte('[')
 	var addComma bool
@@ -93,7 +93,7 @@ func (a SexpPair) MarshalJSON() ([]byte, error) {
 		}
 		buffer.Write(data)
 		var ok bool
-		if elem, ok = elem.tail.(SexpPair); !ok {
+		if elem, ok = elem.tail.(*SexpPair); !ok {
 			break
 		}
 	}
@@ -101,7 +101,7 @@ func (a SexpPair) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (a SexpHash) MarshalJSON() ([]byte, error) {
+func (a *SexpHash) MarshalJSON() ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	buffer.WriteByte('{')
 	keys := a.KeyOrder

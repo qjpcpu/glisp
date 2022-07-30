@@ -6,15 +6,13 @@ import (
 	"hash/fnv"
 )
 
-type sexpHash struct {
-	Map      map[int][]SexpPair
+type SexpHash struct {
+	Map      map[int][]*SexpPair
 	KeyOrder []Sexp // must user pointers here, else hset! will fail to update.
 	NumKeys  int
 }
 
-type SexpHash = *sexpHash
-
-func (hash SexpHash) SexpString() string {
+func (hash *SexpHash) SexpString() string {
 	str := "{"
 	for _, arr := range hash.Map {
 		for _, pair := range arr {
@@ -60,15 +58,15 @@ func HashExpression(expr Sexp) (int, error) {
 	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
 
-func MakeHash(args []Sexp) (SexpHash, error) {
+func MakeHash(args []Sexp) (*SexpHash, error) {
 	if len(args)%2 != 0 {
-		return &sexpHash{},
+		return &SexpHash{},
 			errors.New("hash requires even number of arguments")
 	}
 
 	var memberCount int
-	hash := &sexpHash{
-		Map:      make(map[int][]SexpPair),
+	hash := &SexpHash{
+		Map:      make(map[int][]*SexpPair),
 		KeyOrder: []Sexp{},
 		NumKeys:  memberCount,
 	}
@@ -83,7 +81,7 @@ func MakeHash(args []Sexp) (SexpHash, error) {
 	return hash, nil
 }
 
-func (hash SexpHash) HashGet(key Sexp) (Sexp, error) {
+func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	// this is kind of a hack
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
@@ -99,7 +97,7 @@ func (hash SexpHash) HashGet(key Sexp) (Sexp, error) {
 	return val, nil
 }
 
-func (hash SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
+func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return SexpNull, err
@@ -119,7 +117,7 @@ func (hash SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 	return defaultval, nil
 }
 
-func (hash SexpHash) HashSet(key Sexp, val Sexp) error {
+func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
@@ -127,7 +125,7 @@ func (hash SexpHash) HashSet(key Sexp, val Sexp) error {
 	arr, ok := hash.Map[hashval]
 
 	if !ok {
-		hash.Map[hashval] = []SexpPair{Cons(key, val)}
+		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		(hash.NumKeys)++
 		return nil
@@ -153,7 +151,7 @@ func (hash SexpHash) HashSet(key Sexp, val Sexp) error {
 	return nil
 }
 
-func (hash SexpHash) HashDelete(key Sexp) error {
+func (hash *SexpHash) HashDelete(key Sexp) error {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
@@ -185,7 +183,7 @@ func (hash SexpHash) HashDelete(key Sexp) error {
 	return nil
 }
 
-func HashCountKeys(hash SexpHash) int {
+func HashCountKeys(hash *SexpHash) int {
 	var num int
 	for _, arr := range hash.Map {
 		num += len(arr)
@@ -196,7 +194,7 @@ func HashCountKeys(hash SexpHash) int {
 	return num
 }
 
-func HashIsEmpty(hash SexpHash) bool {
+func HashIsEmpty(hash *SexpHash) bool {
 	for _, arr := range hash.Map {
 		if len(arr) > 0 {
 			return false

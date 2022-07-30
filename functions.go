@@ -45,6 +45,8 @@ var builtinFunctions = map[string]UserFunctionConstructor{
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
+	"flatmap":    FlatMapFunction,
+	"compose":    ComposeFunction,
 	"foldl":      FoldlFunction,
 	"filter":     FilterFunction,
 	"make-array": MakeArrayFunction,
@@ -155,7 +157,7 @@ func FirstFunction(name string) UserFunction {
 		}
 
 		switch expr := args[0].(type) {
-		case SexpPair:
+		case *SexpPair:
 			return expr.head, nil
 		case SexpArray:
 			return expr[0], nil
@@ -172,7 +174,7 @@ func RestFunction(name string) UserFunction {
 		}
 
 		switch expr := args[0].(type) {
-		case SexpPair:
+		case *SexpPair:
 			return expr.tail, nil
 		case SexpArray:
 			if len(expr) == 0 {
@@ -268,7 +270,7 @@ func GetExistFunction(name string) UserFunction {
 			return WrongNumberArguments(name, len(args), 2)
 		}
 		switch expr := args[0].(type) {
-		case SexpHash:
+		case *SexpHash:
 			if _, err := expr.HashGet(args[1]); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					return SexpBool(false), nil
@@ -286,7 +288,7 @@ func GetExistFunction(name string) UserFunction {
 				}
 			}
 			return SexpBool(false), nil
-		case SexpPair:
+		case *SexpPair:
 			if IsList(expr) {
 				ex, err := existInList(expr, args[1])
 				return SexpBool(ex), err
@@ -306,9 +308,9 @@ func GetHashAccessFunction(name string) UserFunction {
 			return WrongNumberArguments(name, len(args), 2, 3)
 		}
 
-		var hash SexpHash
+		var hash *SexpHash
 		switch e := args[0].(type) {
-		case SexpHash:
+		case *SexpHash:
 			hash = e
 		default:
 			return SexpNull, errors.New("first argument of hget must be hash")
@@ -403,9 +405,9 @@ func LenFunction(name string) UserFunction {
 			return NewSexpInt(len(t)), nil
 		case SexpStr:
 			return NewSexpInt(len(t)), nil
-		case SexpHash:
+		case *SexpHash:
 			return NewSexpInt(HashCountKeys(t)), nil
-		case SexpPair:
+		case *SexpPair:
 			if IsList(t) {
 				arr, _ := ListToArray(t)
 				return NewSexpInt(len(arr)), nil
@@ -457,7 +459,7 @@ func concatSexp(args []Sexp) (Sexp, error) {
 		return ConcatArray(t, args[1:]...)
 	case SexpStr:
 		return ConcatStr(t, args[1:]...)
-	case SexpPair:
+	case *SexpPair:
 		return ConcatList(t, args[1:]...)
 	case SexpBytes:
 		return ConcatBytes(t, args[1:]...)
@@ -581,7 +583,7 @@ func ApplyFunction(name string) UserFunction {
 		switch e := args[1].(type) {
 		case SexpArray:
 			funargs = e
-		case SexpPair:
+		case *SexpPair:
 			var err error
 			funargs, err = ListToArray(e)
 			if err != nil {
@@ -612,8 +614,32 @@ func MapFunction(name string) UserFunction {
 		switch e := args[1].(type) {
 		case SexpArray:
 			return MapArray(env, fun, e)
-		case SexpPair:
+		case *SexpPair:
 			return MapList(env, fun, e)
+		}
+		return SexpNull, errors.New("second argument of map must be array/list")
+	}
+}
+
+func FlatMapFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return WrongNumberArguments(name, len(args), 2)
+		}
+		var fun *SexpFunction
+
+		switch e := args[0].(type) {
+		case *SexpFunction:
+			fun = e
+		default:
+			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+		}
+
+		switch e := args[1].(type) {
+		case SexpArray:
+			return FlatMapArray(env, fun, e)
+		case *SexpPair:
+			return FlatMapList(env, fun, e)
 		}
 		return SexpNull, errors.New("second argument of map must be array/list")
 	}
@@ -692,10 +718,10 @@ func SourceFileFunction(env *Environment, args []Sexp) (Sexp, error) {
 					return err
 				}
 			}
-		case SexpPair:
+		case *SexpPair:
 			expr := item
 			for expr != SexpNull {
-				list := expr.(SexpPair)
+				list := expr.(*SexpPair)
 				if err := sourceItem(list.head); err != nil {
 					return err
 				}
@@ -891,7 +917,7 @@ func FoldlFunction(name string) UserFunction {
 		switch e := args[2].(type) {
 		case SexpArray:
 			return FoldlArray(env, fun, e, args[1])
-		case SexpPair:
+		case *SexpPair:
 			return FoldlList(env, fun, e, args[1])
 		case SexpSentinel:
 			if e == SexpNull {
@@ -920,7 +946,7 @@ func FilterFunction(name string) UserFunction {
 		switch e := args[1].(type) {
 		case SexpArray:
 			return FilterArray(env, fun, e)
-		case SexpPair:
+		case *SexpPair:
 			return FilterList(env, fun, e)
 		case SexpSentinel:
 			if e == SexpNull {
@@ -928,5 +954,32 @@ func FilterFunction(name string) UserFunction {
 			}
 		}
 		return SexpNull, fmt.Errorf("second argument of %s must be array/list", name)
+	}
+}
+
+func ComposeFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) < 2 {
+			return WrongNumberArguments(name, len(args), 2, Many)
+		}
+		for _, fn := range args {
+			if !IsFunction(fn) {
+				return SexpNull, errors.New("argument should be function")
+			}
+		}
+		return MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *Environment, _args []Sexp) (Sexp, error) {
+			for _, f := range args {
+				fn := f.(*SexpFunction)
+				ret, err := _env.Apply(fn, _args)
+				if err != nil {
+					return SexpNull, err
+				}
+				_args = []Sexp{ret}
+			}
+			if len(_args) == 0 {
+				return SexpNull, nil
+			}
+			return _args[0], nil
+		}), nil
 	}
 }

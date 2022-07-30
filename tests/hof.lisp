@@ -32,3 +32,26 @@
 
 (assert (= 4 (foldl max 0 '(1 2 3 4) )))
 (assert (= 4 (foldl max 0 '[1 2 3 4] )))
+
+(assert (= ["101!" "201!" "301!" "401!"] (map
+          (compose
+            ;; add 1 to every integer
+            (fn [a] (+ a 1))
+            ;; convert integer to string
+            str
+            ;; append char ! to string
+            (fn [a] (append a #!))
+            )
+          [100 200 300 400]))
+        )
+(assert (= [1 101 2 102 3 103] (flatmap (fn [a] [a (+ a 100)]) [1 2 3])))
+(assert (= [100 101 300 301] (flatmap (fn [a] (cond (= a 200) [] [a (+ 1 a)])) [100 200 300])))
+(assert (= [200 201 300 301] (flatmap (fn [a] (cond (= a 100) [] [a (+ 1 a)])) [100 200 300])))
+(assert (= [200 201 300 301] (flatmap (fn [a] (cond (= a 100) '() [a (+ 1 a)])) [100 200 300])))
+(assert (= [] (flatmap (fn [a] '()) [100 200 300])))
+
+(assert (= '(100 101) (flatmap (fn [a] (list a (+ 1 a))) '(100))))
+(assert (= '(100 101 200 201 300 301) (flatmap (fn [a] (list a (+ 1 a))) '(100 200 300))))
+(assert (= '(100 101 300 301) (flatmap (fn [a] (cond (= a 200) '() (list a (+ 1 a)))) '(100 200 300))))
+(assert (= '(200 201 300 301) (flatmap (fn [a] (cond (= a 100) '() (list a (+ 1 a)))) '(100 200 300))))
+(assert (= '() (flatmap (fn [a] '()) '(100 200 300))))

@@ -173,7 +173,7 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 	switch expr := args[0].(type) {
 	case SexpSymbol:
 		sym = expr
-	case SexpPair:
+	case *SexpPair:
 		if IsList(expr) {
 			if err := gen.GenerateCall(expr); err != nil {
 				return err
@@ -241,12 +241,12 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 		return WrongGeneratorNumberArguments("macexpand", len(args), 1)
 	}
 
-	var list SexpPair
+	var list *SexpPair
 	var islist bool
 	var ismacrocall bool
 
 	switch t := args[0].(type) {
-	case SexpPair:
+	case *SexpPair:
 		if IsList(t.tail) {
 			list = t
 			islist = true
@@ -457,10 +457,10 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 					return err
 				}
 			}
-		case SexpPair:
+		case *SexpPair:
 			expr := item
 			for expr != SexpNull {
-				list := expr.(SexpPair)
+				list := expr.(*SexpPair)
 				if err := sourceItem(list.head); err != nil {
 					return err
 				}
@@ -570,7 +570,7 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateCall(expr SexpPair) error {
+func (gen *Generator) GenerateCall(expr *SexpPair) error {
 	arr, _ := ListToArray(expr.tail)
 	switch head := expr.head.(type) {
 	case SexpSymbol:
@@ -593,7 +593,7 @@ func (gen *Generator) Generate(expr Sexp) error {
 	case SexpSymbol:
 		gen.AddInstruction(GetInstr{e})
 		return nil
-	case SexpPair:
+	case *SexpPair:
 		if IsList(e) {
 			err := gen.GenerateCall(e)
 			if err != nil {
@@ -645,13 +645,13 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 	case SexpArray:
 		gen.generateSyntaxQuoteArray(arg)
 		return nil
-	case SexpPair:
+	case *SexpPair:
 		if !IsList(arg) {
 			break
 		}
 		gen.generateSyntaxQuoteList(arg)
 		return nil
-	case SexpHash:
+	case *SexpHash:
 		gen.generateSyntaxQuoteHash(arg)
 		return nil
 	}
@@ -669,7 +669,7 @@ func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
 	case SexpSymbol:
 		gen.AddInstruction(GetInstr{sym: expr})
 		return nil
-	case SexpPair:
+	case *SexpPair:
 		if !IsList(arg) {
 			return fmt.Errorf("sharp-quote only support function, not %s", arg.SexpString())
 		}
@@ -687,7 +687,7 @@ func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
 func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 
 	switch a := arg.(type) {
-	case SexpPair:
+	case *SexpPair:
 		//good, required here
 	default:
 		return fmt.Errorf("arg to generateSyntaxQuoteList() must be list; got %T", a)
@@ -758,9 +758,9 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 
 func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 
-	var hash SexpHash
+	var hash *SexpHash
 	switch a := arg.(type) {
-	case SexpHash:
+	case *SexpHash:
 		//good, required here
 		hash = a
 	default:

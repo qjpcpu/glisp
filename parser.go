@@ -30,7 +30,7 @@ func ParseList(parser *Parser) (Sexp, error) {
 		return SexpNull, nil
 	}
 
-	var start SexpPair
+	start := &SexpPair{}
 
 	expr, err := ParseExpression(parser)
 	if err != nil {
@@ -129,7 +129,7 @@ func ParseHash(parser *Parser) (Sexp, error) {
 		arr = append(arr, expr)
 	}
 
-	var list SexpPair
+	list := &SexpPair{}
 	list.head = parser.env.MakeSymbol("hash")
 	list.tail = MakeList(arr)
 

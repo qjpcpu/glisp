@@ -38,6 +38,12 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 			return ParseJSON(rawBytes)
 		case glisp.SexpBytes:
 			return ParseJSON(val.Bytes())
+		case glisp.SexpInt:
+			return val, nil
+		case glisp.SexpBool:
+			return val, nil
+		case glisp.SexpFloat:
+			return val, nil
 		default:
 			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes", name)
 		}

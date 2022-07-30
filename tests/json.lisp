@@ -45,3 +45,14 @@
 (assert (= "97" (json/stringify #a)))
 
 (assert (= "[1,2,3]" (json/stringify '(1 2 3))))
+
+;; parse empty string
+(assert (= '() (json/parse "")))
+(assert (= '() (json/parse (str2bytes ""))))
+(assert (= '() (json/parse "null")))
+(assert (= '() (json/parse (str2bytes "null"))))
+
+;; parse json atom
+(assert (= 1 (json/parse 1)))
+(assert (= 1.0 (json/parse 1.0)))
+(assert (= true (json/parse true)))

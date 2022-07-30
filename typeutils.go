@@ -15,7 +15,7 @@ func IsList(expr Sexp) bool {
 		return true
 	}
 	switch list := expr.(type) {
-	case SexpPair:
+	case *SexpPair:
 		return IsList(list.tail)
 	}
 	return false
@@ -83,7 +83,7 @@ func IsBool(expr Sexp) bool {
 
 func IsHash(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpHash:
+	case *SexpHash:
 		return true
 	}
 	return false
@@ -125,7 +125,7 @@ func IsEmpty(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpArray:
 		return len(e) == 0
-	case SexpHash:
+	case *SexpHash:
 		return HashIsEmpty(e)
 	}
 

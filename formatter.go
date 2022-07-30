@@ -23,7 +23,7 @@ func FormatPretty(expressions []Sexp) string {
 }
 
 func formatExpression(buffer *bytes.Buffer, expr Sexp, indent, lastIndent int) {
-	pair, ok := expr.(SexpPair)
+	pair, ok := expr.(*SexpPair)
 	if !ok {
 		buffer.WriteString(expr.SexpString())
 		return
@@ -40,22 +40,22 @@ func formatExpression(buffer *bytes.Buffer, expr Sexp, indent, lastIndent int) {
 
 	for {
 		switch pair.tail.(type) {
-		case SexpPair:
-			formatExpression(buffer, pair.head, indent+1, lastIndent)
+		case *SexpPair:
+			formatExpression(buffer, pair.Head(), indent+1, lastIndent)
 			buffer.WriteString(" ")
-			pair = pair.tail.(SexpPair)
+			pair = pair.Tail().(*SexpPair)
 			continue
 		}
 		break
 	}
 
-	formatExpression(buffer, pair.head, indent+1, lastIndent)
+	formatExpression(buffer, pair.Head(), indent+1, lastIndent)
 
-	if pair.tail == SexpNull {
+	if pair.Tail() == SexpNull {
 		buffer.WriteString(")")
 	} else {
 		buffer.WriteString(" . ")
-		formatExpression(buffer, pair.tail, indent+1, lastIndent)
+		formatExpression(buffer, pair.Tail(), indent+1, lastIndent)
 		buffer.WriteString(")")
 	}
 }

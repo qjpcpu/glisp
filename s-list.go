@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 var NotAList = errors.New("not a list")
@@ -11,26 +12,26 @@ type SexpPair struct {
 	tail Sexp
 }
 
-func Cons(a Sexp, b Sexp) SexpPair {
-	return SexpPair{a, b}
+func Cons(a Sexp, b Sexp) *SexpPair {
+	return &SexpPair{a, b}
 }
 
-func (pair SexpPair) Head() Sexp {
+func (pair *SexpPair) Head() Sexp {
 	return pair.head
 }
 
-func (pair SexpPair) Tail() Sexp {
+func (pair *SexpPair) Tail() Sexp {
 	return pair.tail
 }
 
-func (pair SexpPair) SexpString() string {
+func (pair *SexpPair) SexpString() string {
 	str := "("
 
 	for {
 		switch pair.tail.(type) {
-		case SexpPair:
+		case *SexpPair:
 			str += pair.head.SexpString() + " "
-			pair = pair.tail.(SexpPair)
+			pair = pair.tail.(*SexpPair)
 			continue
 		}
 		break
@@ -54,7 +55,7 @@ func ListToArray(expr Sexp) ([]Sexp, error) {
 	arr := make([]Sexp, 0)
 
 	for expr != SexpNull {
-		list := expr.(SexpPair)
+		list := expr.(*SexpPair)
 		arr = append(arr, list.head)
 		expr = list.tail
 	}
@@ -75,10 +76,10 @@ func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 		return SexpNull, nil
 	}
 
-	var list SexpPair
+	list := &SexpPair{}
 	switch e := expr.(type) {
-	case SexpPair:
-		list = e
+	case *SexpPair:
+		*list = *e
 	default:
 		return SexpNull, NotAList
 	}
@@ -100,18 +101,68 @@ func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	return list, nil
 }
 
-func ConcatList(a SexpPair, b ...Sexp) (Sexp, error) {
+func FlatMapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
+	if expr == SexpNull {
+		return SexpNull, nil
+	}
+
+	list := &SexpPair{}
+	switch e := expr.(type) {
+	case *SexpPair:
+		*list = *e
+	default:
+		return SexpNull, NotAList
+	}
+
+	oldlist := list
+	tail := list.tail
+	head, err := env.Apply(fun, []Sexp{list.head})
+	if err != nil {
+		return SexpNull, err
+	}
+
+	var noHead bool
+	if head == SexpNull {
+		noHead = true
+	} else {
+		if pair, ok := head.(*SexpPair); !ok {
+			return SexpNull, fmt.Errorf("flatmap function must return list but got %v", head.SexpString())
+		} else {
+			list.head = pair.head
+			list.tail = pair.tail
+			/* go to list end */
+			for list.tail != SexpNull {
+				list = list.tail.(*SexpPair)
+			}
+		}
+	}
+
+	result, err := FlatMapList(env, fun, tail)
+	if err != nil {
+		return SexpNull, err
+	}
+	if noHead {
+		return result, nil
+	}
+	if pair, ok := result.(*SexpPair); ok {
+		list.tail = pair
+	}
+
+	return oldlist, nil
+}
+
+func ConcatList(a *SexpPair, b ...Sexp) (Sexp, error) {
 	for _, expr := range b {
 		ret, err := concatList(a, expr)
 		if err != nil {
 			return ret, err
 		}
-		a = ret.(SexpPair)
+		a = ret.(*SexpPair)
 	}
 	return a, nil
 }
 
-func concatList(a SexpPair, b Sexp) (Sexp, error) {
+func concatList(a *SexpPair, b Sexp) (Sexp, error) {
 	if !IsList(b) {
 		return SexpNull, NotAList
 	}
@@ -121,7 +172,7 @@ func concatList(a SexpPair, b Sexp) (Sexp, error) {
 	}
 
 	switch t := a.tail.(type) {
-	case SexpPair:
+	case *SexpPair:
 		newtail, err := ConcatList(t, b)
 		if err != nil {
 			return SexpNull, err
@@ -137,10 +188,10 @@ func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error)
 		return acc, nil
 	}
 
-	var list SexpPair
+	list := &SexpPair{}
 	switch e := lst.(type) {
-	case SexpPair:
-		list = e
+	case *SexpPair:
+		*list = *e
 	default:
 		return SexpNull, NotAList
 	}
@@ -153,7 +204,7 @@ func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error)
 	return FoldlList(env, fun, list.tail, acc)
 }
 
-func FilterList(env *Environment, fun *SexpFunction, list SexpPair) (Sexp, error) {
+func FilterList(env *Environment, fun *SexpFunction, list *SexpPair) (Sexp, error) {
 	var head *SexpPair
 	var last *SexpPair
 	for {
@@ -168,13 +219,13 @@ func FilterList(env *Environment, fun *SexpFunction, list SexpPair) (Sexp, error
 			} else {
 				cell := Cons(list.head, SexpNull)
 				last.tail = cell
-				last = &cell
+				last = cell
 			}
 		}
 		if list.tail == SexpNull {
 			break
 		}
-		if next, ok := list.tail.(SexpPair); ok {
+		if next, ok := list.tail.(*SexpPair); ok {
 			list = next
 		} else {
 			break
@@ -184,5 +235,5 @@ func FilterList(env *Environment, fun *SexpFunction, list SexpPair) (Sexp, error
 	if head == nil {
 		return SexpNull, nil
 	}
-	return *head, nil
+	return head, nil
 }

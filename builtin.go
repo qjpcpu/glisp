@@ -63,11 +63,11 @@ func GetTypeFunction(name string) UserFunction {
 			present = `float`
 		case *SexpFunction:
 			present = `function`
-		case SexpHash:
+		case *SexpHash:
 			present = `hash`
 		case SexpInt:
 			present = `int`
-		case SexpPair:
+		case *SexpPair:
 			present = `list`
 		case SexpSentinel:
 			switch expr {
