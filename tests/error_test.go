@@ -3,6 +3,8 @@ package tests
 import (
 	"strings"
 	"testing"
+
+	"github.com/qjpcpu/glisp"
 )
 
 func TestCompareFloatWithString(t *testing.T) {
@@ -60,6 +62,11 @@ func TestCompareArrayWithInt(t *testing.T) {
 	expectErrorContains(t, scritp, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
 }
 
+func TestDiv0(t *testing.T) {
+	scritp := `(/ 1 0)`
+	expectErrorContains(t, scritp, `division by zero`)
+}
+
 func TestNotComparable(t *testing.T) {
 	scritp := `(= (make-chan) 1)`
 	expectErrorContains(t, scritp, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
@@ -108,6 +115,50 @@ func TestApplySymbolNotFound(t *testing.T) {
 func TestApplyArgMustBeList(t *testing.T) {
 	script := `(apply + (cons 1 2))`
 	expectErrorContains(t, script, `not a list`)
+}
+
+func TestDefensiveCornor(t *testing.T) {
+	if glisp.SexpEnd.SexpString() != `End` {
+		t.Fatal(glisp.SexpEnd.SexpString())
+	}
+	if glisp.SexpMarker.SexpString() != `Marker` {
+		t.Fatal(glisp.SexpMarker.SexpString())
+	}
+	if glisp.SexpSentinel(100).SexpString() != "" {
+		t.Fatal("should be emtpy")
+	}
+	if _, err := glisp.NewSexpIntStr("abc"); err == nil {
+		t.Fatal("should be error")
+	}
+	if _, err := glisp.NewSexpIntStrWithBase("abc", 12); err == nil {
+		t.Fatal("should be error")
+	}
+	if _, err := glisp.NewSexpFloatStr("abc"); err == nil {
+		t.Fatal("should be error")
+	}
+	if glisp.NewSexpFloat(1).SexpString() != "1" {
+		t.Fatal("should be 1")
+	}
+	if _, err := glisp.NewSexpBytesByHex("世界"); err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRecover(t *testing.T) {
+	env := newFullEnv()
+	env.PushGlobalScope()
+	if _, err := env.EvalString(`(def g_var 1023) (/ 1 0)`); err == nil {
+		t.Fatal("must error")
+	}
+	_, ok := env.FindObject(`g_var`)
+	if !ok {
+		t.Fatal("should find g_var")
+	}
+	env.Clear()
+	_, ok = env.FindObject(`g_var`)
+	if ok {
+		t.Fatal("should not find g_var")
+	}
 }
 
 func TestWrongArgumentNumber(t *testing.T) {
@@ -199,6 +250,17 @@ func TestWrongArgumentNumber(t *testing.T) {
 	mustErr(`(filter)`)
 	mustErr(`(filter + 1)`)
 	mustErr(`(filter "+" 1)`)
+	mustErr(`(/ 1 "")`)
+	mustErr(`(/ "" 1)`)
+	mustErr(`(/ #a "")`)
+	mustErr(`(/ #a 0)`)
+	mustErr(`(/ 1.0 "")`)
+	mustErr(`(assert)`)
+	mustErr(`({'a})`)
+	mustErr(`(rand 1 2)`)
+	mustErr(`(rand "")`)
+	mustErr(`(rand 0)`)
+	mustErr(`(randf 1)`)
 }
 
 func expectErrorContains(t *testing.T, script string, keyword string) {

@@ -3,6 +3,7 @@ package glisp
 import (
 	"fmt"
 	"math/big"
+	"math/rand"
 )
 
 type SexpInt struct {
@@ -101,6 +102,10 @@ func (i SexpInt) IsInt64() bool {
 
 func (i SexpInt) IsUint64() bool {
 	return i.v.IsUint64()
+}
+
+func (i SexpInt) Random(rnd *rand.Rand) SexpInt {
+	return SexpInt{v: new(big.Int).Rand(rnd, i.v)}
 }
 
 func (i SexpInt) ToInt64() int64 {

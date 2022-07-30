@@ -125,7 +125,7 @@ func compareBytes(s SexpBytes, expr Sexp) (int, error) {
 func compareSymbol(sym SexpSymbol, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpSymbol:
-		return compareBetweenInt(NewSexpInt(sym.number), NewSexpInt(e.number)), nil
+		return compareBetweenInt(NewSexpInt(sym.Number()), NewSexpInt(e.Number())), nil
 	}
 	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", sym, sym.SexpString(), expr, expr.SexpString())
 	return 0, errors.New(errmsg)

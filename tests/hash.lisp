@@ -43,3 +43,4 @@
 (assert (exist? h2 false))
 (assert (= false (hget h2 true)))
 (assert (= true (hget h2 false)))
+(assert (= 1 (hget {18446744073709551615 1} 18446744073709551615)))

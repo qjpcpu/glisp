@@ -83,6 +83,9 @@ func NumericMatchChar(op NumericOp, a SexpChar, b Sexp) (Sexp, error) {
 	case SexpFloat:
 		res = NumericFloatDo(op, NewSexpFloat(float64(a)), tb)
 	case SexpInt:
+		if tb.IsZero() {
+			return SexpNull, errors.New(`division by zero`)
+		}
 		res = NumericIntDo(op, NewSexpInt(int(a)), tb)
 	case SexpChar:
 		res = NumericIntDo(op, NewSexpInt(int(a)), NewSexpInt(int(tb)))
