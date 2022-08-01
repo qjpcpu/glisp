@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"strings"
@@ -339,12 +340,12 @@ func GetHashAccessFunction(name string) UserFunction {
 
 func SliceFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 3 {
-			return WrongNumberArguments(name, len(args), 3)
+		if len(args) != 3 && len(args) != 2 {
+			return WrongNumberArguments(name, len(args), 2, 3)
 		}
 
 		var start int
-		var end int
+		end := math.MaxInt
 		switch t := args[1].(type) {
 		case SexpInt:
 			start = int(t.ToInt64())
@@ -354,13 +355,15 @@ func SliceFunction(name string) UserFunction {
 			return SexpNull, errors.New("Second argument of slice must be integer")
 		}
 
-		switch t := args[2].(type) {
-		case SexpInt:
-			end = int(t.ToInt64())
-		case SexpChar:
-			end = int(t)
-		default:
-			return SexpNull, errors.New("Third argument of slice must be integer")
+		if len(args) == 3 {
+			switch t := args[2].(type) {
+			case SexpInt:
+				end = int(t.ToInt64())
+			case SexpChar:
+				end = int(t)
+			default:
+				return SexpNull, errors.New("Third argument of slice must be integer")
+			}
 		}
 
 		min := func(i, j int) int {

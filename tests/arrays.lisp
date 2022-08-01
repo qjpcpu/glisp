@@ -30,3 +30,4 @@
 (assert (< [1] [2]))
 (assert (empty? (cdr [])))
 (assert (= "a" (slice "a" 0 100)))
+(assert (= "a" (slice "ba" 1)))
