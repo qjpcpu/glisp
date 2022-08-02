@@ -902,7 +902,7 @@ func RoundFloat(name string) UserFunction {
 	}
 }
 
-/* (foldl function accumulate list/array) */
+/* (foldl function accumulate list/array/hash) */
 func FoldlFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 3 {
@@ -922,6 +922,8 @@ func FoldlFunction(name string) UserFunction {
 			return FoldlArray(env, fun, e, args[1])
 		case *SexpPair:
 			return FoldlList(env, fun, e, args[1])
+		case *SexpHash:
+			return FoldlHash(env, fun, e, args[1])
 		case SexpSentinel:
 			if e == SexpNull {
 				return args[1], nil
@@ -931,7 +933,7 @@ func FoldlFunction(name string) UserFunction {
 	}
 }
 
-/* (filter function list/array) */
+/* (filter function list/array/hash) */
 func FilterFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
@@ -951,6 +953,8 @@ func FilterFunction(name string) UserFunction {
 			return FilterArray(env, fun, e)
 		case *SexpPair:
 			return FilterList(env, fun, e)
+		case *SexpHash:
+			return FilterHash(env, fun, e)
 		case SexpSentinel:
 			if e == SexpNull {
 				return e, nil

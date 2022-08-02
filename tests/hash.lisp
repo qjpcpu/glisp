@@ -44,3 +44,7 @@
 (assert (= false (hget h2 true)))
 (assert (= true (hget h2 false)))
 (assert (= 1 (hget {18446744073709551615 1} 18446744073709551615)))
+
+(def hh {'a 1 'b 2 'c 3 'd 4})
+(def hhres (filter (fn [k v] (not= 0 (mod v 2))) hh))
+(assert (= 2 (len hhres)))

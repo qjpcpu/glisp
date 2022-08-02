@@ -55,3 +55,7 @@
 (assert (= '(100 101 300 301) (flatmap (fn [a] (cond (= a 200) '() (list a (+ 1 a)))) '(100 200 300))))
 (assert (= '(200 201 300 301) (flatmap (fn [a] (cond (= a 100) '() (list a (+ 1 a)))) '(100 200 300))))
 (assert (= '() (flatmap (fn [a] '()) '(100 200 300))))
+
+(assert (= 606 (foldl (fn [k v acc] (+ k v acc)) 0 {1 100 2 200 3 300})))
+(assert (= 0 (foldl (fn [k v acc] (+ k v acc)) 0 {})))
+(assert (= [1 100 2 200 3 300] (foldl (fn [k v acc] (append acc k v)) [] {1 100 2 200 3 300})))

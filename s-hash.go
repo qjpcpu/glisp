@@ -194,6 +194,16 @@ func HashCountKeys(hash *SexpHash) int {
 	return num
 }
 
+func (hash *SexpHash) Foreach(fn func(Sexp, Sexp) bool) {
+	keys := hash.KeyOrder
+	for _, key := range keys {
+		val, _ := hash.HashGet(key)
+		if !fn(key, val) {
+			break
+		}
+	}
+}
+
 func HashIsEmpty(hash *SexpHash) bool {
 	for _, arr := range hash.Map {
 		if len(arr) > 0 {
@@ -201,4 +211,54 @@ func HashIsEmpty(hash *SexpHash) bool {
 		}
 	}
 	return true
+}
+
+func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash, error) {
+	result, err := MakeHash(nil)
+	if err != nil {
+		return hash, err
+	}
+
+	hash.Foreach(func(key Sexp, val Sexp) bool {
+		ret, err0 := env.Apply(fun, []Sexp{key, val})
+		if err0 != nil {
+			err = err0
+			return false
+		}
+		pass, ok := ret.(SexpBool)
+		if !ok {
+			err = errors.New("filter function must return boolean")
+			return false
+		}
+		if pass {
+			result.HashSet(key, val)
+		}
+		return true
+	})
+
+	if err != nil {
+		return hash, err
+	}
+
+	return result, nil
+}
+
+func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (Sexp, error) {
+	if hash.NumKeys == 0 {
+		return acc, nil
+	}
+
+	var err error
+	hash.Foreach(func(k Sexp, v Sexp) bool {
+		if acc, err = env.Apply(fun, []Sexp{k, v, acc}); err != nil {
+			return false
+		}
+		return true
+	})
+
+	if err != nil {
+		return acc, err
+	}
+
+	return acc, nil
 }

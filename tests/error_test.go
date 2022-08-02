@@ -61,6 +61,18 @@ func TestFlatMapArrayFail(t *testing.T) {
 	expectErrorContains(t, script, `flatmap function must return array`)
 }
 
+func TestFilterHash(t *testing.T) {
+	script := `(filter (fn [a b] (+ "a" 1)) {'a 1})`
+	expectErrorContains(t, script, `operands have invalid type`)
+	script = `(filter (fn [k v] (+ 1 1)) {'a 1})`
+	expectErrorContains(t, script, `filter function must return boolean`)
+}
+
+func TestFoldlHash(t *testing.T) {
+	script := `(foldl (fn [a b c] (+ "a" 1)) 0 {'a 1})`
+	expectErrorContains(t, script, `operands have invalid type`)
+}
+
 type AnyStruct struct{ Number int }
 
 func (AnyStruct) SexpString() string { return "" }
