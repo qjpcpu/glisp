@@ -4,20 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sync"
 
 	"github.com/qjpcpu/glisp"
 )
 
-type SexpRegexp regexp.Regexp
-
-func (re SexpRegexp) SexpString() string {
-	r := regexp.Regexp(re)
-	return fmt.Sprintf(`(regexp-compile "%v")`, r.String())
+type SexpRegexp struct {
+	r *regexp.Regexp
 }
 
-func regexpFindIndex(
-	needle regexp.Regexp, haystack string) (glisp.Sexp, error) {
+func (re *SexpRegexp) SexpString() string {
+	return fmt.Sprintf(`(regexp-compile %v)`, glisp.SexpStr(re.r.String()).SexpString())
+}
 
+func regexpFindIndex(needle *regexp.Regexp, haystack string) (glisp.Sexp, error) {
 	loc := needle.FindStringIndex(haystack)
 
 	arr := make([]glisp.Sexp, len(loc))
@@ -42,10 +42,10 @@ func GetRegexpFind(name string) glisp.UserFunction {
 				fmt.Errorf("2nd argument of %v should be a string", name)
 		}
 
-		var needle regexp.Regexp
+		var needle *regexp.Regexp
 		switch t := args[0].(type) {
-		case SexpRegexp:
-			needle = regexp.Regexp(t)
+		case *SexpRegexp:
+			needle = t.r
 		default:
 			return glisp.SexpNull,
 				fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
@@ -80,6 +80,10 @@ func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error
 			errors.New("argument of regexp-compile should be a string")
 	}
 
+	if r, ok := regCache.Get(re); ok {
+		return glisp.Sexp(&SexpRegexp{r: r}), nil
+	}
+
 	r, err := regexp.Compile(re)
 
 	if err != nil {
@@ -87,7 +91,9 @@ func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error
 			fmt.Sprintf("error during regexp-compile: '%v'", err))
 	}
 
-	return glisp.Sexp(SexpRegexp(*r)), nil
+	regCache.Set(re, r)
+
+	return glisp.Sexp(&SexpRegexp{r: r}), nil
 }
 
 func ImportRegex(env *glisp.Environment) {
@@ -95,4 +101,32 @@ func ImportRegex(env *glisp.Environment) {
 	env.AddFunctionByConstructor("regexp-find-index", GetRegexpFind)
 	env.AddFunctionByConstructor("regexp-find", GetRegexpFind)
 	env.AddFunctionByConstructor("regexp-match", GetRegexpFind)
+}
+
+type regexpCache struct {
+	rmap    map[string]*regexp.Regexp
+	rw      *sync.RWMutex
+	maxSize int
+}
+
+func (c *regexpCache) Get(k string) (*regexp.Regexp, bool) {
+	c.rw.RLock()
+	defer c.rw.RUnlock()
+	r, ok := c.rmap[k]
+	return r, ok
+}
+
+func (c *regexpCache) Set(k string, v *regexp.Regexp) {
+	c.rw.Lock()
+	c.rw.Unlock()
+	if len(c.rmap) > c.maxSize {
+		c.rmap = make(map[string]*regexp.Regexp)
+	}
+	c.rmap[k] = v
+}
+
+var regCache = &regexpCache{
+	rmap:    make(map[string]*regexp.Regexp),
+	rw:      new(sync.RWMutex),
+	maxSize: 100,
 }

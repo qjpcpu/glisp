@@ -8,10 +8,15 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
+const (
+	sym_timestamp    = `timestamp`
+	sym_timestamp_ms = `timestamp-ms`
+)
+
 type SexpTime time.Time
 
 func (t SexpTime) SexpString() string {
-	return time.Time(t).String()
+	return fmt.Sprintf(`(time/parse %v '%s)`, time.Time(t).UnixMilli(), sym_timestamp_ms)
 }
 
 func (t SexpTime) TypeName() string {
@@ -221,6 +226,7 @@ func TimeAddDate(name string) glisp.UserFunction {
 
 /*
   (time/parse 1655967400280) => parse unix timestamp to SexpTime
+  (time/parse 1655967400280000 'timestamp-ms) => parse unix milli timestamp to SexpTime
   (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
@@ -243,6 +249,10 @@ func ParseTime(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
 			}
 		case 2, 3:
+			if len(args) == 2 && glisp.IsInt(args[0]) && glisp.IsSymbol(args[1]) && args[1].(glisp.SexpSymbol).Name() == sym_timestamp_ms {
+				tm := time.UnixMilli(args[0].(glisp.SexpInt).ToInt64())
+				return SexpTime(tm), nil
+			}
 			layout, ok := readSymOrStr(args[0])
 			if !ok {
 				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
@@ -299,9 +309,9 @@ func GetTimeFormatFunction(fname string) glisp.UserFunction {
 		}
 		tm := time.Time(stm)
 		switch format {
-		case "timestamp":
+		case sym_timestamp:
 			return glisp.NewSexpInt64(tm.Unix()), nil
-		case "timestamp-ms":
+		case sym_timestamp_ms:
 			return glisp.NewSexpInt64(tm.UnixMilli()), nil
 		case "":
 			return glisp.SexpNull, errors.New(`blank time format symbol`)

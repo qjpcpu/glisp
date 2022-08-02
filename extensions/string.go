@@ -249,12 +249,8 @@ func isTitle() glisp.UserFunctionConstructor {
 		if len(s) == 0 || !('A' <= s[0] && s[0] <= 'Z') {
 			return false
 		}
-		for i := 1; i < len(s); i++ {
-			b := s[i]
-			if 'a' <= b && b <= 'z' {
-			} else {
-				return false
-			}
+		if len(s) > 1 {
+			return s[1] > 'Z' || s[1] < 'A'
 		}
 		return true
 	})
