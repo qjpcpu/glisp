@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"sync/atomic"
 )
 
 type PreHook func(*Environment, string, []Sexp)
@@ -25,7 +26,7 @@ type Environment struct {
 	curfunc          *SexpFunction
 	mainfunc         *SexpFunction
 	pc               int
-	nextsymbol       int
+	nextsymbol       *nextSymbol
 	before           []PreHook
 	after            []PostHook
 	extraGlobalCount int
@@ -47,7 +48,7 @@ func New() *Environment {
 	env.macros = make(map[int]*SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
-	env.nextsymbol = 1
+	env.nextsymbol = &nextSymbol{counter: 1}
 	env.before = []PreHook{}
 	env.after = []PostHook{}
 
@@ -117,15 +118,15 @@ func (env *Environment) MakeSymbol(name string) SexpSymbol {
 	if ok {
 		return SexpSymbol{name, symnum}
 	}
-	symbol := SexpSymbol{name, env.nextsymbol}
+	symbol := SexpSymbol{name, int(env.nextsymbol.Get())}
 	env.symtable[name] = symbol.number
 	env.revsymtable[symbol.number] = name
-	env.nextsymbol++
+	env.nextsymbol.Incr()
 	return symbol
 }
 
 func (env *Environment) GenSymbol(prefix string) SexpSymbol {
-	symname := prefix + strconv.Itoa(env.nextsymbol)
+	symname := prefix + strconv.FormatInt(env.nextsymbol.Get(), 10)
 	return env.MakeSymbol(symname)
 }
 
@@ -572,4 +573,14 @@ func (env *Environment) GlobalFunctions() []string {
 		"include",
 	)
 	return ret
+}
+
+type nextSymbol struct{ counter int64 }
+
+func (g *nextSymbol) Incr() int64 {
+	return atomic.AddInt64(&g.counter, 1)
+}
+
+func (g *nextSymbol) Get() int64 {
+	return atomic.LoadInt64(&g.counter)
 }

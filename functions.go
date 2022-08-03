@@ -708,7 +708,7 @@ func SymnumFunction(name string) UserFunction {
 
 func SourceFileFunction(env *Environment, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
-		return WrongNumberArguments("source", len(args), 1)
+		return WrongNumberArguments("source-file", len(args), 1)
 	}
 
 	var sourceItem func(item Sexp) error

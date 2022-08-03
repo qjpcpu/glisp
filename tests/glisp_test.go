@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 
 	"github.com/qjpcpu/glisp"
@@ -179,5 +180,27 @@ func TestSandBox(t *testing.T) {
 	_, err = vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
 	if err == nil {
 		t.Fatal("should not found function")
+	}
+}
+
+func TestWrapExpressionsAsFunction(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	script := `(+ 2 3)`
+	name := vm.GenSymbol("__anoy")
+	script = fmt.Sprintf(`(defn %s [] %s)`, name.Name(), script)
+	_, err := vm.EvalString(script)
+	if err != nil {
+		t.Fatal("should success")
+	}
+	sym, ok := vm.FindObject(name.Name())
+	if !ok {
+		t.Fatal("should find anoy function")
+	}
+	ret, err := vm.Apply(sym.(*glisp.SexpFunction), nil)
+	if err != nil {
+		t.Fatal("should success")
+	}
+	if ret.(glisp.SexpInt).ToInt() != 5 {
+		t.Fatal("bad result")
 	}
 }
