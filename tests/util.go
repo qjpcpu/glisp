@@ -13,11 +13,12 @@ func newFullEnv() *glisp.Environment {
 
 func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	vm.ImportEval()
+	extensions.ImportCoreUtils(vm)
+	extensions.ImportContainerUtils(vm)
 	extensions.ImportJSON(vm)
 	extensions.ImportMathUtils(vm)
 	extensions.ImportBase64(vm)
 	extensions.ImportChannels(vm)
-	extensions.ImportCoreUtils(vm)
 	extensions.ImportCoroutines(vm)
 	extensions.ImportRandom(vm)
 	extensions.ImportRegex(vm)

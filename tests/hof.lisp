@@ -6,6 +6,9 @@
 (assert (= (apply (fn [a b] (* 2 a b)) [1 2]) 4))
 (assert (= (apply (fn [a b] (* 2 a b)) '(1 2)) 4))
 
+;; map nil
+(assert (= ['() '() '()] (map (fn [a] '()) [1 2 3])))
+(assert (= (list '() '() '()) (map (fn [a] '()) '(1 2 3))))
 
 (assert (= 10 (foldl + 0 [1 2 3 4])))
 (assert (= 24 (foldl * 1 [1 2 3 4])))
