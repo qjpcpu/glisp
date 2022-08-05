@@ -1,5 +1,8 @@
 # GLisp
 
+![Image text](./tests/codcov.svg)
+
+
 This is a LISP dialect designed as an embedded extension language for the Go
 programming language. It is implemented in pure Go, so it can be easily ported
 to all systems and architectures that Go targets.
