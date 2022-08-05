@@ -62,3 +62,9 @@
 (assert (= 606 (foldl (fn [k v acc] (+ k v acc)) 0 {1 100 2 200 3 300})))
 (assert (= 0 (foldl (fn [k v acc] (+ k v acc)) 0 {})))
 (assert (= [1 100 2 200 3 300] (foldl (fn [k v acc] (append acc k v)) [] {1 100 2 200 3 300})))
+
+(defn fn1 [] 1)
+(defn fn2 [] 2)
+(defn fn3 [] 3)
+
+(assert (= [1 2 3] (map (fn [f] (f)) [fn1 fn2 fn3])))
