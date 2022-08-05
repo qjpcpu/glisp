@@ -6,24 +6,60 @@ import (
 	"os"
 	"strings"
 
-	"github.com/c-bata/go-prompt"
+	"github.com/peterh/liner"
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/glisp/extensions"
 )
 
-var history []string
+var (
+	history  []string
+	keywords []string
+)
 
-func completer(d prompt.Document) []prompt.Suggest {
-	s := []prompt.Suggest{}
-	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+func init() {
+	for _, fn := range glisp.New().GlobalFunctions() {
+		if len(fn) > 1 {
+			keywords = append(keywords, fn)
+		}
+	}
+}
+
+func findWordBackward(line string) (string, int) {
+	for i := len(line) - 1; i >= 0; i-- {
+		if line[i] == ' ' || line[i] == '\t' || line[i] == '\n' {
+			return line[i+1:], i + 1
+		}
+	}
+	return line, 0
 }
 
 func getLine(prefix string) (string, error) {
-	line := prompt.Input(prefix, completer,
-		prompt.OptionHistory(history),
-		prompt.OptionPrefixTextColor(prompt.Yellow),
-	)
-	return line, nil
+	line := liner.NewLiner()
+	defer line.Close()
+
+	line.SetCtrlCAborts(true)
+	for _, kw := range history {
+		line.AppendHistory(kw)
+	}
+
+	line.SetCompleter(func(line string) (c []string) {
+		for _, n := range keywords {
+			n = "(" + n
+			word, idx := findWordBackward(line)
+			if strings.HasPrefix(n, word) {
+				c = append(c, line[0:idx]+n)
+			}
+		}
+		return
+	})
+
+	if sentence, err := line.Prompt(prefix); err == nil {
+		line.AppendHistory(sentence)
+		history = append(history, sentence)
+		return sentence, nil
+	} else {
+		return "", err
+	}
 }
 
 func isBalanced(str string) bool {
@@ -77,7 +113,6 @@ func repl(env *glisp.Environment) {
 	for {
 		line, err := getExpression()
 		if err != nil {
-			fmt.Println(err)
 			os.Exit(-1)
 		}
 
