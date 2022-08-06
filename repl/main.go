@@ -16,8 +16,8 @@ var (
 	keywords []string
 )
 
-func init() {
-	for _, fn := range glisp.New().GlobalFunctions() {
+func registKeywords(vm *glisp.Environment) {
+	for _, fn := range vm.GlobalFunctions() {
 		if len(fn) > 1 {
 			keywords = append(keywords, fn)
 		}
@@ -194,6 +194,8 @@ func main() {
 	extensions.ImportString(env)
 
 	flag.Parse()
+
+	registKeywords(env)
 
 	if fmtFile != "" {
 		fmtScript(env, fmtFile)
