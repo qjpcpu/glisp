@@ -1,6 +1,9 @@
 package tests
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -430,6 +433,23 @@ func TestWrongArgumentNumber(t *testing.T) {
 	mustErr(`(str/mask "abc" 1 0 "*")`)
 	mustErr(`(str/mask "abc" 1 0 "")`)
 	mustErr(`(str/mask "abc" 1 -1 "")`)
+	mustErr(`(io/read-file)`)
+	mustErr(`(io/read-file 1)`)
+	mustErr(`(io/read-file "not-exist-file")`)
+	mustErr(`(io/write-file)`)
+	mustErr(`(io/write-file 1 2)`)
+	mustErr(`(io/write-file "./test" 2)`)
+
+	notExistDir := `~/tmp/not-exist-dir/`
+	home, _ := os.UserHomeDir()
+	os.RemoveAll(filepath.Join(home, strings.TrimPrefix(notExistDir, "~")))
+	mustErr(fmt.Sprintf(`(io/write-file "%s" 2)`, notExistDir+"not-exit-file"))
+	os.RemoveAll(filepath.Join(home, strings.TrimPrefix(notExistDir, "~")))
+
+	mustErr(`(io/remove-file)`)
+	mustErr(`(io/remove-file 1)`)
+	mustErr(`(io/file-exist?)`)
+	mustErr(`(io/file-exist? 1)`)
 }
 
 func expectErrorContains(t *testing.T, script string, keyword string) {

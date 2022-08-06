@@ -113,7 +113,7 @@ func testFile(t *testing.T, file string) {
 	if err != nil {
 		t.Fatalf("read file %s fail %v", file, err)
 	}
-	vm := registerTestingFunc(loadAllExtensions(glisp.New()))
+	vm := loadAllExtensions(glisp.New())
 	err = vm.LoadString(string(bytes))
 	if err != nil {
 		t.Fatalf("parse file %s fail %v", file, err)
@@ -127,7 +127,7 @@ func testFile(t *testing.T, file string) {
 
 func testFileAgain(t *testing.T, file string) {
 	testit := func(fn func([]glisp.Sexp) string, expressions []glisp.Sexp) {
-		vm := registerTestingFunc(loadAllExtensions(glisp.New()))
+		vm := loadAllExtensions(glisp.New())
 		err := vm.LoadString(fn(expressions))
 		if err != nil {
 			t.Fatalf("parse file %s fail %v", file, err)
@@ -139,7 +139,7 @@ func testFileAgain(t *testing.T, file string) {
 		}
 		t.Logf("TEST %s OK", file)
 	}
-	vm := registerTestingFunc(loadAllExtensions(glisp.New()))
+	vm := loadAllExtensions(glisp.New())
 	expressions, err := vm.ParseFile(file)
 	if err != nil {
 		t.Fatalf("read file %s fail %v", file, err)

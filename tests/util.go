@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"io/ioutil"
-
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/glisp/extensions"
 )
@@ -24,17 +22,6 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	extensions.ImportRegex(vm)
 	extensions.ImportTime(vm)
 	extensions.ImportString(vm)
+	extensions.ImportIO(vm)
 	return vm
-}
-
-func registerTestingFunc(vm *glisp.Environment) *glisp.Environment {
-	vm.AddFunctionByConstructor("test/read-file", testReadFile)
-	return vm
-}
-
-func testReadFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		bytes, _ := ioutil.ReadFile(string(args[0].(glisp.SexpStr)))
-		return glisp.SexpStr(string(bytes)), nil
-	}
 }
