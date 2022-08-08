@@ -213,7 +213,7 @@ func HashIsEmpty(hash *SexpHash) bool {
 	return true
 }
 
-func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash, error) {
+func FilterHash(env *Context, fun *SexpFunction, hash *SexpHash) (*SexpHash, error) {
 	result, err := MakeHash(nil)
 	if err != nil {
 		return hash, err
@@ -243,7 +243,7 @@ func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash,
 	return result, nil
 }
 
-func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (Sexp, error) {
+func FoldlHash(env *Context, fun *SexpFunction, hash *SexpHash, acc Sexp) (Sexp, error) {
 	if hash.NumKeys == 0 {
 		return acc, nil
 	}

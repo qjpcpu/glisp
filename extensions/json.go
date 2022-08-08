@@ -10,43 +10,40 @@ import (
 )
 
 func ImportJSON(env *glisp.Environment) {
-	env.AddFunctionByConstructor("json/stringify", jsonMarshal)
-	env.AddFunctionByConstructor("json/parse", jsonUnmarshal)
+	env.AddFunction("json/stringify", jsonMarshal)
+	env.AddFunction("json/parse", jsonUnmarshal)
 }
 
-func jsonMarshal(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
-		}
-		bytes, err := glisp.Marshal(args[0])
-		if err != nil {
-			return glisp.SexpNull, err
-		}
-		return glisp.SexpStr(string(bytes)), nil
+func jsonMarshal(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+	if len(args) != 1 {
+		return glisp.WrongNumberArguments(env.Function, len(args), 1)
 	}
+	bytes, err := glisp.Marshal(args[0])
+	if err != nil {
+		return glisp.SexpNull, err
+	}
+	return glisp.SexpStr(string(bytes)), nil
 }
 
-func jsonUnmarshal(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
-		}
-		switch val := args[0].(type) {
-		case glisp.SexpStr:
-			rawBytes := []byte(string(val))
-			return ParseJSON(rawBytes)
-		case glisp.SexpBytes:
-			return ParseJSON(val.Bytes())
-		case glisp.SexpInt:
-			return val, nil
-		case glisp.SexpBool:
-			return val, nil
-		case glisp.SexpFloat:
-			return val, nil
-		default:
-			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes", name)
-		}
+func jsonUnmarshal(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+	name := env.Function
+	if len(args) != 1 {
+		return glisp.WrongNumberArguments(name, len(args), 1)
+	}
+	switch val := args[0].(type) {
+	case glisp.SexpStr:
+		rawBytes := []byte(string(val))
+		return ParseJSON(rawBytes)
+	case glisp.SexpBytes:
+		return ParseJSON(val.Bytes())
+	case glisp.SexpInt:
+		return val, nil
+	case glisp.SexpBool:
+		return val, nil
+	case glisp.SexpFloat:
+		return val, nil
+	default:
+		return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes", name)
 	}
 }
 

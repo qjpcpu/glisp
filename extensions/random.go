@@ -10,9 +10,9 @@ import (
 
 var defaultRand = rand.New(rand.NewSource(time.Now().Unix()))
 
-func RandomIntegerFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+func RandomIntegerFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 0 && len(args) != 1 {
-		return glisp.WrongNumberArguments("rand", len(args), 0, 1)
+		return glisp.WrongNumberArguments(env.Function, len(args), 0, 1)
 	}
 	if len(args) == 1 {
 		if !glisp.IsInt(args[0]) {
@@ -27,9 +27,9 @@ func RandomIntegerFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sex
 	return glisp.NewSexpInt(100).Random(defaultRand), nil
 }
 
-func RandomFloatFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+func RandomFloatFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 0 {
-		return glisp.WrongNumberArguments("randf", len(args), 0)
+		return glisp.WrongNumberArguments(env.Function, len(args), 0)
 	}
 	return glisp.NewSexpFloat(defaultRand.Float64()), nil
 }

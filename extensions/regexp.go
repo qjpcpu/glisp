@@ -28,47 +28,46 @@ func regexpFindIndex(needle *regexp.Regexp, haystack string) (glisp.Sexp, error)
 	return glisp.SexpArray(arr), nil
 }
 
-func GetRegexpFind(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
-		}
-		var haystack string
-		switch t := args[1].(type) {
-		case glisp.SexpStr:
-			haystack = string(t)
-		default:
-			return glisp.SexpNull,
-				fmt.Errorf("2nd argument of %v should be a string", name)
-		}
-
-		var needle *regexp.Regexp
-		switch t := args[0].(type) {
-		case *SexpRegexp:
-			needle = t.r
-		default:
-			return glisp.SexpNull,
-				fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
-		}
-
-		switch name {
-		case "regexp-find":
-			str := needle.FindString(haystack)
-			return glisp.SexpStr(str), nil
-		case "regexp-find-index":
-			return regexpFindIndex(needle, haystack)
-		case "regexp-match":
-			matches := needle.MatchString(haystack)
-			return glisp.SexpBool(matches), nil
-		}
-
-		return glisp.SexpNull, errors.New("unknown function")
+func RegexpFind(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+	name := env.Function
+	if len(args) != 2 {
+		return glisp.WrongNumberArguments(name, len(args), 2)
 	}
+	var haystack string
+	switch t := args[1].(type) {
+	case glisp.SexpStr:
+		haystack = string(t)
+	default:
+		return glisp.SexpNull,
+			fmt.Errorf("2nd argument of %v should be a string", name)
+	}
+
+	var needle *regexp.Regexp
+	switch t := args[0].(type) {
+	case *SexpRegexp:
+		needle = t.r
+	default:
+		return glisp.SexpNull,
+			fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
+	}
+
+	switch name {
+	case "regexp-find":
+		str := needle.FindString(haystack)
+		return glisp.SexpStr(str), nil
+	case "regexp-find-index":
+		return regexpFindIndex(needle, haystack)
+	case "regexp-match":
+		matches := needle.MatchString(haystack)
+		return glisp.SexpBool(matches), nil
+	}
+
+	return glisp.SexpNull, errors.New("unknown function")
 }
 
-func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+func RegexpCompile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) < 1 {
-		return glisp.WrongNumberArguments("regexp-compile", len(args), 1)
+		return glisp.WrongNumberArguments(env.Function, len(args), 1)
 	}
 
 	var re string
@@ -98,9 +97,9 @@ func RegexpCompile(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error
 
 func ImportRegex(env *glisp.Environment) {
 	env.AddFunction("regexp-compile", RegexpCompile)
-	env.AddFunctionByConstructor("regexp-find-index", GetRegexpFind)
-	env.AddFunctionByConstructor("regexp-find", GetRegexpFind)
-	env.AddFunctionByConstructor("regexp-match", GetRegexpFind)
+	env.AddFunction("regexp-find-index", RegexpFind)
+	env.AddFunction("regexp-find", RegexpFind)
+	env.AddFunction("regexp-match", RegexpFind)
 }
 
 type regexpCache struct {

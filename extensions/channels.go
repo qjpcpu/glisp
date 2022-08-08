@@ -16,55 +16,52 @@ func (ch SexpChannel) TypeName() string {
 	return "channel"
 }
 
-func MakeChanFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) > 1 {
-			return glisp.WrongNumberArguments(name, len(args), 0, 1)
-		}
-
-		size := 0
-		if len(args) == 1 {
-			switch t := args[0].(type) {
-			case glisp.SexpInt:
-				size = t.ToInt()
-			default:
-				return glisp.SexpNull, errors.New(
-					fmt.Sprintf("argument to %s must be int", `make-chan`))
-			}
-		}
-
-		return SexpChannel(make(chan glisp.Sexp, size)), nil
+func MakeChanFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+	if len(args) > 1 {
+		return glisp.WrongNumberArguments(env.Function, len(args), 0, 1)
 	}
-}
 
-func GetChanTxFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1, 2)
-		}
-		var channel chan glisp.Sexp
+	size := 0
+	if len(args) == 1 {
 		switch t := args[0].(type) {
-		case SexpChannel:
-			channel = chan glisp.Sexp(t)
+		case glisp.SexpInt:
+			size = t.ToInt()
 		default:
 			return glisp.SexpNull, errors.New(
-				fmt.Sprintf("argument 0 of %s must be channel", name))
+				fmt.Sprintf("argument to %s must be int", `make-chan`))
 		}
-
-		if name == "send!" {
-			if len(args) != 2 {
-				return glisp.WrongNumberArguments(name, len(args), 2)
-			}
-			channel <- args[1]
-			return glisp.SexpNull, nil
-		}
-
-		return <-channel, nil
 	}
+
+	return SexpChannel(make(chan glisp.Sexp, size)), nil
+}
+
+func GetChanTxFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+	name := env.Function
+	if len(args) < 1 {
+		return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	}
+	var channel chan glisp.Sexp
+	switch t := args[0].(type) {
+	case SexpChannel:
+		channel = chan glisp.Sexp(t)
+	default:
+		return glisp.SexpNull, errors.New(
+			fmt.Sprintf("argument 0 of %s must be channel", name))
+	}
+
+	if name == "send!" {
+		if len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2)
+		}
+		channel <- args[1]
+		return glisp.SexpNull, nil
+	}
+
+	return <-channel, nil
 }
 
 func ImportChannels(env *glisp.Environment) {
-	env.AddFunctionByConstructor("make-chan", MakeChanFunction)
-	env.AddFunctionByConstructor("send!", GetChanTxFunction)
-	env.AddFunctionByConstructor("<!", GetChanTxFunction)
+	env.AddFunction("make-chan", MakeChanFunction)
+	env.AddFunction("send!", GetChanTxFunction)
+	env.AddFunction("<!", GetChanTxFunction)
 }

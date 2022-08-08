@@ -11,8 +11,8 @@ import (
 	"sync/atomic"
 )
 
-type PreHook func(*Environment, string, []Sexp)
-type PostHook func(*Environment, string, Sexp)
+type PreHook func(*Context, []Sexp)
+type PostHook func(*Context, Sexp)
 
 type Environment struct {
 	datastack        *Stack
@@ -156,12 +156,13 @@ func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 }
 
 func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
+	ctx := newCtx(function.name, env)
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
 			return err
 		}
-		prehook(env, function.name, expressions)
+		prehook(ctx, expressions)
 	}
 
 	if function.varargs {
@@ -228,12 +229,13 @@ func (env *Environment) globalScopes() []StackElem {
 }
 
 func (env *Environment) ReturnFromFunction() error {
+	ctx := newCtx(env.curfunc.name, env)
 	for _, posthook := range env.after {
 		retval, err := env.datastack.GetExpr(0)
 		if err != nil {
 			return err
 		}
-		posthook(env, env.curfunc.name, retval)
+		posthook(ctx, retval)
 	}
 
 	var err error
@@ -250,15 +252,14 @@ func (env *Environment) ReturnFromFunction() error {
 	return nil
 }
 
-func (env *Environment) CallUserFunction(
-	function *SexpFunction, name string, nargs int) error {
-
+func (env *Environment) CallUserFunction(function *SexpFunction, name string, nargs int) error {
+	ctx := newCtx(name, env)
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
 			return err
 		}
-		prehook(env, function.name, expressions)
+		prehook(ctx, expressions)
 	}
 
 	args, err := env.datastack.PopExpressions(nargs)
@@ -271,7 +272,7 @@ func (env *Environment) CallUserFunction(
 	env.curfunc = function
 	env.pc = -1
 
-	res, err := function.userfun(env, args)
+	res, err := function.userfun(newCtx(name, env), args)
 	if err != nil {
 		return errors.New(
 			fmt.Sprintf("Error calling %s: %v", name, err))
@@ -279,7 +280,7 @@ func (env *Environment) CallUserFunction(
 	env.datastack.PushExpr(res)
 
 	for _, posthook := range env.after {
-		posthook(env, name, res)
+		posthook(ctx, res)
 	}
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
@@ -409,10 +410,6 @@ func (env *Environment) AddFunction(name string, function UserFunction) {
 	env.Bind(name, MakeUserFunction(name, function))
 }
 
-func (env *Environment) AddFunctionByConstructor(name string, function UserFunctionConstructor) {
-	env.Bind(name, MakeUserFunction(name, function(name)))
-}
-
 func (env *Environment) AddMacro(name string, function UserFunction) {
 	sym := env.MakeSymbol(name)
 	env.macros[sym.number] = MakeUserFunction(name, function)
@@ -507,7 +504,7 @@ func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 
 func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
-		return fun.userfun(env, args)
+		return fun.userfun(newCtx(fun.name, env), args)
 	}
 
 	env.pc = -2

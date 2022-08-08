@@ -19,7 +19,7 @@ func (arr SexpArray) SexpString() string {
 	return str
 }
 
-func MapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
+func MapArray(env *Context, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, len(arr))
 	var err error
 
@@ -54,7 +54,7 @@ func FlatMapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray
 	return SexpArray(result), nil
 }
 
-func FilterArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
+func FilterArray(env *Context, fun *SexpFunction, arr SexpArray) (SexpArray, error) {
 	result := make([]Sexp, 0, len(arr))
 
 	for i := range arr {
@@ -89,7 +89,7 @@ func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
 	return ret, nil
 }
 
-func FoldlArray(env *Environment, fun *SexpFunction, lst Sexp, acc Sexp) (Sexp, error) {
+func FoldlArray(env *Context, fun *SexpFunction, lst Sexp, acc Sexp) (Sexp, error) {
 	if lst == SexpNull {
 		return acc, nil
 	}
