@@ -8,9 +8,27 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
+func ImportTime(env *glisp.Environment) {
+	env.AddFunction("time/now", TimeNow)
+	env.AddFunction("time/format", TimeFormatFunction)
+	env.AddFunction("time/parse", ParseTime)
+	env.AddFunction("time/add-date", TimeAddDate)
+	env.AddFunction("time/add", TimeAdd)
+	env.AddFunction("time/sub", TimeSub)
+	env.AddFunction("time/year", TimeYearOf)
+	env.AddFunction("time/month", TimeMonthOf)
+	env.AddFunction("time/day", TimeDayOf)
+	env.AddFunction("time/hour", TimeHourOf)
+	env.AddFunction("time/minute", TimeMinuteOf)
+	env.AddFunction("time/second", TimeSecondOf)
+	env.AddFunction("time/weekday", TimeWeekdayOf)
+}
+
 const (
-	sym_timestamp    = `timestamp`
-	sym_timestamp_ms = `timestamp-ms`
+	sym_timestamp       = `timestamp`
+	sym_timestamp_ms    = `timestamp-ms`
+	sym_timestamp_micro = `timestamp-micro`
+	sym_timestamp_nano  = `timestamp-nano`
 )
 
 type SexpTime time.Time
@@ -214,6 +232,8 @@ func TimeAddDate(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 /*
   (time/parse 1655967400280) => parse unix timestamp to SexpTime
   (time/parse 1655967400280000 'timestamp-ms) => parse unix milli timestamp to SexpTime
+  (time/parse 1655967400280000 'timestamp-micro) => parse unix micro timestamp to SexpTime
+  (time/parse 1655967400280000 'timestamp-nano) => parse unix nano timestamp to SexpTime
   (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
   (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
@@ -236,9 +256,24 @@ func ParseTime(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 			return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
 		}
 	case 2, 3:
-		if len(args) == 2 && glisp.IsInt(args[0]) && glisp.IsSymbol(args[1]) && args[1].(glisp.SexpSymbol).Name() == sym_timestamp_ms {
-			tm := time.UnixMilli(args[0].(glisp.SexpInt).ToInt64())
-			return SexpTime(tm), nil
+		if len(args) == 2 && glisp.IsInt(args[0]) && glisp.IsSymbol(args[1]) {
+			switch args[1].(glisp.SexpSymbol).Name() {
+			case sym_timestamp:
+				tm := time.Unix(args[0].(glisp.SexpInt).ToInt64(), 0)
+				return SexpTime(tm), nil
+			case sym_timestamp_ms:
+				tm := time.UnixMilli(args[0].(glisp.SexpInt).ToInt64())
+				return SexpTime(tm), nil
+			case sym_timestamp_micro:
+				tm := time.UnixMicro(args[0].(glisp.SexpInt).ToInt64())
+				return SexpTime(tm), nil
+			case sym_timestamp_nano:
+				number := args[0].(glisp.SexpInt)
+				sec := number.Div(glisp.NewSexpUint64(1e9))
+				nsec := number.Mod(glisp.NewSexpUint64(1e9))
+				tm := time.Unix(sec.ToInt64(), nsec.ToInt64())
+				return SexpTime(tm), nil
+			}
 		}
 		layout, ok := readSymOrStr(args[0])
 		if !ok {
@@ -274,9 +309,11 @@ func ParseTime(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 /*
   (time/format SexpTime 'timestamp) => SexpTime to unix timestamp
   (time/format SexpTime 'timestamp-ms) => SexpTime to unix timestamp mills
+  (time/format SexpTime 'timestamp-micro) => SexpTime to unix timestamp microseconds
+  (time/format SexpTime 'timestamp-nano) => SexpTime to unix timestamp nanoseconds
   (time/format SexpTime "2006-01-02 15:04:05") => SexpTime to string by layout
 */
-func GetTimeFormatFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+func TimeFormatFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	fname := env.CallName()
 	if len(args) != 2 {
 		return glisp.SexpNull, fmt.Errorf(`wrong argument number of function %s`, fname)
@@ -299,6 +336,10 @@ func GetTimeFormatFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, e
 		return glisp.NewSexpInt64(tm.Unix()), nil
 	case sym_timestamp_ms:
 		return glisp.NewSexpInt64(tm.UnixMilli()), nil
+	case sym_timestamp_micro:
+		return glisp.NewSexpInt64(tm.UnixMicro()), nil
+	case sym_timestamp_nano:
+		return glisp.NewSexpInt64(tm.UnixNano()), nil
 	case "":
 		return glisp.SexpNull, errors.New(`blank time format symbol`)
 	default:
@@ -314,20 +355,4 @@ func readSymOrStr(s glisp.Sexp) (string, bool) {
 		return string(s.(glisp.SexpStr)), true
 	}
 	return "", false
-}
-
-func ImportTime(env *glisp.Environment) {
-	env.AddFunction("time/now", TimeNow)
-	env.AddFunction("time/format", GetTimeFormatFunction)
-	env.AddFunction("time/parse", ParseTime)
-	env.AddFunction("time/add-date", TimeAddDate)
-	env.AddFunction("time/add", TimeAdd)
-	env.AddFunction("time/sub", TimeSub)
-	env.AddFunction("time/year", TimeYearOf)
-	env.AddFunction("time/month", TimeMonthOf)
-	env.AddFunction("time/day", TimeDayOf)
-	env.AddFunction("time/hour", TimeHourOf)
-	env.AddFunction("time/minute", TimeMinuteOf)
-	env.AddFunction("time/second", TimeSecondOf)
-	env.AddFunction("time/weekday", TimeWeekdayOf)
 }

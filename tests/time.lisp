@@ -45,3 +45,8 @@
      (assert (= 7 (time/sub t1 t2)))
 )
 
+
+(def t2 (time/now))
+(assert (= (time/format t2 'timestamp) (time/format (time/parse (time/format t2 'timestamp) 'timestamp) 'timestamp)))
+(assert (= (time/format t2 'timestamp-micro) (time/format (time/parse (time/format t2 'timestamp-micro) 'timestamp-micro) 'timestamp-micro)))
+(assert (= (time/format t2 'timestamp-nano) (time/format (time/parse (time/format t2 'timestamp-nano) 'timestamp-nano) 'timestamp-nano)))
