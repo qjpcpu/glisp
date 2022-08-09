@@ -9,3 +9,5 @@
 (go (send! ch '()) (def global "bar"))
 (<! ch)
 (assert (= global "bar"))
+
+(make-chan 1)

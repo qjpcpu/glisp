@@ -937,9 +937,7 @@ func ComposeFunction(env *Context, args []Sexp) (Sexp, error) {
 			}
 			_args = []Sexp{ret}
 		}
-		if len(_args) == 0 {
-			return SexpNull, nil
-		}
+		/* len(_args) is greater than 0, because function always return something */
 		return _args[0], nil
 	}), nil
 }

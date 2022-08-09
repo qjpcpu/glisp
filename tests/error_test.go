@@ -450,6 +450,16 @@ func TestWrongArgumentNumber(t *testing.T) {
 	mustErr(`(io/remove-file 1)`)
 	mustErr(`(io/file-exist?)`)
 	mustErr(`(io/file-exist? 1)`)
+	mustErr(`(flatmap)`)
+	mustErr(`(flatmap 1 2)`)
+	mustErr(`(flatmap (fn [] 1) 2)`)
+	mustErr(`(compose)`)
+	mustErr(`(compose 1 2)`)
+	mustErr(`(make-chan 1 2 3)`)
+	mustErr(`(make-chan "a")`)
+	mustErr(`(send!)`)
+	mustErr(`(send! "a")`)
+	mustErr(`(send! (make-chan))`)
 }
 
 func expectErrorContains(t *testing.T, script string, keyword string) {

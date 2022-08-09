@@ -35,7 +35,7 @@ func MakeChanFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error)
 	return SexpChannel(make(chan glisp.Sexp, size)), nil
 }
 
-func GetChanTxFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+func ChanTxFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	name := env.Function
 	if len(args) < 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1, 2)
@@ -62,6 +62,6 @@ func GetChanTxFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error
 
 func ImportChannels(env *glisp.Environment) {
 	env.AddFunction("make-chan", MakeChanFunction)
-	env.AddFunction("send!", GetChanTxFunction)
-	env.AddFunction("<!", GetChanTxFunction)
+	env.AddFunction("send!", ChanTxFunction)
+	env.AddFunction("<!", ChanTxFunction)
 }
