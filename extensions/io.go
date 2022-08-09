@@ -18,7 +18,7 @@ func ImportIO(env *glisp.Environment) {
 }
 
 func ReadFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -35,7 +35,7 @@ func ReadFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func WriteFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -58,7 +58,7 @@ func WriteFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func RemoveFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -71,7 +71,7 @@ func RemoveFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func ExistFile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}

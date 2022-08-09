@@ -11,13 +11,13 @@ type ITypeName interface {
 
 func GenSymFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 0 {
-		return SexpNull, fmt.Errorf(`%s expect 0 argument but got %v`, env.Function, len(args))
+		return SexpNull, fmt.Errorf(`%s expect 0 argument but got %v`, env.CallName(), len(args))
 	}
 	return env.GenSymbol("__anon"), nil
 }
 
 func Str2SymFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -28,7 +28,7 @@ func Str2SymFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func Sym2StrFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -40,7 +40,7 @@ func Sym2StrFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func GetTypeFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, env.Function, len(args))
+		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, env.CallName(), len(args))
 	}
 	var present string
 	switch expr := args[0].(type) {

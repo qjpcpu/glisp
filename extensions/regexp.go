@@ -29,7 +29,7 @@ func regexpFindIndex(needle *regexp.Regexp, haystack string) (glisp.Sexp, error)
 }
 
 func RegexpFind(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.WrongNumberArguments(name, len(args), 2)
 	}
@@ -67,7 +67,7 @@ func RegexpFind(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 
 func RegexpCompile(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) < 1 {
-		return glisp.WrongNumberArguments(env.Function, len(args), 1)
+		return glisp.WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	var re string

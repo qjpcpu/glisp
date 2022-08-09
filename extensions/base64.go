@@ -13,7 +13,7 @@ func ImportBase64(env *glisp.Environment) {
 }
 
 func Base64StringToBytes(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -29,7 +29,7 @@ func Base64StringToBytes(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, err
 }
 
 func BytesToBase64String(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}

@@ -45,25 +45,25 @@ func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
 
 func TimeNow(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 0 {
-		return glisp.WrongNumberArguments(env.Function, len(args), 0)
+		return glisp.WrongNumberArguments(env.CallName(), len(args), 0)
 	}
 	return SexpTime(time.Now()), nil
 }
 
 func TimeYearOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 1 {
-		return glisp.WrongNumberArguments(env.Function, len(args), 1)
+		return glisp.WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 	stm, ok := args[0].(SexpTime)
 	if !ok {
-		return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", env.Function)
+		return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", env.CallName())
 	}
 	tm := time.Time(stm)
 	return glisp.NewSexpInt64(int64(tm.Year())), nil
 }
 
 func TimeMonthOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -76,7 +76,7 @@ func TimeMonthOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func TimeDayOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -89,7 +89,7 @@ func TimeDayOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func TimeHourOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -102,7 +102,7 @@ func TimeHourOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func TimeMinuteOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -115,7 +115,7 @@ func TimeMinuteOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func TimeSecondOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -128,7 +128,7 @@ func TimeSecondOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func TimeWeekdayOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1)
 	}
@@ -142,7 +142,7 @@ func TimeWeekdayOf(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 
 // TimeSub t1-t2 in seconds
 func TimeSub(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.WrongNumberArguments(name, len(args), 2)
 	}
@@ -157,7 +157,7 @@ func TimeSub(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 
 // (time/add time number uint)
 func TimeAdd(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 3 {
 		return glisp.WrongNumberArguments(name, len(args), 3)
 	}
@@ -194,7 +194,7 @@ func TimeAdd(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 
 // (time/add-date time year month day)
 func TimeAddDate(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 4 {
 		return glisp.WrongNumberArguments(name, len(args), 4)
 	}
@@ -219,7 +219,7 @@ func TimeAddDate(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
   (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
 */
 func ParseTime(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	switch len(args) {
 	case 1:
 		arg := args[0]
@@ -277,7 +277,7 @@ func ParseTime(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
   (time/format SexpTime "2006-01-02 15:04:05") => SexpTime to string by layout
 */
 func GetTimeFormatFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	fname := env.Function
+	fname := env.CallName()
 	if len(args) != 2 {
 		return glisp.SexpNull, fmt.Errorf(`wrong argument number of function %s`, fname)
 	}

@@ -25,7 +25,7 @@ func ImportCoreUtils(env *glisp.Environment) error {
 
 func GetPrintFunction(w io.Writer) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) == 0 {
 			return glisp.SexpNull, fmt.Errorf("%s need at least one argument", name)
 		}

@@ -32,7 +32,7 @@ func ImportString(env *glisp.Environment) {
 
 func StringPredict(fn func(string, string) bool) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
@@ -48,7 +48,7 @@ func StringPredict(fn func(string, string) bool) glisp.UserFunction {
 
 func StringSearch(fn func(string, string) int) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
@@ -64,7 +64,7 @@ func StringSearch(fn func(string, string) int) glisp.UserFunction {
 
 func StringSplit(fn func(string, string) []string) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
@@ -85,7 +85,7 @@ func StringSplit(fn func(string, string) []string) glisp.UserFunction {
 
 func StringMap(fn func(string) string) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 1 {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
@@ -98,7 +98,7 @@ func StringMap(fn func(string) string) glisp.UserFunction {
 
 func StringBool(fn func(string) bool) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 1 {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
@@ -111,7 +111,7 @@ func StringBool(fn func(string) bool) glisp.UserFunction {
 
 func StringJoin(fn func([]string, string) string) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
@@ -135,7 +135,7 @@ func StringJoin(fn func([]string, string) string) glisp.UserFunction {
 
 func StringMap2(fn func(string, string) string) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
@@ -151,7 +151,7 @@ func StringMap2(fn func(string, string) string) glisp.UserFunction {
 
 func StringMap3(fn func(string, string, string) string) glisp.UserFunction {
 	return func(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := env.Function
+		name := env.CallName()
 		if len(args) != 3 {
 			return glisp.WrongNumberArguments(name, len(args), 3)
 		}
@@ -169,7 +169,7 @@ func StringMap3(fn func(string, string, string) string) glisp.UserFunction {
 }
 
 func strMask(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 4 {
 		return glisp.WrongNumberArguments(name, len(args), 4)
 	}

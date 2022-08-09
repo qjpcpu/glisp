@@ -18,7 +18,7 @@ func (ch SexpChannel) TypeName() string {
 
 func MakeChanFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) > 1 {
-		return glisp.WrongNumberArguments(env.Function, len(args), 0, 1)
+		return glisp.WrongNumberArguments(env.CallName(), len(args), 0, 1)
 	}
 
 	size := 0
@@ -36,7 +36,7 @@ func MakeChanFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error)
 }
 
 func ChanTxFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) < 1 {
 		return glisp.WrongNumberArguments(name, len(args), 1, 2)
 	}

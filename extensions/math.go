@@ -82,7 +82,7 @@ func IntegerDo(op IntegerOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func GetBitwiseFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.WrongNumberArguments(name, len(args), 2)
 	}
@@ -111,7 +111,7 @@ func GetBitwiseFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, erro
 
 func ComplementFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 1 {
-		return glisp.WrongNumberArguments(env.Function, len(args), 1)
+		return glisp.WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	switch t := args[0].(type) {
@@ -125,7 +125,7 @@ func ComplementFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, erro
 }
 
 func GetBinaryIntFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.WrongNumberArguments(name, len(args), 2)
 	}
@@ -144,7 +144,7 @@ func GetBinaryIntFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, er
 }
 
 func GetLogicalShiftFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return glisp.WrongNumberArguments(name, len(args), 2)
 	}

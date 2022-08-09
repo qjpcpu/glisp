@@ -14,12 +14,14 @@ type Function []Instruction
 type UserFunction func(*Context, []Sexp) (Sexp, error)
 type Context struct {
 	*Environment
-	Function string
+	curFuncName string
 }
 
 func newCtx(function string, env *Environment) *Context {
-	return &Context{Function: function, Environment: env}
+	return &Context{curFuncName: function, Environment: env}
 }
+
+func (ctx *Context) CallName() string { return ctx.curFuncName }
 
 var builtinFunctions = map[string]UserFunction{
 	"<":          CompareFunction,
@@ -88,7 +90,7 @@ var builtinFunctions = map[string]UserFunction{
 }
 
 func CompareFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return WrongNumberArguments(name, len(args), 2)
 	}
@@ -118,7 +120,7 @@ func CompareFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func NumericFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) < 1 {
 		return WrongNumberArguments(name, len(args), 1)
 	}
@@ -148,7 +150,7 @@ func NumericFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func ConsFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 
 	return Cons(args[0], args[1]), nil
@@ -156,7 +158,7 @@ func ConsFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func FirstFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	switch expr := args[0].(type) {
@@ -171,7 +173,7 @@ func FirstFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func RestFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	switch expr := args[0].(type) {
@@ -192,7 +194,7 @@ func RestFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func ArrayAccessFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) < 2 {
 		return WrongNumberArguments(name, len(args), 2, 3)
 	}
@@ -233,7 +235,7 @@ func ArrayAccessFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func SgetFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 
 	var str SexpStr
@@ -262,7 +264,7 @@ func SgetFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func ExistFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 2 {
 		return WrongNumberArguments(name, len(args), 2)
 	}
@@ -299,7 +301,7 @@ func ExistFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func HashAccessFunction(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) < 2 || len(args) > 3 {
 		return WrongNumberArguments(name, len(args), 2, 3)
 	}
@@ -334,7 +336,7 @@ func HashAccessFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func SliceFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 3 && len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2, 3)
+		return WrongNumberArguments(env.CallName(), len(args), 2, 3)
 	}
 
 	var start int
@@ -391,7 +393,7 @@ func SliceFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func LenFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	switch t := args[0].(type) {
@@ -419,7 +421,7 @@ func LenFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func AppendFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) < 2 {
-		return WrongNumberArguments(env.Function, len(args), 2, Many)
+		return WrongNumberArguments(env.CallName(), len(args), 2, Many)
 	}
 
 	switch t := args[0].(type) {
@@ -434,7 +436,7 @@ func AppendFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func ConcatFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) < 2 {
-		return WrongNumberArguments(env.Function, len(args), 2, Many)
+		return WrongNumberArguments(env.CallName(), len(args), 2, Many)
 	}
 	return concatSexp(args)
 }
@@ -462,7 +464,7 @@ func concatSexp(args []Sexp) (Sexp, error) {
 
 func ReadFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 	str := ""
 	switch t := args[0].(type) {
@@ -478,7 +480,7 @@ func ReadFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func EvalFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 	newenv := env.Duplicate()
 	err := newenv.LoadExpressions(args)
@@ -491,12 +493,12 @@ func EvalFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func TypeQueryFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	var result bool
 
-	switch env.Function {
+	switch env.CallName() {
 	case "list?":
 		result = IsList(args[0])
 	case "null?":
@@ -530,7 +532,7 @@ func TypeQueryFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func NotFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	result := SexpBool(!IsTruthy(args[0]))
@@ -539,7 +541,7 @@ func NotFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func ApplyFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 	var fun *SexpFunction
 	var funargs SexpArray
@@ -580,7 +582,7 @@ func ApplyFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func MapFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 	var fun *SexpFunction
 
@@ -602,7 +604,7 @@ func MapFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func FlatMapFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 	var fun *SexpFunction
 
@@ -624,7 +626,7 @@ func FlatMapFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func MakeArrayFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
-		return WrongNumberArguments(env.Function, len(args), 1, 2)
+		return WrongNumberArguments(env.CallName(), len(args), 1, 2)
 	}
 
 	var size int
@@ -651,7 +653,7 @@ func MakeArrayFunction(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func ConstructorFunction(env *Context, args []Sexp) (Sexp, error) {
-	switch env.Function {
+	switch env.CallName() {
 	case "array":
 		return SexpArray(args), nil
 	case "list":
@@ -664,7 +666,7 @@ func ConstructorFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func SymnumFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	switch t := args[0].(type) {
@@ -676,7 +678,7 @@ func SymnumFunction(env *Context, args []Sexp) (Sexp, error) {
 
 func SourceFileFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	var sourceItem func(item Sexp) error
@@ -757,14 +759,14 @@ func BuiltinFunctions() map[string]UserFunction {
 
 func StringifyFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return WrongNumberArguments(env.Function, len(args), 1)
+		return WrongNumberArguments(env.CallName(), len(args), 1)
 	}
 
 	return SexpStr(args[0].SexpString()), nil
 }
 
 func StringToNumber(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -776,7 +778,7 @@ func StringToNumber(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func BytesToString(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -788,7 +790,7 @@ func BytesToString(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func StringToBytes(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -800,7 +802,7 @@ func StringToBytes(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func StringToFloat(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -812,7 +814,7 @@ func StringToFloat(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func FloatToInt(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -828,7 +830,7 @@ func FloatToInt(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func FloatToString(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 && len(args) != 2 {
 		return SexpNull, fmt.Errorf(`%s expect 1/2 argument but got %v`, name, len(args))
 	}
@@ -848,7 +850,7 @@ func FloatToString(env *Context, args []Sexp) (Sexp, error) {
 }
 
 func RoundFloat(env *Context, args []Sexp) (Sexp, error) {
-	name := env.Function
+	name := env.CallName()
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 	}
@@ -864,7 +866,7 @@ func RoundFloat(env *Context, args []Sexp) (Sexp, error) {
 /* (foldl function accumulate list/array/hash) */
 func FoldlFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 3 {
-		return WrongNumberArguments(env.Function, len(args), 3)
+		return WrongNumberArguments(env.CallName(), len(args), 3)
 	}
 	var fun *SexpFunction
 
@@ -887,13 +889,13 @@ func FoldlFunction(env *Context, args []Sexp) (Sexp, error) {
 			return args[1], nil
 		}
 	}
-	return SexpNull, fmt.Errorf("third argument of %s must be array/list", env.Function)
+	return SexpNull, fmt.Errorf("third argument of %s must be array/list", env.CallName())
 }
 
 /* (filter function list/array/hash) */
 func FilterFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
-		return WrongNumberArguments(env.Function, len(args), 2)
+		return WrongNumberArguments(env.CallName(), len(args), 2)
 	}
 	var fun *SexpFunction
 
@@ -916,12 +918,12 @@ func FilterFunction(env *Context, args []Sexp) (Sexp, error) {
 			return e, nil
 		}
 	}
-	return SexpNull, fmt.Errorf("second argument of %s must be array/list", env.Function)
+	return SexpNull, fmt.Errorf("second argument of %s must be array/list", env.CallName())
 }
 
 func ComposeFunction(env *Context, args []Sexp) (Sexp, error) {
 	if len(args) < 2 {
-		return WrongNumberArguments(env.Function, len(args), 2, Many)
+		return WrongNumberArguments(env.CallName(), len(args), 2, Many)
 	}
 	for _, fn := range args {
 		if !IsFunction(fn) {
