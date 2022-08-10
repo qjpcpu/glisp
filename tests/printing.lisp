@@ -1,0 +1,5 @@
+(assert (= "100.hello" (sprintf "%v.%v" 100 "hello")))
+(assert (= "<nil>" (sprintf "%v" '())))
+(assert (= "true" (sprintf "%v" true)))
+(assert (= "s" (sprintf "%v" 's)))
+(assert (= "1234567891011121314151617181920" (sprintf "%v" 1234567891011121314151617181920)))

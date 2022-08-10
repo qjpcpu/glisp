@@ -75,3 +75,26 @@
 
 (assert (= "1.0" (float2str 1.0 -1)))
 (assert (= "0" (float2str 0.0 0)))
+
+(assert (= 97 (mod #a #b)))
+(assert (= -99 (char2int (bit-not #b))))
+
+(assert (= 2 (sll8 1 1)))
+(assert (= 254 (sll8 -1 1)))
+(assert (= 2 (sll16 1 1)))
+(assert (= 65534 (sll16 -1 1)))
+(assert (= 2 (sll32 1 1)))
+(assert (= 4294967294 (sll32 -1 1)))
+(assert (= 2 (sll64 1 1)))
+(assert (= 18446744073709551614 (sll64 -1 1)))
+
+(assert (= 1 (srl8 2 1)))
+(assert (= 127 (srl8 -2 1)))
+(assert (= 1 (srl16 2 1)))
+(assert (= 32767 (srl16 -2 1)))
+(assert (= 1 (srl32 2 1)))
+(assert (= 2147483647 (srl32 -2 1)))
+(assert (= 1 (srl64 2 1)))
+(assert (= 9223372036854775807 (srl64 -2 1)))
+
+(assert (= "a" (char2str #a)))

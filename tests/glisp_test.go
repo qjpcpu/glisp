@@ -62,6 +62,20 @@ func TestPrint(t *testing.T) {
 	}
 }
 
+func TestPrintln(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	var buf bytes.Buffer
+	vm.AddNamedFunction("println", extensions.GetPrintFunction(&buf))
+	vm.LoadString(`(println "hello" 18446744073709551615)`)
+	_, err := vm.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ret := buf.String(); ret != "hello 18446744073709551615\n" {
+		t.Fatalf("(%s)!=(%s)", ret, "hello")
+	}
+}
+
 func TestPrintf(t *testing.T) {
 	testPrintf(t, `(printf "%d" 10)`, `10`)
 	testPrintf(t, `(printf "%v" 0.2)`, `0.2`)

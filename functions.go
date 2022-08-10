@@ -60,6 +60,8 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"str2float":  GetStringToFloat,
 	"float2int":  GetFloatToInt,
 	"float2str":  GetFloatToString,
+	"char2int":   GetCharToNumber,
+	"char2str":   GetCharToStr,
 	"round":      GetRoundFloat,
 	"typestr":    GetTypeFunction,
 	"gensym":     GetGenSymFunction,
@@ -719,6 +721,7 @@ func BuiltinFunctions() map[string]UserFunction {
 	return ret
 }
 
+// GetStringifyFunction return s-expr's SexpString representation
 func GetStringifyFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
@@ -739,6 +742,32 @@ func GetStringToNumber(name string) UserFunction {
 			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
 		}
 		return NewSexpIntStr(string(str))
+	}
+}
+
+func GetCharToNumber(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		ch, ok := args[0].(SexpChar)
+		if !ok {
+			return SexpNull, fmt.Errorf(`%s argument should be char`, name)
+		}
+		return NewSexpInt64(int64(ch)), nil
+	}
+}
+
+func GetCharToStr(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		ch, ok := args[0].(SexpChar)
+		if !ok {
+			return SexpNull, fmt.Errorf(`%s argument should be char`, name)
+		}
+		return SexpStr([]rune{rune(ch)}), nil
 	}
 }
 

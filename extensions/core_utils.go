@@ -20,6 +20,7 @@ func ImportCoreUtils(env *glisp.Environment) error {
 	env.AddNamedFunction("println", GetPrintFunction(os.Stdout))
 	env.AddNamedFunction("printf", GetPrintFunction(os.Stdout))
 	env.AddNamedFunction("print", GetPrintFunction(os.Stdout))
+	env.AddNamedFunction("sprintf", GetPrintFunction(os.Stdout))
 	env.AddNamedFunction("<", GetCompareFunction)
 	env.AddNamedFunction(">", GetCompareFunction)
 	env.AddNamedFunction("<=", GetCompareFunction)
@@ -41,7 +42,7 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 			if len(args) == 0 {
 				return glisp.SexpNull, fmt.Errorf("%s need at least one argument", name)
 			}
-			if name == `printf` {
+			if name == `printf` || name == `sprintf` {
 				if len(args) <= 1 {
 					return glisp.SexpNull, fmt.Errorf("%s need at least two argument", name)
 				}
@@ -62,6 +63,8 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 				fmt.Fprint(w, items...)
 			case "printf":
 				fmt.Fprintf(w, items[0].(string), items[1:]...)
+			case "sprintf":
+				return glisp.SexpStr(fmt.Sprintf(items[0].(string), items[1:]...)), nil
 			}
 
 			return glisp.SexpNull, nil
