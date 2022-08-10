@@ -19,3 +19,7 @@
   (fn [& extra]
       (let [all (concat args extra)]
            (apply function all))))
+
+;; override
+(defmac override [function new_function]
+  `(def ~function (apply ~new_function [~function])))
