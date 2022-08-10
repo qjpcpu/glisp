@@ -201,6 +201,15 @@ func (env *Environment) Bind(name string, expr Sexp) error {
 	return env.scopestack.BindSymbol(sym, expr)
 }
 
+func (env *Environment) BindGlobal(name string, expr Sexp) error {
+	sym := env.MakeSymbol(name)
+	if env.scopestack.IsEmpty() {
+		return errors.New("no scope available")
+	}
+	env.scopestack.elements[env.extraGlobalCount].(Scope)[sym.number] = expr
+	return nil
+}
+
 func (env *Environment) PushGlobalScope() error {
 	if env.scopestack.Top() != env.extraGlobalCount {
 		return errors.New("not in global scope")
@@ -407,7 +416,7 @@ func (env *Environment) LoadString(str string) error {
 }
 
 func (env *Environment) AddFunction(name string, function UserFunction) {
-	env.Bind(name, MakeUserFunction(name, function))
+	env.BindGlobal(name, MakeUserFunction(name, function))
 }
 
 func (env *Environment) AddMacro(name string, function UserFunction) {
