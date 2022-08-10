@@ -17,7 +17,7 @@ func (coro SexpCoroutine) TypeName() string {
 	return "coroutine"
 }
 
-func StartCoroutineFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+func StartCoroutineFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpCoroutine:
 		go t.env.Run()
@@ -27,7 +27,7 @@ func StartCoroutineFunction(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, 
 	return glisp.SexpNull, nil
 }
 
-func CreateCoroutineMacro(env *glisp.Context, args []glisp.Sexp) (glisp.Sexp, error) {
+func CreateCoroutineMacro(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 	coroenv := env.Duplicate()
 	err := coroenv.LoadExpressions(args)
 	if err != nil {

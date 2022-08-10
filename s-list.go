@@ -71,7 +71,7 @@ func MakeList(expressions []Sexp) Sexp {
 	return Cons(expressions[0], MakeList(expressions[1:]))
 }
 
-func MapList(env *Context, fun *SexpFunction, expr Sexp) (Sexp, error) {
+func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	if expr == SexpNull {
 		return SexpNull, nil
 	}
@@ -183,7 +183,7 @@ func concatList(a *SexpPair, b Sexp) (Sexp, error) {
 	return SexpNull, NotAList
 }
 
-func FoldlList(env *Context, fun *SexpFunction, lst, acc Sexp) (Sexp, error) {
+func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error) {
 	if lst == SexpNull {
 		return acc, nil
 	}
@@ -204,7 +204,7 @@ func FoldlList(env *Context, fun *SexpFunction, lst, acc Sexp) (Sexp, error) {
 	return FoldlList(env, fun, list.tail, acc)
 }
 
-func FilterList(env *Context, fun *SexpFunction, list *SexpPair) (Sexp, error) {
+func FilterList(env *Environment, fun *SexpFunction, list *SexpPair) (Sexp, error) {
 	var head *SexpPair
 	var last *SexpPair
 	for {

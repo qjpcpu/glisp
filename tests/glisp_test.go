@@ -51,7 +51,7 @@ func TestLoadAllFunction(t *testing.T) {
 func TestPrint(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	var buf bytes.Buffer
-	vm.AddFunction("print", extensions.GetPrintFunction(&buf))
+	vm.AddNamedFunction("print", extensions.GetPrintFunction(&buf))
 	vm.LoadString(`(print "hello" 18446744073709551615)`)
 	_, err := vm.Run()
 	if err != nil {
@@ -76,7 +76,7 @@ func TestPrintf(t *testing.T) {
 func testPrintf(t *testing.T, script string, expect string) {
 	vm := loadAllExtensions(glisp.New())
 	var buf bytes.Buffer
-	vm.AddFunction("printf", extensions.GetPrintFunction(&buf))
+	vm.AddNamedFunction("printf", extensions.GetPrintFunction(&buf))
 	vm.LoadString(script)
 	_, err := vm.Run()
 	if err != nil {

@@ -11,9 +11,6 @@ import (
 	"sync/atomic"
 )
 
-type PreHook func(*Context, []Sexp)
-type PostHook func(*Context, Sexp)
-
 type Environment struct {
 	datastack        *Stack
 	scopestack       *Stack
@@ -27,8 +24,6 @@ type Environment struct {
 	mainfunc         *SexpFunction
 	pc               int
 	nextsymbol       *nextSymbol
-	before           []PreHook
-	after            []PostHook
 	extraGlobalCount int
 }
 
@@ -49,8 +44,6 @@ func New() *Environment {
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
-	env.before = []PreHook{}
-	env.after = []PostHook{}
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
@@ -78,8 +71,6 @@ func (env *Environment) Clone() *Environment {
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
-	dupenv.before = env.before
-	dupenv.after = env.after
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
 	dupenv.extraGlobalCount = env.extraGlobalCount
@@ -101,8 +92,6 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
-	dupenv.before = env.before
-	dupenv.after = env.after
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
 	dupenv.extraGlobalCount = env.extraGlobalCount
@@ -156,15 +145,6 @@ func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 }
 
 func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
-	ctx := newCtx(function.name, env)
-	for _, prehook := range env.before {
-		expressions, err := env.datastack.GetExpressions(nargs)
-		if err != nil {
-			return err
-		}
-		prehook(ctx, expressions)
-	}
-
 	if function.varargs {
 		err := env.wrangleOptargs(function.nargs, nargs)
 		if err != nil {
@@ -238,15 +218,6 @@ func (env *Environment) globalScopes() []StackElem {
 }
 
 func (env *Environment) ReturnFromFunction() error {
-	ctx := newCtx(env.curfunc.name, env)
-	for _, posthook := range env.after {
-		retval, err := env.datastack.GetExpr(0)
-		if err != nil {
-			return err
-		}
-		posthook(ctx, retval)
-	}
-
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
 	if err != nil {
@@ -262,15 +233,6 @@ func (env *Environment) ReturnFromFunction() error {
 }
 
 func (env *Environment) CallUserFunction(function *SexpFunction, name string, nargs int) error {
-	ctx := newCtx(name, env)
-	for _, prehook := range env.before {
-		expressions, err := env.datastack.GetExpressions(nargs)
-		if err != nil {
-			return err
-		}
-		prehook(ctx, expressions)
-	}
-
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
 		return errors.New(
@@ -281,16 +243,12 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 	env.curfunc = function
 	env.pc = -1
 
-	res, err := function.userfun(newCtx(name, env), args)
+	res, err := function.userfun(env, args)
 	if err != nil {
 		return errors.New(
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 	env.datastack.PushExpr(res)
-
-	for _, posthook := range env.after {
-		posthook(ctx, res)
-	}
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
 	return nil
@@ -419,14 +377,18 @@ func (env *Environment) AddFunction(name string, function UserFunction) {
 	env.BindGlobal(name, MakeUserFunction(name, function))
 }
 
+func (env *Environment) AddNamedFunction(name string, function NamedUserFunction) {
+	env.BindGlobal(name, MakeUserFunction(name, function(name)))
+}
+
 func (env *Environment) AddMacro(name string, function UserFunction) {
 	sym := env.MakeSymbol(name)
 	env.macros[sym.number] = MakeUserFunction(name, function)
 }
 
 func (env *Environment) ImportEval() {
-	env.AddFunction("source-file", SourceFileFunction)
-	env.AddFunction("eval", EvalFunction)
+	env.AddNamedFunction("source-file", GetSourceFileFunction)
+	env.AddNamedFunction("eval", GetEvalFunction)
 }
 
 func (env *Environment) DumpFunctionByName(name string) error {
@@ -513,7 +475,7 @@ func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 
 func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
-		return fun.userfun(newCtx(fun.name, env), args)
+		return fun.userfun(env, args)
 	}
 
 	env.pc = -2
@@ -544,14 +506,6 @@ func (env *Environment) Run() (Sexp, error) {
 	}
 
 	return env.datastack.PopExpr()
-}
-
-func (env *Environment) AddPreHook(fun PreHook) {
-	env.before = append(env.before, fun)
-}
-
-func (env *Environment) AddPostHook(fun PostHook) {
-	env.after = append(env.after, fun)
 }
 
 func (env *Environment) GlobalFunctions() []string {

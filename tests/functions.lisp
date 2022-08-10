@@ -41,3 +41,6 @@
 
 (assert (= "list" (typestr (read "()"))))
 (assert (= 2 (apply '+ [1 1])))
+
+(defn sub [f a b] (f a b))
+(assert (= 1 (sub -  2 1)))

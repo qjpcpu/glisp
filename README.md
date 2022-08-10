@@ -24,6 +24,5 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Macro System
  * [x] Syntax quoting (backticks)
  * [x] Channel and goroutine support
- * [x] Pre- and Post- function call hooks
 
 The full documentation can be found in the [Wiki](https://github.com/qjpcpu/glisp/wiki).

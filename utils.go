@@ -1,12 +1,15 @@
 package glisp
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
 const Many = -1
+
+var WrongType error = errors.New("operands have invalid type")
 
 func WrongNumberArguments(funcname string, current int, expect ...int) (Sexp, error) {
 	exp := make([]string, len(expect))

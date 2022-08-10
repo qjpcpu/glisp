@@ -193,6 +193,7 @@ func main() {
 	extensions.ImportJSON(env)
 	extensions.ImportString(env)
 	extensions.ImportIO(env)
+	extensions.ImportContainerUtils(env)
 
 	flag.Parse()
 
