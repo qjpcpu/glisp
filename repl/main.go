@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/peterh/liner"
 	"github.com/qjpcpu/glisp"
@@ -62,37 +63,10 @@ func getLine(prefix string) (string, error) {
 	}
 }
 
-func isBalanced(str string) bool {
-	parens := 0
-	squares := 0
-
-	for _, c := range str {
-		switch c {
-		case '(':
-			parens++
-		case ')':
-			parens--
-		case '[':
-			squares++
-		case ']':
-			squares--
-		}
-	}
-
-	return parens == 0 && squares == 0
-}
-
-func getExpression() (string, error) {
+func readLine() (string, error) {
 	line, err := getLine("> ")
 	if err != nil {
 		return "", err
-	}
-	for !isBalanced(line) {
-		nextline, err := getLine(">> ")
-		if err != nil {
-			return "", err
-		}
-		line += "\n" + nextline
 	}
 	history = append(history, strings.ReplaceAll(line, "\n", " "))
 	return line, nil
@@ -110,36 +84,30 @@ func processDumpCommand(env *glisp.Environment, args []string) {
 }
 
 func repl(env *glisp.Environment) {
+	stremRepl := NewStreamRepl(env)
 	for {
-		line, err := getExpression()
+		line, err := readLine()
 		if err != nil {
+			stremRepl.Stop()
 			os.Exit(-1)
 		}
+		stremRepl.Write(line + "\n")
 
-		parts := strings.Split(line, " ")
-		if strings.TrimSpace(line) == "" {
-			continue
+		select {
+		case <-time.After(time.Millisecond * 100):
+		case ret := <-stremRepl.Out():
+			expr, err := ret.Ret, ret.Err
+			if err != nil {
+				fmt.Print(env.GetStackTrace(err))
+				env.Clear()
+				break
+			}
+
+			if expr != glisp.SexpNull {
+				fmt.Println(expr.SexpString())
+			}
 		}
 
-		if parts[0] == "quit" {
-			break
-		}
-
-		if parts[0] == "dump" {
-			processDumpCommand(env, parts[1:])
-			continue
-		}
-
-		expr, err := env.EvalString(line)
-		if err != nil {
-			fmt.Print(env.GetStackTrace(err))
-			env.Clear()
-			continue
-		}
-
-		if expr != glisp.SexpNull {
-			fmt.Println(expr.SexpString())
-		}
 	}
 }
 

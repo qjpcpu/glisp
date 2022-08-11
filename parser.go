@@ -14,6 +14,10 @@ var UnexpectedEnd error = errors.New("Unexpected end of input")
 
 const SliceDefaultCap = 10
 
+func NewParser(l *Lexer, e *Environment) *Parser {
+	return &Parser{lexer: l, env: e}
+}
+
 func ParseList(parser *Parser) (Sexp, error) {
 	lexer := parser.lexer
 	tok, err := lexer.PeekNextToken()
