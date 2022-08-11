@@ -85,6 +85,7 @@ func TestPrintf(t *testing.T) {
 	testPrintf(t, `(printf "%v" '(1 2 3))`, `(1 2 3)`)
 	testPrintf(t, `(printf "%v" [1 2 3])`, `[1 2 3]`)
 	testPrintf(t, `(printf "%v" {'a 1})`, `{a 1}`)
+	testPrintf(t, `(printf "%f%%" 3.14)`, `3.14%`)
 }
 
 func testPrintf(t *testing.T, script string, expect string) {

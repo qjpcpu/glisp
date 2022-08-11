@@ -62,9 +62,9 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 			case "print":
 				fmt.Fprint(w, items...)
 			case "printf":
-				fmt.Fprintf(w, items[0].(string), items[1:]...)
+				fmt.Fprintf(w, refactFmtStr(items[0].(string)), items[1:]...)
 			case "sprintf":
-				return glisp.SexpStr(fmt.Sprintf(items[0].(string), items[1:]...)), nil
+				return glisp.SexpStr(fmt.Sprintf(refactFmtStr(items[0].(string)), items[1:]...)), nil
 			}
 
 			return glisp.SexpNull, nil
@@ -90,7 +90,7 @@ func mapSexpToGoPrintableInterface(sexp glisp.Sexp) interface{} {
 			return expr.SexpString()
 		}
 	case glisp.SexpFloat:
-		return expr.ToFloat64()
+		return expr.SexpString()
 	case glisp.SexpSymbol:
 		return expr.Name()
 	case glisp.SexpChar:
@@ -98,4 +98,35 @@ func mapSexpToGoPrintableInterface(sexp glisp.Sexp) interface{} {
 	default:
 		return expr.SexpString()
 	}
+}
+
+func refactFmtStr(str string) string {
+	data := []rune(str)
+	var ret []rune
+	var foundSym bool
+	for i := 0; i < len(data); {
+		b := data[i]
+		if !foundSym {
+			if b == '%' {
+				if i < len(data)-1 && data[i+1] == '%' {
+					ret = append(ret, '%', '%')
+					i += 2
+				} else {
+					foundSym = true
+					i++
+				}
+				continue
+			} else {
+				ret = append(ret, b)
+				i++
+			}
+		} else {
+			if ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z') {
+				ret = append(ret, '%', 'v')
+				foundSym = false
+			}
+			i++
+		}
+	}
+	return string(ret)
 }
