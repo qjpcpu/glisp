@@ -98,3 +98,5 @@
 (assert (= 9223372036854775807 (srl64 -2 1)))
 
 (assert (= "a" (char2str #a)))
+
+(assert (= #a (int2char 97)))

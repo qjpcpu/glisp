@@ -483,6 +483,8 @@ func TestWrongArgumentNumber(t *testing.T) {
 	mustErr(`(char2int "")`)
 	mustErr(`(char2str)`)
 	mustErr(`(char2str "")`)
+	mustErr(`(int2char)`)
+	mustErr(`(int2char "")`)
 }
 
 func expectErrorContains(t *testing.T, script string, keyword string) {

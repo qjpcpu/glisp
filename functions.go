@@ -61,6 +61,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"float2int":  GetFloatToInt,
 	"float2str":  GetFloatToString,
 	"char2int":   GetCharToNumber,
+	"int2char":   GetIntToChar,
 	"char2str":   GetCharToStr,
 	"round":      GetRoundFloat,
 	"typestr":    GetTypeFunction,
@@ -755,6 +756,19 @@ func GetCharToNumber(name string) UserFunction {
 			return SexpNull, fmt.Errorf(`%s argument should be char`, name)
 		}
 		return NewSexpInt64(int64(ch)), nil
+	}
+}
+
+func GetIntToChar(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		integer, ok := args[0].(SexpInt)
+		if !ok {
+			return SexpNull, fmt.Errorf(`%s argument should be integer`, name)
+		}
+		return SexpChar(rune(integer.ToInt())), nil
 	}
 }
 
