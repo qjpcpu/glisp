@@ -12,6 +12,7 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Float, Int, Char, String, Bytes, Symbol, List, Array, and Hash datatypes
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`)
  * [x] Shift Operators (`sla`, `sra`)
+ * [x] Big integer
  * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
  * [x] Comparison operations (`<`, `>`, `<=`, `>=`, `=`, and `not=`)
  * [x] Short-circuit boolean operators (`and` and `or`)
