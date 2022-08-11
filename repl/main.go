@@ -63,8 +63,12 @@ func getLine(prefix string) (string, error) {
 	}
 }
 
-func readLine() (string, error) {
-	line, err := getLine("> ")
+func readLine(waitMore bool) (string, error) {
+	prefix := "> "
+	if waitMore {
+		prefix = ">> "
+	}
+	line, err := getLine(prefix)
 	if err != nil {
 		return "", err
 	}
@@ -85,17 +89,23 @@ func processDumpCommand(env *glisp.Environment, args []string) {
 
 func repl(env *glisp.Environment) {
 	stremRepl := NewStreamRepl(env)
+	var waitMore bool
+	var pendingCount int
 	for {
-		line, err := readLine()
+		line, err := readLine(waitMore)
 		if err != nil {
 			stremRepl.Stop()
 			os.Exit(-1)
 		}
 		stremRepl.Write(line + "\n")
+		pendingCount += len(strings.TrimSpace(line))
 
 		select {
 		case <-time.After(time.Millisecond * 100):
+			waitMore = pendingCount > 0
 		case ret := <-stremRepl.Out():
+			waitMore = false
+			pendingCount = 0
 			expr, err := ret.Ret, ret.Err
 			if err != nil {
 				fmt.Print(env.GetStackTrace(err))
