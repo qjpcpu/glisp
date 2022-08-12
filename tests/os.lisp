@@ -1,0 +1,16 @@
+(assert (= "hello world" (os/exec "echo" "-n" "hello world")))
+(assert (= "1 hello world" (os/exec "echo" "-n" 1 (str2bytes "hello world"))))
+(def name "jack")
+(assert (= "hello jack" (os/exec "echo -n hello" name)))
+
+;; file
+(def dir "./not-exist-dir/")
+(def file (concat dir "not-exist-file.dat"))
+(assert (not (os/file-exist? file)))
+(os/write-file file "hello")
+(assert (= "hello" (bytes2str (os/read-file file))))
+(os/write-file file (str2bytes "hello"))
+(assert (= "hello" (bytes2str (os/read-file file))))
+(assert (os/file-exist? file))
+(os/remove-file dir)
+(assert (not (os/file-exist? file)))

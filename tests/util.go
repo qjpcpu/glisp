@@ -22,6 +22,6 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	extensions.ImportRegex(vm)
 	extensions.ImportTime(vm)
 	extensions.ImportString(vm)
-	extensions.ImportIO(vm)
+	extensions.ImportOS(vm)
 	return vm
 }

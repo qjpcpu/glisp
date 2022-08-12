@@ -186,7 +186,7 @@ func newEnv() *glisp.Environment {
 	extensions.ImportCoreUtils(env)
 	extensions.ImportJSON(env)
 	extensions.ImportString(env)
-	extensions.ImportIO(env)
 	extensions.ImportContainerUtils(env)
+	extensions.ImportOS(env)
 	return env
 }

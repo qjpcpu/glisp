@@ -17,7 +17,7 @@
 (def h2 {'a (time/parse 1656988237)})
 (assert (= "{\"a\":\"2022-07-05 10:30:37\"}" (json/stringify h2)))
 
-(def js (json/parse (io/read-file "./test-data.json")))
+(def js (json/parse (os/read-file "./test-data.json")))
 (assert (> (len (json/stringify js)) 0))
 (assert (= 100 (hget js "number")))
 (assert (= 1.23 (hget js "float")))

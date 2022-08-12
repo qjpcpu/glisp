@@ -1,20 +1,52 @@
 package extensions
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"os/exec"
+
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportIO(env *glisp.Environment) {
-	env.AddNamedFunction("io/read-file", GetReadFile)
-	env.AddNamedFunction("io/write-file", GetWriteFile)
-	env.AddNamedFunction("io/file-exist?", GetExistFile)
-	env.AddNamedFunction("io/remove-file", GetRemoveFile)
+func ImportOS(env *glisp.Environment) error {
+	env.AddNamedFunction("os/read-file", GetReadFile)
+	env.AddNamedFunction("os/write-file", GetWriteFile)
+	env.AddNamedFunction("os/file-exist?", GetExistFile)
+	env.AddNamedFunction("os/remove-file", GetRemoveFile)
+	env.AddNamedFunction("os/exec", ExecCommand)
+	return nil
+}
+
+func ExecCommand(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) == 0 {
+			return glisp.SexpNull, errors.New("no command arguments")
+		}
+		var arguments []string
+		for _, arg := range args {
+			switch expr := arg.(type) {
+			case glisp.SexpStr:
+				arguments = append(arguments, string(expr))
+			case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
+				arguments = append(arguments, arg.SexpString())
+			case glisp.SexpBytes:
+				arguments = append(arguments, string(expr.Bytes()))
+			default:
+				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %T", arg)
+			}
+		}
+		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
+		ret, err := cmd.CombinedOutput()
+		if err != nil {
+			return glisp.SexpNull, fmt.Errorf("%v\n%v", err, string(ret))
+		}
+		return glisp.SexpStr(ret), nil
+	}
 }
 
 func GetReadFile(name string) glisp.UserFunction {
