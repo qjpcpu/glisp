@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 
 	"unicode/utf8"
@@ -32,6 +33,8 @@ func NewStreamRepl(env *glisp.Environment) *StreamRepl {
 }
 
 func (sr *StreamRepl) start() {
+START:
+	sr.drainInput()
 	lexer := glisp.NewLexerFromStream(sr)
 	for {
 		select {
@@ -39,17 +42,38 @@ func (sr *StreamRepl) start() {
 			return
 		default:
 		}
-		expr, err := glisp.ParseExpression(glisp.NewParser(lexer, sr.env))
+		expr, err := sr.replOnce(lexer)
 		if err != nil {
 			sr.output <- &Result{Err: err}
-			continue
+			sr.env.Clear()
+			goto START
 		}
-		if err = sr.env.LoadExpressions([]glisp.Sexp{expr}); err != nil {
-			sr.output <- &Result{Err: err}
-			continue
+		sr.output <- &Result{Ret: expr}
+	}
+}
+
+func (sr *StreamRepl) replOnce(lexer *glisp.Lexer) (glisp.Sexp, error) {
+	expr, err := glisp.ParseExpression(glisp.NewParser(lexer, sr.env))
+	if err != nil {
+		return glisp.SexpNull, errors.New(sr.env.GetStackTrace(err))
+	}
+	if err = sr.env.LoadExpressions([]glisp.Sexp{expr}); err != nil {
+		return glisp.SexpNull, errors.New(sr.env.GetStackTrace(err))
+	}
+	ret, err := sr.env.Run()
+	if err != nil {
+		return glisp.SexpNull, errors.New(sr.env.GetStackTrace(err))
+	}
+	return ret, nil
+}
+
+func (sr *StreamRepl) drainInput() {
+	for {
+		select {
+		case <-sr.input:
+		default:
+			return
 		}
-		ret, err := sr.env.Run()
-		sr.output <- &Result{Ret: ret, Err: err}
 	}
 }
 

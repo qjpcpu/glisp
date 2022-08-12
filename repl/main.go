@@ -108,8 +108,7 @@ func repl(env *glisp.Environment) {
 			pendingCount = 0
 			expr, err := ret.Ret, ret.Err
 			if err != nil {
-				fmt.Print(env.GetStackTrace(err))
-				env.Clear()
+				fmt.Println(ret.Err)
 				break
 			}
 
@@ -157,7 +156,24 @@ var (
 
 func main() {
 	flag.StringVar(&fmtFile, "f", "", "format file")
+	flag.Parse()
 
+	env := newEnv()
+	registKeywords(env)
+
+	if fmtFile != "" {
+		fmtScript(env, fmtFile)
+		return
+	}
+
+	if args := os.Args; len(args) > 1 {
+		runScript(env, args[1])
+	} else {
+		repl(env)
+	}
+}
+
+func newEnv() *glisp.Environment {
 	env := glisp.New()
 	env.ImportEval()
 	extensions.ImportRandom(env)
@@ -172,19 +188,5 @@ func main() {
 	extensions.ImportString(env)
 	extensions.ImportIO(env)
 	extensions.ImportContainerUtils(env)
-
-	flag.Parse()
-
-	registKeywords(env)
-
-	if fmtFile != "" {
-		fmtScript(env, fmtFile)
-		return
-	}
-
-	if args := os.Args; len(args) > 1 {
-		runScript(env, args[1])
-	} else {
-		repl(env)
-	}
+	return env
 }

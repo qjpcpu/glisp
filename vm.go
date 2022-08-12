@@ -335,44 +335,6 @@ func (s SquashInstr) Execute(env *Environment) error {
 	return nil
 }
 
-// bind these symbols to the SexpPair list found at
-// datastack top.
-type BindlistInstr struct {
-	syms []SexpSymbol
-}
-
-func (b BindlistInstr) InstrString() string {
-	joined := ""
-	for _, s := range b.syms {
-		joined += s.name + " "
-	}
-	return fmt.Sprintf("bindlist %s", joined)
-}
-
-func (b BindlistInstr) Execute(env *Environment) error {
-	expr, err := env.datastack.PopExpr()
-	if err != nil {
-		return err
-	}
-
-	arr, err := ListToArray(expr)
-	if err != nil {
-		return err
-	}
-
-	nsym := len(b.syms)
-	narr := len(arr)
-	if narr < nsym {
-		return fmt.Errorf("bindlist failing: %d targets but only %d sources", nsym, narr)
-	}
-
-	for i, bindThisSym := range b.syms {
-		env.scopestack.BindSymbol(bindThisSym, arr[i])
-	}
-	env.pc++
-	return nil
-}
-
 type VectorizeInstr int
 
 func (s VectorizeInstr) InstrString() string {
