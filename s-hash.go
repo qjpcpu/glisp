@@ -81,6 +81,11 @@ func MakeHash(args []Sexp) (*SexpHash, error) {
 	return hash, nil
 }
 
+func (hash *SexpHash) HashExist(key Sexp) bool {
+	_, err := hash.HashGet(key)
+	return err == nil
+}
+
 func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	// this is kind of a hack
 	// SexpEnd can't be created by user

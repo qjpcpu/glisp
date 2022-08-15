@@ -8,7 +8,7 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func QuerySexp(name string) glisp.UserFunction {
+func QueryJSONSexp(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
@@ -27,6 +27,38 @@ func QuerySexp(name string) glisp.UserFunction {
 			return glisp.SexpNull, nil
 		}
 		return findSexp(args[0], p), nil
+	}
+}
+
+func SetJSONSexp(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 3 {
+			return glisp.WrongNumberArguments(name, len(args), 3)
+		}
+		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
+		}
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
+		}
+		tokens := strings.Split(string(args[1].(glisp.SexpStr)), ".")
+		return setSexp(args[0], tokens, args[2])
+	}
+}
+
+func DelJSONSexp(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2)
+		}
+		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
+		}
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
+		}
+		tokens := strings.Split(string(args[1].(glisp.SexpStr)), ".")
+		return delSexp(args[0], tokens)
 	}
 }
 
@@ -324,5 +356,102 @@ func sexprToStr(expr glisp.Sexp) string {
 		return string(s)
 	default:
 		return expr.SexpString()
+	}
+}
+
+func setSexp(root glisp.Sexp, tokens []string, val glisp.Sexp) (glisp.Sexp, error) {
+	/* tokens always greather than 0, so dont worry about out of boundary */
+	if strings.TrimSpace(tokens[0]) == "" {
+		return glisp.SexpNull, fmt.Errorf("bad path %s", tokens[0])
+	}
+	if root == glisp.SexpNull {
+		root, _ = glisp.MakeHash(nil)
+	}
+	key := glisp.SexpStr(tokens[0])
+	switch expr := root.(type) {
+	case *glisp.SexpHash:
+		if len(tokens) == 1 {
+			return root, expr.HashSet(key, val)
+		}
+		child, _ := expr.HashGetDefault(key, glisp.SexpNull)
+		ret, err := setSexp(child, tokens[1:], val)
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		return expr, expr.HashSet(key, ret)
+	case glisp.SexpArray:
+		idx, err := strconv.Atoi(tokens[0])
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		if len(tokens) == 1 {
+			if idx >= 0 && idx < len(expr) {
+				expr[idx] = val
+				return expr, nil
+			}
+			return append(expr, val), nil
+		}
+		if idx >= 0 && idx < len(expr) {
+			ret, err := setSexp(expr[idx], tokens[1:], val)
+			if err != nil {
+				return glisp.SexpNull, err
+			}
+			expr[idx] = ret
+			return expr, nil
+		}
+		ret, err := setSexp(glisp.SexpNull, tokens[1:], val)
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		return append(expr, ret), nil
+	default:
+		return glisp.SexpNull, fmt.Errorf("must set on hash/array but got %#T", root)
+	}
+}
+
+func delSexp(root glisp.Sexp, tokens []string) (glisp.Sexp, error) {
+	if root == glisp.SexpNull {
+		return root, nil
+	}
+	key := glisp.SexpStr(tokens[0])
+	switch expr := root.(type) {
+	case *glisp.SexpHash:
+		if len(tokens) == 1 {
+			return expr, expr.HashDelete(key)
+		}
+		child, _ := expr.HashGetDefault(key, glisp.SexpNull)
+		if child == glisp.SexpNull {
+			return expr, nil
+		}
+		ret, err := delSexp(child, tokens[1:])
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		return expr, expr.HashSet(key, ret)
+	case glisp.SexpArray:
+		idx, err := strconv.Atoi(tokens[0])
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		if len(tokens) == 1 {
+			if idx >= 0 && idx < len(expr) {
+				for i := idx; i < len(expr)-1; i++ {
+					expr[i] = expr[i+1]
+				}
+				return expr[:len(expr)-1], nil
+			}
+			return expr, nil
+		}
+		if idx >= 0 && idx < len(expr) {
+			ret, err := delSexp(expr[idx], tokens[1:])
+			if err != nil {
+				return glisp.SexpNull, err
+			}
+			expr[idx] = ret
+			return expr, nil
+		}
+		return expr, nil
+	default:
+		return glisp.SexpNull, fmt.Errorf("must del on hash/array but got %#T", root)
 	}
 }

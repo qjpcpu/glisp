@@ -5,4 +5,5 @@
 .idea
 /repl/repl
 /repl/*.lisp
+/repl/glisp
 /*.dat

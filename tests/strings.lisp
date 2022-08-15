@@ -54,3 +54,7 @@
 (assert (= "语言*" (str/mask "语言学" 2 -1 "*")))
 (assert (= "语言学" (str/mask "语言学" 20 1 "*")))
 (assert (= "语l**学" (str/mask "语lan学" 2 2 "*")))
+
+(assert (str/integer? "123"))
+(assert (str/float? "0.123"))
+(assert (str/bool? "false"))

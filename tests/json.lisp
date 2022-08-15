@@ -56,3 +56,8 @@
 (assert (= 1 (json/parse 1)))
 (assert (= 1.0 (json/parse 1.0)))
 (assert (= true (json/parse true)))
+
+;; with indent
+(assert (= "{
+  \"a\": 1
+}" (json/stringify {"a" 1} true)))

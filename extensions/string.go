@@ -26,6 +26,9 @@ func ImportString(env *glisp.Environment) {
 	env.AddNamedFunction("str/digit?", isDigit())
 	env.AddNamedFunction("str/alpha?", isAlpha())
 	env.AddNamedFunction("str/title?", isTitle())
+	env.AddNamedFunction("str/integer?", isInteger())
+	env.AddNamedFunction("str/float?", isFloat())
+	env.AddNamedFunction("str/bool?", isBool())
 	env.AddNamedFunction("str/md5", strMD5())
 	env.AddNamedFunction("str/mask", strMask)
 }
@@ -230,6 +233,26 @@ func isDigit() glisp.NamedUserFunction {
 			}
 		}
 		return len(s) > 0
+	})
+}
+
+func isInteger() glisp.NamedUserFunction {
+	return StringBool(func(s string) bool {
+		_, err := glisp.NewSexpIntStr(s)
+		return err == nil
+	})
+}
+
+func isFloat() glisp.NamedUserFunction {
+	return StringBool(func(s string) bool {
+		_, err := glisp.NewSexpFloatStr(s)
+		return err == nil
+	})
+}
+
+func isBool() glisp.NamedUserFunction {
+	return StringBool(func(s string) bool {
+		return s == `true` || s == `false`
 	})
 }
 

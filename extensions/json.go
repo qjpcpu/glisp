@@ -12,18 +12,26 @@ import (
 func ImportJSON(env *glisp.Environment) {
 	env.AddNamedFunction("json/stringify", jsonMarshal)
 	env.AddNamedFunction("json/parse", jsonUnmarshal)
+	env.AddNamedFunction("json/query", QueryJSONSexp)
+	env.AddNamedFunction("json/set", SetJSONSexp)
+	env.AddNamedFunction("json/del", DelJSONSexp)
 }
 
 func jsonMarshal(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+		if len(args) != 1 && len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 1, 2)
 		}
-		bytes, err := glisp.Marshal(args[0])
+		bs, err := glisp.Marshal(args[0])
 		if err != nil {
 			return glisp.SexpNull, err
 		}
-		return glisp.SexpStr(string(bytes)), nil
+		if len(args) == 2 && glisp.IsBool(args[1]) && bool(args[1].(glisp.SexpBool)) {
+			buf := new(bytes.Buffer)
+			json.Indent(buf, bs, "", "  ")
+			return glisp.SexpStr(buf.String()), nil
+		}
+		return glisp.SexpStr(string(bs)), nil
 	}
 }
 
