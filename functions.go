@@ -47,7 +47,6 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"hget":       GetHashAccessFunction,
 	"hset!":      GetHashAccessFunction,
 	"hdel!":      GetHashAccessFunction,
-	"hsearch":    SearchSexp,
 	"exist?":     GetExistFunction,
 	"slice":      GetSliceFunction,
 	"len":        GetLenFunction,

@@ -1,28 +1,30 @@
-package glisp
+package extensions
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/qjpcpu/glisp"
 )
 
-func SearchSexp(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
+func QuerySexp(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
-		if args[0] == SexpNull {
-			return SexpNull, nil
+		if args[0] == glisp.SexpNull {
+			return glisp.SexpNull, nil
 		}
-		if !IsHash(args[0]) && !IsArray(args[0]) {
-			return SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
+		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
 		}
-		if !IsString(args[1]) {
-			return SexpNull, fmt.Errorf("second argument of %s must be string", name)
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		p, ok := makeStPath(string(args[1].(SexpStr)))
+		p, ok := makeStPath(string(args[1].(glisp.SexpStr)))
 		if !ok {
-			return SexpNull, nil
+			return glisp.SexpNull, nil
 		}
 		return findSexp(args[0], p), nil
 	}
@@ -61,16 +63,16 @@ func (sp stPath) asInteger() int {
 	return int(i)
 }
 
-func findSexp(node Sexp, paths []stPath) Sexp {
+func findSexp(node glisp.Sexp, paths []stPath) glisp.Sexp {
 	if len(paths) == 0 {
 		return node
 	}
-	if node == nil || node == SexpNull {
-		return SexpNull
+	if node == nil || node == glisp.SexpNull {
+		return glisp.SexpNull
 	}
 	p := paths[0]
 	switch expr := node.(type) {
-	case *SexpHash:
+	case *glisp.SexpHash:
 		keys := expr.KeyOrder
 		for _, key := range keys {
 			if sexprToStr(key) == p.Name {
@@ -78,15 +80,15 @@ func findSexp(node Sexp, paths []stPath) Sexp {
 				return findSexp(val, paths[1:])
 			}
 		}
-	case SexpArray:
+	case glisp.SexpArray:
 		if p.isArrayElemSelector() {
-			var list SexpArray
+			var list glisp.SexpArray
 			fromList := expr
 			if p.Op != "" {
 				fromList = filterArrayNodeBySelector(expr, p)
 			}
 			for _, n := range fromList {
-				if out := findSexp(n, paths[1:]); out != nil && out != SexpNull {
+				if out := findSexp(n, paths[1:]); out != nil && out != glisp.SexpNull {
 					list = append(list, out)
 				}
 			}
@@ -95,16 +97,16 @@ func findSexp(node Sexp, paths []stPath) Sexp {
 			return findSexp(expr[p.asInteger()], paths[1:])
 		}
 	}
-	return SexpNull
+	return glisp.SexpNull
 }
 
-func filterArrayNodeBySelector(nodes SexpArray, path stPath) SexpArray {
+func filterArrayNodeBySelector(nodes glisp.SexpArray, path stPath) glisp.SexpArray {
 	paths, ok := makeStPath(path.Selector)
 	if !ok {
 		return nil
 	}
 	val := strings.TrimSuffix(strings.TrimPrefix(path.Val, `"`), `"`)
-	var list SexpArray
+	var list glisp.SexpArray
 	for _, n := range nodes {
 		if out := findSexp(n, paths); out != nil {
 			if isElemMatched(out, path.Op, val) {
@@ -115,10 +117,10 @@ func filterArrayNodeBySelector(nodes SexpArray, path stPath) SexpArray {
 	return list
 }
 
-func isElemMatched(n Sexp, op string, val string) bool {
+func isElemMatched(n glisp.Sexp, op string, val string) bool {
 	switch n.(type) {
-	case SexpArray:
-	case *SexpHash:
+	case glisp.SexpArray:
+	case *glisp.SexpHash:
 	default:
 		v := sexprToStr(n)
 		switch op {
@@ -131,56 +133,56 @@ func isElemMatched(n Sexp, op string, val string) bool {
 		case arrayElemNotContains:
 			return !strings.Contains(v, val)
 		case arrayElemGreaterThan:
-			if IsNumber(n) {
+			if glisp.IsNumber(n) {
 				if strings.Contains(val, ".") || strings.Contains(v, ".") {
-					f, _ := NewSexpFloatStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpFloatStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r > 0
 				} else {
-					f, _ := NewSexpIntStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpIntStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r > 0
 				}
 			} else {
 				return v > val
 			}
 		case arrayElemGreaterEqThan:
-			if IsNumber(n) {
+			if glisp.IsNumber(n) {
 				if strings.Contains(val, ".") || strings.Contains(v, ".") {
-					f, _ := NewSexpFloatStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpFloatStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r >= 0
 				} else {
-					f, _ := NewSexpIntStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpIntStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r >= 0
 				}
 			} else {
 				return v >= val
 			}
 		case arrayElemLessEqThan:
-			if IsNumber(n) {
+			if glisp.IsNumber(n) {
 				if strings.Contains(val, ".") || strings.Contains(v, ".") {
-					f, _ := NewSexpFloatStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpFloatStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r <= 0
 				} else {
-					f, _ := NewSexpIntStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpIntStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r <= 0
 				}
 			} else {
 				return v <= val
 			}
 		case arrayElemLessThan:
-			if IsNumber(n) {
+			if glisp.IsNumber(n) {
 				if strings.Contains(val, ".") || strings.Contains(v, ".") {
-					f, _ := NewSexpFloatStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpFloatStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r < 0
 				} else {
-					f, _ := NewSexpIntStr(val)
-					r, _ := Compare(n, f)
+					f, _ := glisp.NewSexpIntStr(val)
+					r, _ := glisp.Compare(n, f)
 					return r < 0
 				}
 			} else {
@@ -316,9 +318,9 @@ func findCloseSym(data []byte, from, to int, openSym byte, proj map[byte]byte) i
 	return -1
 }
 
-func sexprToStr(expr Sexp) string {
+func sexprToStr(expr glisp.Sexp) string {
 	switch s := expr.(type) {
-	case SexpStr:
+	case glisp.SexpStr:
 		return string(s)
 	default:
 		return expr.SexpString()

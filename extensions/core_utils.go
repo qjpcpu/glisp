@@ -33,6 +33,7 @@ func ImportCoreUtils(env *glisp.Environment) error {
 	env.AddNamedFunction("*", GetNumericFunction)
 	env.AddNamedFunction("/", GetNumericFunction)
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
+	env.AddNamedFunction("query", QuerySexp)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 
