@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -253,6 +254,38 @@ func TestRecover(t *testing.T) {
 	_, ok = env.FindObject(`g_var`)
 	if ok {
 		t.Fatal("should not find g_var")
+	}
+}
+
+func TestScriptFunctionFail(t *testing.T) {
+	env := newFullEnv()
+	fn, err := env.MakeScriptFunction(`(1 2 3)`, ``)
+	if err != nil {
+		t.Fatal("should not be error")
+	}
+	_, err = env.Apply(fn, []glisp.Sexp{})
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestLetListFail(t *testing.T) {
+	env := newFullEnv()
+	err := env.SourceStream(bytes.NewBufferString(`(let (1) 1)`))
+	if err == nil {
+		t.Fatal("should be error")
+	}
+	err = env.SourceStream(bytes.NewBufferString(`(let (list 1) 1)`))
+	if err == nil || !strings.Contains(err.Error(), `not an array`) {
+		t.Fatal("not an array")
+	}
+	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1])) 1)`))
+	if err == nil || !strings.Contains(err.Error(), `bind list length must be even`) {
+		t.Fatal("should be error")
+	}
+	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1 2])) 1)`))
+	if err == nil || !strings.Contains(err.Error(), `odd argument of bind list must be symbol`) {
+		t.Fatal("should be error")
 	}
 }
 

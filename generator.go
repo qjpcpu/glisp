@@ -365,16 +365,19 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 		return errors.New("malformed let statement")
 	}
 
-	lstatements := make([]SexpSymbol, 0)
-	rstatements := make([]Sexp, 0)
-	var bindings []Sexp
-
 	switch expr := args[0].(type) {
 	case SexpArray:
-		bindings = []Sexp(expr)
+		return gen.generateLetArray(name, expr, args[1:])
+	case *SexpPair:
+		return gen.generateLetList(name, expr, args[1:])
 	default:
 		return errors.New("let bindings must be in array")
 	}
+}
+
+func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []Sexp) error {
+	lstatements := make([]SexpSymbol, 0)
+	rstatements := make([]Sexp, 0)
 
 	if len(bindings)%2 != 0 {
 		return errors.New("uneven let binding list")
@@ -412,7 +415,26 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 			gen.AddInstruction(PutInstr{lstatements[i]})
 		}
 	}
-	err := gen.GenerateBegin(args[1:])
+	err := gen.GenerateBegin(args)
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.scopes--
+
+	return nil
+}
+
+func (gen *Generator) generateLetList(name string, bindings *SexpPair, args []Sexp) error {
+	gen.AddInstruction(AddScopeInstr(0))
+	gen.scopes++
+
+	if err := gen.Generate(bindings); err != nil {
+		return err
+	}
+	gen.AddInstruction(BindlistInstr{})
+
+	err := gen.GenerateBegin(args)
 	if err != nil {
 		return err
 	}

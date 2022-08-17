@@ -388,3 +388,35 @@ func (s HashizeInstr) Execute(env *Environment) error {
 	env.pc++
 	return nil
 }
+
+type BindlistInstr struct{}
+
+func (b BindlistInstr) InstrString() string {
+	return `bindlist`
+}
+
+func (b BindlistInstr) Execute(env *Environment) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	if !IsArray(expr) {
+		return fmt.Errorf("%s not an array", expr.SexpString())
+	}
+	arr := expr.(SexpArray)
+
+	if len(arr)%2 != 0 {
+		return errors.New("bind list length must be even")
+	}
+
+	for i := 0; i*2+1 < len(arr); i++ {
+		if !IsSymbol(arr[i*2]) {
+			return errors.New("odd argument of bind list must be symbol")
+		}
+		env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
+	}
+
+	env.pc++
+	return nil
+}

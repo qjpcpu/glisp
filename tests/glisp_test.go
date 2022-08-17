@@ -88,6 +88,63 @@ func TestPrintf(t *testing.T) {
 	testPrintf(t, `(printf "%f%%" 3.14)`, `3.14%`)
 }
 
+func TestMakeScriptFunction(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	fn, err := vm.MakeScriptFunction(`(+ @arg0 @arg1)`, ``)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !glisp.IsInt(ret) {
+		t.Fatal("return value should be integer")
+	}
+	if ret.(glisp.SexpInt).ToInt() != 3 {
+		t.Fatal("bad result")
+	}
+
+	fn, err = vm.MakeScriptFunction(`(str/start-with? @arg0 @arg1)`, ``)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.SexpStr("abc"), glisp.SexpStr("a")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !glisp.IsBool(ret) {
+		t.Fatal("return value should be boolean")
+	}
+	if !bool(ret.(glisp.SexpBool)) {
+		t.Fatal("bad result")
+	}
+}
+
+func TestMakeComplexScriptFunction(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	script := `
+(defn afn [a b] (+ a b))
+(defmac amac [a b] ESCAPE(* ~a ~b))
+;; (@arg0 + @arg1) * (@arg3 - @arg2)
+(amac (afn @arg0 @arg1) ((fn [a] (- a @arg2)) @arg3))
+`
+	fn, err := vm.MakeScriptFunction(strings.ReplaceAll(script, "ESCAPE", "`"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(2), glisp.NewSexpInt(3), glisp.NewSexpInt(5), glisp.NewSexpInt(7)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !glisp.IsInt(ret) {
+		t.Fatal("return value should be integer")
+	}
+	if ret.(glisp.SexpInt).ToInt() != 10 {
+		t.Fatal("bad result")
+	}
+}
+
 func testPrintf(t *testing.T, script string, expect string) {
 	vm := loadAllExtensions(glisp.New())
 	var buf bytes.Buffer
