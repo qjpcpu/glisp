@@ -54,12 +54,8 @@ func TestPrint(t *testing.T) {
 	vm.AddNamedFunction("print", extensions.GetPrintFunction(&buf))
 	vm.LoadString(`(print "hello" 18446744073709551615)`)
 	_, err := vm.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ret := buf.String(); ret != "hello18446744073709551615" {
-		t.Fatalf("(%s)!=(%s)", ret, "hello")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, `hello18446744073709551615`, glisp.SexpStr(buf.String()))
 }
 
 func TestPrintln(t *testing.T) {
@@ -68,12 +64,8 @@ func TestPrintln(t *testing.T) {
 	vm.AddNamedFunction("println", extensions.GetPrintFunction(&buf))
 	vm.LoadString(`(println "hello" 18446744073709551615)`)
 	_, err := vm.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ret := buf.String(); ret != "hello 18446744073709551615\n" {
-		t.Fatalf("(%s)!=(%s)", ret, "hello")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, "hello 18446744073709551615\n", glisp.SexpStr(buf.String()))
 }
 
 func TestPrintf(t *testing.T) {
@@ -91,34 +83,18 @@ func TestPrintf(t *testing.T) {
 func TestMakeScriptFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	fn, err := vm.MakeScriptFunction(`(+ @arg0 @arg1)`, ``)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ExpectSuccess(t, err)
+
 	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !glisp.IsInt(ret) {
-		t.Fatal("return value should be integer")
-	}
-	if ret.(glisp.SexpInt).ToInt() != 3 {
-		t.Fatal("bad result")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, ret)
 
 	fn, err = vm.MakeScriptFunction(`(str/start-with? @arg0 @arg1)`, ``)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ExpectSuccess(t, err)
+
 	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.SexpStr("abc"), glisp.SexpStr("a")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !glisp.IsBool(ret) {
-		t.Fatal("return value should be boolean")
-	}
-	if !bool(ret.(glisp.SexpBool)) {
-		t.Fatal("bad result")
-	}
+	ExpectSuccess(t, err)
+	ExpectTrue(t, ret)
 }
 
 func TestMakeComplexScriptFunction(t *testing.T) {
@@ -130,19 +106,11 @@ func TestMakeComplexScriptFunction(t *testing.T) {
 (amac (afn @arg0 @arg1) ((fn [a] (- a @arg2)) @arg3))
 `
 	fn, err := vm.MakeScriptFunction(strings.ReplaceAll(script, "ESCAPE", "`"), "")
-	if err != nil {
-		t.Fatal(err)
-	}
+	ExpectSuccess(t, err)
+
 	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(2), glisp.NewSexpInt(3), glisp.NewSexpInt(5), glisp.NewSexpInt(7)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !glisp.IsInt(ret) {
-		t.Fatal("return value should be integer")
-	}
-	if ret.(glisp.SexpInt).ToInt() != 10 {
-		t.Fatal("bad result")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 10, ret)
 }
 
 func testPrintf(t *testing.T, script string, expect string) {
@@ -151,12 +119,8 @@ func testPrintf(t *testing.T, script string, expect string) {
 	vm.AddNamedFunction("printf", extensions.GetPrintFunction(&buf))
 	vm.LoadString(script)
 	_, err := vm.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if out := buf.String(); out != expect {
-		t.Fatalf("[test printf] expect %s but got %s", expect, out)
-	}
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, expect, glisp.SexpStr(buf.String()))
 }
 
 type testSexp struct{}
@@ -170,30 +134,22 @@ func (testSexp2) SexpString() string { return "yyyy" }
 func TestCustomType(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	fn, _ := vm.FindObject("typestr")
-	ret, _ := vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{&testSexp{}})
-	if string(ret.(glisp.SexpStr)) != "*tests.testSexp" {
-		t.Fatal("bad type", ret.SexpString())
-	}
-	ret, _ = vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{testSexp2{}})
-	if string(ret.(glisp.SexpStr)) != "tests.testSexp2" {
-		t.Fatal("bad type", ret.SexpString())
-	}
+	ret, err := vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{&testSexp{}})
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, "*tests.testSexp", ret)
+	ret, err = vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{testSexp2{}})
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, "tests.testSexp2", ret)
 }
 
 func testFile(t *testing.T, file string) {
 	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		t.Fatalf("read file %s fail %v", file, err)
-	}
+	ExpectSuccess(t, err)
 	vm := loadAllExtensions(glisp.New())
 	err = vm.LoadString(string(bytes))
-	if err != nil {
-		t.Fatalf("parse file %s fail %v", file, err)
-	}
+	ExpectSuccess(t, err)
 	_, err = vm.Run()
-	if err != nil {
-		t.Fatalf("run file %s fail %v", file, err)
-	}
+	ExpectSuccess(t, err)
 	t.Logf("TEST %s OK", file)
 }
 
@@ -201,30 +157,23 @@ func testFileAgain(t *testing.T, file string) {
 	testit := func(fn func([]glisp.Sexp) string, expressions []glisp.Sexp) {
 		vm := loadAllExtensions(glisp.New())
 		err := vm.LoadString(fn(expressions))
-		if err != nil {
-			t.Fatalf("parse file %s fail %v", file, err)
-		}
+		ExpectSuccess(t, err)
+
 		_, err = vm.Run()
-		if err != nil {
-			t.Log("==========", file, "============\n", fn(expressions))
-			t.Fatalf("run file %s fail %v", file, err)
-		}
+		t.Log("==========", file, "============\n", fn(expressions))
+		ExpectSuccess(t, err)
 		t.Logf("TEST %s OK", file)
 	}
 	vm := loadAllExtensions(glisp.New())
 	expressions, err := vm.ParseFile(file)
-	if err != nil {
-		t.Fatalf("read file %s fail %v", file, err)
-	}
+	ExpectSuccess(t, err)
 	testit(glisp.FormatCompact, expressions)
 	testit(glisp.FormatPretty, expressions)
 }
 
 func listScripts(t *testing.T) []string {
 	files, err := ioutil.ReadDir(testDir)
-	if err != nil {
-		t.Fatal("load scripts fail ", err)
-	}
+	ExpectSuccess(t, err)
 
 	var scripts []string
 	for _, file := range files {
@@ -238,21 +187,16 @@ func listScripts(t *testing.T) []string {
 func TestSandBox(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	vm.PushGlobalScope()
-	if _, err := vm.EvalString(`(defn sb [a b ] (+ a b))`); err != nil {
-		t.Fatal(err)
-	}
+	_, err := vm.EvalString(`(defn sb [a b ] (+ a b))`)
+	ExpectSuccess(t, err)
+
 	ret, err := vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !glisp.IsInt(ret) {
-		t.Fatal(ret.SexpString() + " is not =3")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, ret)
+
 	vm.PopGlobalScope()
 	_, err = vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	if err == nil {
-		t.Fatal("should not found function")
-	}
+	ExpectError(t, err, "function sb not found")
 }
 
 func TestWrapExpressionsAsFunction(t *testing.T) {
@@ -261,72 +205,115 @@ func TestWrapExpressionsAsFunction(t *testing.T) {
 	name := vm.GenSymbol("__anoy")
 	script = fmt.Sprintf(`(defn %s [] %s)`, name.Name(), script)
 	_, err := vm.EvalString(script)
-	if err != nil {
-		t.Fatal("should success")
-	}
+	ExpectSuccess(t, err)
+
 	sym, ok := vm.FindObject(name.Name())
-	if !ok {
-		t.Fatal("should find anoy function")
-	}
+	ExpectTrue(t, glisp.SexpBool(ok))
+
 	ret, err := vm.Apply(sym.(*glisp.SexpFunction), nil)
-	if err != nil {
-		t.Fatal("should success")
-	}
-	if ret.(glisp.SexpInt).ToInt() != 5 {
-		t.Fatal("bad result")
-	}
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 5, ret)
 }
 
 func TestApplyMessupPC0(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	_, err := vm.EvalString(`(+ 1 2)`)
-	ShouldNoError(t, err)
+	ExpectSuccess(t, err)
 	expr, err := vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 
 	_, err = vm.EvalString(`(+ 1 2)`)
-	ShouldNoError(t, err)
+	ExpectSuccess(t, err)
 	expr, err = vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 }
 
 func TestApplyMessupPC(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	_, err := vm.EvalString(`(defn myfn [a b] (+ a b))`)
-	ShouldNoError(t, err)
+	ExpectSuccess(t, err)
 	expr, err := vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 
 	_, err = vm.EvalString(`(defn myfn2 [a b] (+ a b))`)
-	ShouldNoError(t, err)
+	ExpectSuccess(t, err)
 	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (myfn2 2 3)`)
-	ShouldEqInteger(t, 5, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 5, expr)
 	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 9, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 9, expr)
 
 	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (apply myfn2 [2 3])`)
-	ShouldEqInteger(t, 5, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 5, expr)
 	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 9, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 9, expr)
 }
 
 func TestApplyMessupPCWithMacro(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	expr, err := vm.EvalString("(defmac myfnmac [a b] `(+ ~a ~b)) (defn myfn [a b] (myfnmac a b)) (+ 1 2)")
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 	expr, err = vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString("(defmac myfnmac2 [a b] `(+ ~a ~b)) (defn myfn2 [a b] (myfnmac2 a b)) (+ 1 2)")
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString("(defmac myfnmac3 [a b] `(+ ~a ~b)) (defn myfn3 [a b] (myfnmac3 (myfnmac2 a 1) (myfnmac b 1))) (+ 1 2)")
-	ShouldEqInteger(t, 3, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, expr)
 	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
-	ShouldEqInteger(t, 5, expr, err)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 5, expr)
+}
+
+func TestCrossApply(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.AddFunction("f0", func(env *glisp.Environment, expr []glisp.Sexp) (glisp.Sexp, error) {
+		ret, err := env.ApplyByName("my-plus", expr)
+		ExpectSuccess(t, err)
+		return ret, err
+	})
+	_, err := vm.EvalString("(defn my-plus [a b] (+ a b))")
+	ExpectSuccess(t, err)
+	ret, err := vm.ApplyByName("f0", []glisp.Sexp{glisp.NewSexpInt(100), glisp.NewSexpInt(200)})
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 300, ret)
+}
+
+func TestCloneEnv(t *testing.T) {
+	vm := glisp.New()
+	vm2 := vm.Clone()
+	vm.AddFunction("f0", func(env *glisp.Environment, expr []glisp.Sexp) (glisp.Sexp, error) {
+		return glisp.NewSexpInt(100), nil
+	})
+	ret, err := vm.ApplyByName("f0", nil)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 100, ret)
+
+	_, ok := vm2.FindObject("f0")
+	ExpectFalse(t, glisp.SexpBool(ok))
+}
+
+func TestSourceFile(t *testing.T) {
+	WithTempFile(`(+ 1 2)`, func(file string) {
+		script := fmt.Sprintf(`(source-file '("%s"))`, file)
+		ExpectScriptSuccess(t, script)
+	})
 }

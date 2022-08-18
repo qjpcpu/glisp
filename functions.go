@@ -30,7 +30,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"symbol?":    GetTypeQueryFunction,
 	"string?":    GetTypeQueryFunction,
 	"zero?":      GetTypeQueryFunction,
-	"bool?":      GetTypeFunction,
+	"bool?":      GetTypeQueryFunction,
 	"empty?":     GetTypeQueryFunction,
 	"bytes?":     GetTypeQueryFunction,
 	"not":        GetNotFunction,
@@ -432,7 +432,7 @@ func GetEvalFunction(name string) UserFunction {
 		newenv := env.Duplicate()
 		err := newenv.LoadExpressions(args)
 		if err != nil {
-			return SexpNull, errors.New("failed to compile expression")
+			return SexpNull, fmt.Errorf("failed to compile expression: %v", err)
 		}
 		newenv.pc = 0
 		return newenv.Run()
@@ -644,8 +644,8 @@ func GetSymnumFunction(name string) UserFunction {
 
 func GetSourceFileFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 1 {
-			return WrongNumberArguments(name, len(args), 1)
+		if len(args) == 0 {
+			return WrongNumberArguments(name, len(args), 1, Many)
 		}
 
 		var sourceItem func(item Sexp) error

@@ -14,16 +14,16 @@ done
 
 case "${VERBOSE}.${COVERAGE}" in
   "0.0")
-      cd tests && go test  -coverprofile=c.out -coverpkg=../... | tee test.out
+      cd tests && go test  -coverprofile=c.out -coverpkg=../.,../extensions | tee test.out
      ;;
   "0.1")
-     cd tests && go test  -coverprofile=c.out -coverpkg=../...  | tee test.out && go tool cover -html=c.out
+     cd tests && go test  -coverprofile=c.out -coverpkg=../.,../extensions  | tee test.out && go tool cover -html=c.out
      ;;
   "1.0")
-     cd tests && go test  -coverprofile=c.out -coverpkg=../...  -v | tee test.out
+     cd tests && go test  -coverprofile=c.out -coverpkg=../.,../extensions  -v | tee test.out
      ;;
   "1.1")
-     cd tests && go test  -coverprofile=c.out -coverpkg=../...  -v | tee test.out && go tool cover -html=c.out
+     cd tests && go test  -coverprofile=c.out -coverpkg=../.,../extensions  -v | tee test.out && go tool cover -html=c.out
      ;;
 esac
 

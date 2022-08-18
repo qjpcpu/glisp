@@ -78,9 +78,9 @@ func readLine(waitMore bool) (string, error) {
 
 func processDumpCommand(env *glisp.Environment, args []string) {
 	if len(args) == 0 {
-		env.DumpEnvironment()
+		env.DumpEnvironment(os.Stderr)
 	} else {
-		err := env.DumpFunctionByName(args[0])
+		err := env.DumpFunctionByName(os.Stderr, args[0])
 		if err != nil {
 			fmt.Println(err)
 		}

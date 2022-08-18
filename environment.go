@@ -66,13 +66,31 @@ func (env *Environment) Clone() *Environment {
 	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
-	dupenv.builtins = env.builtins
-	dupenv.macros = env.macros
-	dupenv.symtable = env.symtable
-	dupenv.revsymtable = env.revsymtable
-	dupenv.nextsymbol = env.nextsymbol
+	dupenv.builtins = make(map[int]*SexpFunction)
+	for k, v := range env.builtins {
+		dupenv.builtins[k] = v
+	}
+	dupenv.macros = make(map[int]*SexpFunction)
+	for k, v := range env.macros {
+		dupenv.macros[k] = v
+	}
+	dupenv.symtable = make(map[string]int)
+	for k, v := range env.symtable {
+		dupenv.symtable[k] = v
+	}
+	dupenv.revsymtable = make(map[int]string)
+	for k, v := range env.revsymtable {
+		dupenv.revsymtable[k] = v
+	}
+	dupenv.nextsymbol = env.nextsymbol.Clone()
 
-	dupenv.scopestack.PushMulti(env.globalScopes()...)
+	for _, scp := range env.globalScopes() {
+		if cb, ok := scp.(Clonable); ok {
+			dupenv.scopestack.Push(cb.Clone())
+		} else {
+			dupenv.scopestack.Push(scp)
+		}
+	}
 	dupenv.extraGlobalCount = env.extraGlobalCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
@@ -391,7 +409,7 @@ func (env *Environment) ImportEval() {
 	env.AddNamedFunction("eval", GetEvalFunction)
 }
 
-func (env *Environment) DumpFunctionByName(name string) error {
+func (env *Environment) DumpFunctionByName(w io.Writer, name string) error {
 	obj, found := env.FindObject(name)
 	if !found {
 		return fmt.Errorf("%q not found", name)
@@ -408,24 +426,24 @@ func (env *Environment) DumpFunctionByName(name string) error {
 	default:
 		return errors.New("not a function")
 	}
-	DumpFunction(fun)
+	DumpFunction(w, fun)
 	return nil
 }
 
-func DumpFunction(fun Function) {
+func DumpFunction(w io.Writer, fun Function) {
 	for _, instr := range fun {
-		fmt.Println("\t" + instr.InstrString())
+		fmt.Fprintln(w, "\t"+instr.InstrString())
 	}
 }
 
-func (env *Environment) DumpEnvironment() {
-	fmt.Println("Instructions:")
+func (env *Environment) DumpEnvironment(w io.Writer) {
+	fmt.Fprintln(w, "Instructions:")
 	if !env.curfunc.user {
-		DumpFunction(env.curfunc.fun)
+		DumpFunction(w, env.curfunc.fun)
 	}
-	fmt.Println("Stack:")
-	env.datastack.PrintStack()
-	fmt.Printf("PC: %d\n", env.pc)
+	fmt.Fprintln(w, "Stack:")
+	env.datastack.PrintStack(w)
+	fmt.Fprintf(w, "PC: %d\n", env.pc)
 }
 
 func (env *Environment) ReachedEnd() bool {
@@ -500,8 +518,9 @@ func (env *Environment) Run() (Sexp, error) {
 	}
 
 	if env.datastack.IsEmpty() {
-		env.DumpEnvironment()
-		os.Exit(-1)
+		var buf bytes.Buffer
+		env.DumpEnvironment(&buf)
+		return SexpNull, errors.New(buf.String())
 	}
 
 	return env.datastack.PopExpr()
@@ -556,4 +575,8 @@ func (g *nextSymbol) Incr() int64 {
 
 func (g *nextSymbol) Get() int64 {
 	return atomic.LoadInt64(&g.counter)
+}
+
+func (g *nextSymbol) Clone() *nextSymbol {
+	return &nextSymbol{counter: g.counter}
 }

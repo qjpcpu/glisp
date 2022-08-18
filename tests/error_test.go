@@ -13,68 +13,68 @@ import (
 
 func TestCompareFloatWithString(t *testing.T) {
 	script := `(= 1.0 "a")`
-	expectErrorContains(t, script, `cannot compare glisp.SexpFloat(1.0) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpFloat(1.0) to glisp.SexpStr("a")`)
 }
 
 func TestMapListFail(t *testing.T) {
 	script := `(map (fn [a] (+ a 1)) '("a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(map (fn [a] (+ a 1)) '(1 "a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(map (fn [a] (+ a 1)) 1)`
-	expectErrorContains(t, script, `second argument of map must be array/list`)
+	ExpectScriptErr(t, script, `second argument of map must be array/list`)
 }
 
 func TestFlatMapListFail(t *testing.T) {
 	script := `(flatmap (fn [a] (+ a 1)) '("a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(flatmap (fn [a] (+ a 1)) '(1))`
-	expectErrorContains(t, script, `flatmap function must return list but got 2`)
+	ExpectScriptErr(t, script, `flatmap function must return list but got 2`)
 	script = `(flatmap (fn [a] (list (+ a 1))) '(1 "a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 }
 
 func TestFilterListFail(t *testing.T) {
 	script := `(filter (fn [a] (+ "3" 1)) '("a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(filter (fn [a] (+ 3 1)) '("a"))`
-	expectErrorContains(t, script, `filter function must return boolean`)
+	ExpectScriptErr(t, script, `filter function must return boolean`)
 }
 
 func TestFoldlListFail(t *testing.T) {
 	script := `(foldl + 0 '("a"))`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 }
 
 func TestMapArrayFail(t *testing.T) {
 	script := `(map (fn [a] (+ a 1)) ["a"])`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 }
 
 func TestFilterArrayFail(t *testing.T) {
 	script := `(filter (fn [a] (+ "a" 1)) ["a"])`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(filter (fn [a] (+ 1 1)) ["a"])`
-	expectErrorContains(t, script, `filter function must return boolean`)
+	ExpectScriptErr(t, script, `filter function must return boolean`)
 }
 
 func TestFlatMapArrayFail(t *testing.T) {
 	script := `(flatmap (fn [a] (+ "a" 1)) ["a"])`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(flatmap (fn [a] (+ 1 1)) ["a"])`
-	expectErrorContains(t, script, `flatmap function must return array`)
+	ExpectScriptErr(t, script, `flatmap function must return array`)
 }
 
 func TestFilterHash(t *testing.T) {
 	script := `(filter (fn [a b] (+ "a" 1)) {'a 1})`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 	script = `(filter (fn [k v] (+ 1 1)) {'a 1})`
-	expectErrorContains(t, script, `filter function must return boolean`)
+	ExpectScriptErr(t, script, `filter function must return boolean`)
 }
 
 func TestFoldlHash(t *testing.T) {
 	script := `(foldl (fn [a b c] (+ "a" 1)) 0 {'a 1})`
-	expectErrorContains(t, script, `operands have invalid type`)
+	ExpectScriptErr(t, script, `operands have invalid type`)
 }
 
 type AnyStruct struct{ Number int }
@@ -86,474 +86,464 @@ func TestMarshalAny(t *testing.T) {
 	env.Bind("g_var", AnyStruct{Number: 1024})
 	script := `(= "{\"Number\":1024}" (json/stringify g_var))`
 	ret, err := env.EvalString(script)
-	if err != nil || !bool(ret.(glisp.SexpBool)) {
-		t.Fatal("marshal any")
-	}
+	ExpectSuccess(t, err)
+	ExpectTrue(t, ret)
 }
 
 func TestCompareIntWithString(t *testing.T) {
 	script := `(= 1 "a")`
-	expectErrorContains(t, script, `cannot compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
 }
 
 func TestIsZero(t *testing.T) {
-	if !glisp.IsZero(glisp.SexpChar(0)) {
-		t.Fatal("zero char")
-	}
-	if glisp.IsTruthy(glisp.SexpChar(0)) {
-		t.Fatal("zero char")
-	}
-	if !glisp.IsNumber(glisp.SexpChar(0)) {
-		t.Fatal("zero char")
-	}
+	ExpectTrue(t, glisp.SexpBool(glisp.IsZero(glisp.SexpChar(0))))
+	ExpectFalse(t, glisp.SexpBool(glisp.IsTruthy(glisp.SexpChar(0))))
+	ExpectTrue(t, glisp.SexpBool(glisp.IsNumber(glisp.SexpChar(0))))
 }
 
 func TestCompareStringWithInt(t *testing.T) {
 	script := `(= "a" 1)`
-	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareCharWithHash(t *testing.T) {
 	script := `(= #a {})`
-	expectErrorContains(t, script, `cannot compare glisp.SexpChar(#a) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpChar(#a) to *glisp.SexpHash({})`)
 }
 
 func TestCompareBytesWithHash(t *testing.T) {
 	script := `(= 0B6869 {})`
-	expectErrorContains(t, script, `cannot compare glisp.SexpBytes(0B6869) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpBytes(0B6869) to *glisp.SexpHash({})`)
 }
 
 func TestCompareHashWithList(t *testing.T) {
 	script := `(=  {} '(1))`
-	expectErrorContains(t, script, `cannot compare *glisp.SexpHash({}) to *glisp.SexpPair((1))`)
+	ExpectScriptErr(t, script, `cannot compare *glisp.SexpHash({}) to *glisp.SexpPair((1))`)
 }
 
 func TestCompareListWithHash(t *testing.T) {
 	script := `(= '(1) {})`
-	expectErrorContains(t, script, `cannot compare *glisp.SexpPair((1)) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare *glisp.SexpPair((1)) to *glisp.SexpHash({})`)
 }
 
 func TestCompareBoolWithInt(t *testing.T) {
 	script := `(= true 1)`
-	expectErrorContains(t, script, `cannot compare glisp.SexpBool(true) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpBool(true) to glisp.SexpInt(1)`)
 }
 
 func TestCompareListStringWithListInt(t *testing.T) {
 	script := `(= '("a") '(1))`
-	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareArrayStringWithArrayInt(t *testing.T) {
 	script := `(= ["a"] [1])`
-	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestCompareArrayWithInt(t *testing.T) {
 	script := `(= [] 1)`
-	expectErrorContains(t, script, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
 }
 
 func TestDiv0(t *testing.T) {
 	script := `(/ 1 0)`
-	expectErrorContains(t, script, `division by zero`)
+	ExpectScriptErr(t, script, `division by zero`)
 }
 
 func TestNotComparable(t *testing.T) {
 	script := `(= (make-chan) 1)`
-	expectErrorContains(t, script, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
 }
 
 func TestErrorExistInList(t *testing.T) {
 	script := `(exist? '("a") 1)`
-	expectErrorContains(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
 }
 
 func TestConcatStringErr(t *testing.T) {
 	script := `(concat "" 1)`
-	expectErrorContains(t, script, `second argument is not a string`)
+	ExpectScriptErr(t, script, `second argument is not a string`)
 }
 
 func TestConcatBytesErr(t *testing.T) {
 	script := `(concat 0B6869 1)`
-	expectErrorContains(t, script, `second argument is not bytes`)
+	ExpectScriptErr(t, script, `second argument is not bytes`)
 }
 
 func TestAppendStringErr(t *testing.T) {
 	script := `(append "" 1)`
-	expectErrorContains(t, script, `second argument is not a char`)
+	ExpectScriptErr(t, script, `second argument is not a char`)
 }
 
 func TestHashKey(t *testing.T) {
 	script := `(exist? {} {})`
-	expectErrorContains(t, script, `cannot hash type *glisp.SexpHash`)
+	ExpectScriptErr(t, script, `cannot hash type *glisp.SexpHash`)
 }
 
 func TestEvalNothing(t *testing.T) {
 	script := `(eval (begin))`
-	expectErrorContains(t, script, `generating (eval (begin))`)
+	ExpectScriptErr(t, script, `generating (eval (begin))`)
 }
 
 func TestExistArrayNotCompare(t *testing.T) {
 	script := `(exist? [1] "a")`
-	expectErrorContains(t, script, `compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
 }
 
 func TestApplySymbolNotFound(t *testing.T) {
 	script := `(apply 'not-found-symbol "a")`
-	expectErrorContains(t, script, `can't find function by symbol not-found-symbol`)
+	ExpectScriptErr(t, script, `can't find function by symbol not-found-symbol`)
 }
 
 func TestJSONParse(t *testing.T) {
 	script := `(json/parse (time/now))`
-	expectErrorContains(t, script, `the first argument of json/parse must be`)
+	ExpectScriptErr(t, script, `the first argument of json/parse must be`)
 }
 
 func TestApplyArgMustBeList(t *testing.T) {
 	script := `(apply + (cons 1 2))`
-	expectErrorContains(t, script, `not a list`)
+	ExpectScriptErr(t, script, `not a list`)
 }
 
 func TestDefensiveCornor(t *testing.T) {
-	if glisp.SexpEnd.SexpString() != `End` {
-		t.Fatal(glisp.SexpEnd.SexpString())
-	}
-	if glisp.SexpMarker.SexpString() != `Marker` {
-		t.Fatal(glisp.SexpMarker.SexpString())
-	}
-	if glisp.SexpSentinel(100).SexpString() != "" {
-		t.Fatal("should be emtpy")
-	}
-	if _, err := glisp.NewSexpIntStr("abc"); err == nil {
-		t.Fatal("should be error")
-	}
-	if _, err := glisp.NewSexpIntStrWithBase("abc", 12); err == nil {
-		t.Fatal("should be error")
-	}
-	if _, err := glisp.NewSexpFloatStr("abc"); err == nil {
-		t.Fatal("should be error")
-	}
-	if glisp.NewSexpFloat(1).SexpString() != "1" {
-		t.Fatal("should be 1")
-	}
-	if _, err := glisp.NewSexpBytesByHex("世界"); err == nil {
-		t.Fatal("should be error")
-	}
+	ExpectEqStr(t, `End`, glisp.SexpStr(glisp.SexpEnd.SexpString()))
+	ExpectEqStr(t, `Marker`, glisp.SexpStr(glisp.SexpMarker.SexpString()))
+	ExpectEqStr(t, ``, glisp.SexpStr(glisp.SexpSentinel(100).SexpString()))
+	_, err := glisp.NewSexpIntStr("abc")
+	ExpectError(t, err)
+
+	_, err = glisp.NewSexpIntStrWithBase("abc", 12)
+	ExpectError(t, err)
+
+	_, err = glisp.NewSexpFloatStr("abc")
+	ExpectError(t, err)
+
+	ExpectEqStr(t, `1`, glisp.SexpStr(glisp.NewSexpFloat(1).SexpString()))
+
+	_, err = glisp.NewSexpBytesByHex("世界")
+	ExpectError(t, err)
 }
 
 func TestRecover(t *testing.T) {
 	env := newFullEnv()
 	env.PushGlobalScope()
-	if _, err := env.EvalString(`(def g_var 1023) (/ 1 0)`); err == nil {
-		t.Fatal("must error")
-	}
+	_, err := env.EvalString(`(def g_var 1023) (/ 1 0)`)
+	ExpectError(t, err, "division by zero")
+
 	_, ok := env.FindObject(`g_var`)
-	if !ok {
-		t.Fatal("should find g_var")
-	}
+	ExpectTrue(t, glisp.SexpBool(ok))
+
 	env.Clear()
 	_, ok = env.FindObject(`g_var`)
-	if ok {
-		t.Fatal("should not find g_var")
-	}
+	ExpectFalse(t, glisp.SexpBool(ok))
 }
 
 func TestScriptFunctionFail(t *testing.T) {
 	env := newFullEnv()
 	fn, err := env.MakeScriptFunction(`(1 2 3)`, ``)
-	if err != nil {
-		t.Fatal("should not be error")
-	}
+	ExpectSuccess(t, err)
 	_, err = env.Apply(fn, []glisp.Sexp{})
-	if err == nil {
-		t.Fatal("should be error")
-	}
+	ExpectError(t, err, "not a function")
 }
 
 func TestLetListFail(t *testing.T) {
 	env := newFullEnv()
 	err := env.SourceStream(bytes.NewBufferString(`(let (1) 1)`))
-	if err == nil {
-		t.Fatal("should be error")
-	}
+	ExpectError(t, err, `not a function`)
+
 	err = env.SourceStream(bytes.NewBufferString(`(let (list 1) 1)`))
-	if err == nil || !strings.Contains(err.Error(), `not an array`) {
-		t.Fatal("not an array")
-	}
+	ExpectError(t, err, "not an array")
+
 	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1])) 1)`))
-	if err == nil || !strings.Contains(err.Error(), `bind list length must be even`) {
-		t.Fatal("should be error")
-	}
+	ExpectError(t, err, "bind list length must be even")
+
 	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1 2])) 1)`))
-	if err == nil || !strings.Contains(err.Error(), `odd argument of bind list must be symbol`) {
-		t.Fatal("should be error")
-	}
+	ExpectError(t, err, "odd argument of bind list must be symbol")
+}
+
+func TestDumpEnv(t *testing.T) {
+	env := newFullEnv()
+	err := env.SourceStream(bytes.NewBufferString(`(let (1) 1)`))
+	ExpectError(t, err)
+	var buf bytes.Buffer
+	env.DumpEnvironment(&buf)
+	ExpectNonEmptyStr(t, buf.String())
+	ExpectNonEmptyStr(t, env.GetStackTrace(err))
+	var buf1 bytes.Buffer
+	env.DumpFunctionByName(&buf1, "+")
+	err = env.DumpFunctionByName(&buf1, "xxxxyyy")
+	ExpectError(t, err, `"xxxxyyy" not found`)
+}
+
+func TestApplyByNameFail(t *testing.T) {
+	env := newFullEnv()
+	env.Bind("aaa", glisp.NewSexpInt(1))
+	_, err := env.ApplyByName("aaa", nil)
+	ExpectError(t, err, "is not a function")
 }
 
 func TestWrongArgumentNumber(t *testing.T) {
-	mustErr := func(script string) {
-		expectErrorOccur(t, script)
-	}
-	mustErr(`(gensym 1)`)
-	mustErr(`(sprintf)`)
-	mustErr(`(sprintf 1)`)
-	mustErr(`(sprintf 1 2)`)
-	mustErr(`(str2sym)`)
-	mustErr(`(str2sym 1)`)
-	mustErr(`(sym2str)`)
-	mustErr(`(sym2str 1)`)
-	mustErr(`(typestr)`)
-	mustErr(`(>)`)
-	mustErr(`(+)`)
-	mustErr(`(+ 1 "a")`)
-	mustErr(`(cons)`)
-	mustErr(`(car)`)
-	mustErr(`(cdr)`)
-	mustErr(`(car 1)`)
-	mustErr(`(cdr 1)`)
-	mustErr(`(aget)`)
-	mustErr(`(aget 1)`)
-	mustErr(`(aget 1 1)`)
-	mustErr(`(list?)`)
-	mustErr(`(aget [1] "")`)
-	mustErr(`(aget [1] -1)`)
-	mustErr(`(aset! [1] #a)`)
-	mustErr(`(aset! [1] 0)`)
-	mustErr(`(sget 0)`)
-	mustErr(`(sget 0 0)`)
-	mustErr(`(sget "" #a)`)
-	mustErr(`(sget "" 0B6869)`)
-	mustErr(`(exist?)`)
-	mustErr(`(exist? 1 1)`)
-	mustErr(`(hget {} 1 2 3 4)`)
-	mustErr(`(hget 0 1 2 )`)
-	mustErr(`(hdel! {} 1 2)`)
-	mustErr(`(slice 1 2 3 4)`)
-	mustErr(`(slice [] (make-chan) 1)`)
-	mustErr(`(slice [] 1 (make-chan))`)
-	mustErr(`(slice (make-chan) 1 1)`)
-	mustErr(`(slice [] 1 1)`)
-	mustErr(`(slice "" 1 1)`)
-	mustErr(`(slice 0B6869 10 100)`)
-	mustErr(`(slice 0B6869 10 1)`)
-	mustErr(`(slice 0B6869 #a 100)`)
-	mustErr(`(slice 0B6869 10 #b)`)
-	mustErr(`(len)`)
-	mustErr(`(len 1)`)
-	mustErr(`(append)`)
-	mustErr(`(append 1 1)`)
-	mustErr(`(concat)`)
-	mustErr(`(concat 1 1)`)
-	mustErr(`(read)`)
-	mustErr(`(read 1)`)
-	mustErr(`(eval)`)
-	mustErr(`(not)`)
-	mustErr(`(apply)`)
-	mustErr(`(apply 1 1)`)
-	mustErr(`(apply '+ 1)`)
-	mustErr(`(map)`)
-	mustErr(`(map 1 1)`)
-	mustErr(`(map + 1)`)
-	mustErr(`(filer)`)
-	mustErr(`(filer 1 1)`)
-	mustErr(`(make-array)`)
-	mustErr(`(make-array "")`)
-	mustErr(`(symnum)`)
-	mustErr(`(symnum 1)`)
-	mustErr(`(str)`)
-	mustErr(`(str2int)`)
-	mustErr(`(str2int 1)`)
-	mustErr(`(bytes2str)`)
-	mustErr(`(bytes2str 1)`)
-	mustErr(`(str2bytes 1)`)
-	mustErr(`(str2bytes)`)
-	mustErr(`(str2float)`)
-	mustErr(`(str2float 1)`)
-	mustErr(`(float2int)`)
-	mustErr(`(float2int "")`)
-	mustErr(`(float2str)`)
-	mustErr(`(float2str {})`)
-	mustErr(`(float2str 1.0 "")`)
-	mustErr(`(round)`)
-	mustErr(`(round "")`)
-	mustErr(`(foldl)`)
-	mustErr(`(foldl + 1 1)`)
-	mustErr(`(foldl "+" 1 1)`)
-	mustErr(`(filter)`)
-	mustErr(`(filter + 1)`)
-	mustErr(`(filter "+" 1)`)
-	mustErr(`(/ 1 "")`)
-	mustErr(`(/ "" 1)`)
-	mustErr(`(/ #a "")`)
-	mustErr(`(/ #a 0)`)
-	mustErr(`(/ 1.0 "")`)
-	mustErr(`(assert)`)
-	mustErr(`({'a})`)
-	mustErr(`(rand 1 2)`)
-	mustErr(`(rand "")`)
-	mustErr(`(rand 0)`)
-	mustErr(`(randf 1)`)
-	mustErr(`(json/stringify)`)
-	mustErr(`(json/parse)`)
-	mustErr(`(regexp-compile)`)
-	mustErr(`(regexp-compile 1)`)
-	mustErr(`(regexp-compile "\\")`)
-	mustErr(`(regexp-find)`)
-	mustErr(`(regexp-find "h" 1)`)
-	mustErr(`(regexp-find "h" "a")`)
-	mustErr(`(time/now "a")`)
-	mustErr(`(time/year)`)
-	mustErr(`(time/year 1)`)
-	mustErr(`(time/month)`)
-	mustErr(`(time/month 1)`)
-	mustErr(`(time/day)`)
-	mustErr(`(time/day 1)`)
-	mustErr(`(time/hour)`)
-	mustErr(`(time/hour 1)`)
-	mustErr(`(time/minute)`)
-	mustErr(`(time/minute 1)`)
-	mustErr(`(time/second)`)
-	mustErr(`(time/second 1)`)
-	mustErr(`(time/weekday)`)
-	mustErr(`(time/weekday 1)`)
-	mustErr(`(time/sub)`)
-	mustErr(`(time/sub 1 2)`)
-	mustErr(`(time/add)`)
-	mustErr(`(time/add 1 2 3)`)
-	mustErr(`(time/add (time/now) "a" 3)`)
-	mustErr(`(time/add (time/now) 1 "a")`)
-	mustErr(`(time/add (time/now) 1 1)`)
-	mustErr(`(time/add-date)`)
-	mustErr(`(time/add-date 1 2 3 4)`)
-	mustErr(`(time/add-date (time/now) "a" 3 4)`)
-	mustErr(`(time/parse)`)
-	mustErr(`(time/parse "xyz")`)
-	mustErr(`(time/parse 1.2)`)
-	mustErr(`(time/parse 1.2 1)`)
-	mustErr(`(time/parse "a" 1)`)
-	mustErr(`(time/parse "a" 1 2)`)
-	mustErr(`(time/format)`)
-	mustErr(`(time/format 1 2)`)
-	mustErr(`(time/format (time/now) 2)`)
-	mustErr(`(time/format (time/now) "")`)
-	mustErr(`(str/start-with?)`)
-	mustErr(`(str/start-with? 1 2)`)
-	mustErr(`(str/start-with? "" 2)`)
-	mustErr(`(str/count)`)
-	mustErr(`(str/count 1 2)`)
-	mustErr(`(str/count "" 2)`)
-	mustErr(`(str/split)`)
-	mustErr(`(str/split 1 2)`)
-	mustErr(`(str/split "" 2)`)
-	mustErr(`(str/lower)`)
-	mustErr(`(str/lower 1)`)
-	mustErr(`(str/digit?)`)
-	mustErr(`(str/digit? 1)`)
-	mustErr(`(str/join)`)
-	mustErr(`(str/join 1 2)`)
-	mustErr(`(str/join [] 2)`)
-	mustErr(`(str/join [1] "")`)
-	mustErr(`(str/join [] "" 2)`)
-	mustErr(`(str/trim-prefix)`)
-	mustErr(`(str/trim-prefix 1 2)`)
-	mustErr(`(str/trim-prefix "" 2)`)
-	mustErr(`(str/replace)`)
-	mustErr(`(str/replace 1 2 3)`)
-	mustErr(`(str/replace "" 2 3)`)
-	mustErr(`(str/replace "" "" 3)`)
-	mustErr(`(str/mask)`)
-	mustErr(`(str/mask 1 2 3 4)`)
-	mustErr(`(str/mask "" "" 3 4)`)
-	mustErr(`(str/mask "" 1 "" 4)`)
-	mustErr(`(str/mask "" 1 1 4)`)
-	mustErr(`(str/mask "" 1 0 4)`)
-	mustErr(`(str/mask "abc" 1 0 "*")`)
-	mustErr(`(str/mask "abc" 1 0 "")`)
-	mustErr(`(str/mask "abc" 1 -1 "")`)
-	mustErr(`(os/read-file)`)
-	mustErr(`(os/read-file 1)`)
-	mustErr(`(os/read-file "not-exist-file")`)
-	mustErr(`(os/write-file)`)
-	mustErr(`(os/write-file 1 2)`)
-	mustErr(`(os/write-file "./test" 2)`)
+	ExpectScriptErr(t, `(gensym 1)`)
+	ExpectScriptErr(t, `(sprintf)`)
+	ExpectScriptErr(t, `(sprintf 1)`)
+	ExpectScriptErr(t, `(sprintf 1 2)`)
+	ExpectScriptErr(t, `(str2sym)`)
+	ExpectScriptErr(t, `(str2sym 1)`)
+	ExpectScriptErr(t, `(sym2str)`)
+	ExpectScriptErr(t, `(sym2str 1)`)
+	ExpectScriptErr(t, `(typestr)`)
+	ExpectScriptErr(t, `(>)`)
+	ExpectScriptErr(t, `(+)`)
+	ExpectScriptErr(t, `(+ 1 "a")`)
+	ExpectScriptErr(t, `(cons)`)
+	ExpectScriptErr(t, `(car)`)
+	ExpectScriptErr(t, `(cdr)`)
+	ExpectScriptErr(t, `(car 1)`)
+	ExpectScriptErr(t, `(cdr 1)`)
+	ExpectScriptErr(t, `(aget)`)
+	ExpectScriptErr(t, `(aget 1)`)
+	ExpectScriptErr(t, `(aget 1 1)`)
+	ExpectScriptErr(t, `(list?)`)
+	ExpectScriptErr(t, `(aget [1] "")`)
+	ExpectScriptErr(t, `(aget [1] -1)`)
+	ExpectScriptErr(t, `(aset! [1] #a)`)
+	ExpectScriptErr(t, `(aset! [1] 0)`)
+	ExpectScriptErr(t, `(sget 0)`)
+	ExpectScriptErr(t, `(sget 0 0)`)
+	ExpectScriptErr(t, `(sget "" #a)`)
+	ExpectScriptErr(t, `(sget "" 0B6869)`)
+	ExpectScriptErr(t, `(exist?)`)
+	ExpectScriptErr(t, `(exist? 1 1)`)
+	ExpectScriptErr(t, `(hget {} 1 2 3 4)`)
+	ExpectScriptErr(t, `(hget 0 1 2 )`)
+	ExpectScriptErr(t, `(hdel! {} 1 2)`)
+	ExpectScriptErr(t, `(slice 1 2 3 4)`)
+	ExpectScriptErr(t, `(slice [] (make-chan) 1)`)
+	ExpectScriptErr(t, `(slice [] 1 (make-chan))`)
+	ExpectScriptErr(t, `(slice (make-chan) 1 1)`)
+	ExpectScriptErr(t, `(slice [] 1 1)`)
+	ExpectScriptErr(t, `(slice "" 1 1)`)
+	ExpectScriptErr(t, `(slice 0B6869 10 100)`)
+	ExpectScriptErr(t, `(slice 0B6869 10 1)`)
+	ExpectScriptErr(t, `(slice 0B6869 #a 100)`)
+	ExpectScriptErr(t, `(slice 0B6869 10 #b)`)
+	ExpectScriptErr(t, `(len)`)
+	ExpectScriptErr(t, `(len 1)`)
+	ExpectScriptErr(t, `(append)`)
+	ExpectScriptErr(t, `(append 1 1)`)
+	ExpectScriptErr(t, `(concat)`)
+	ExpectScriptErr(t, `(concat 1 1)`)
+	ExpectScriptErr(t, `(read)`)
+	ExpectScriptErr(t, `(read 1)`)
+	ExpectScriptErr(t, `(eval)`)
+	ExpectScriptErr(t, `(not)`)
+	ExpectScriptErr(t, `(apply)`)
+	ExpectScriptErr(t, `(apply 1 1)`)
+	ExpectScriptErr(t, `(apply '+ 1)`)
+	ExpectScriptErr(t, `(map)`)
+	ExpectScriptErr(t, `(map 1 1)`)
+	ExpectScriptErr(t, `(map + 1)`)
+	ExpectScriptErr(t, `(filer)`)
+	ExpectScriptErr(t, `(filer 1 1)`)
+	ExpectScriptErr(t, `(make-array)`)
+	ExpectScriptErr(t, `(make-array "")`)
+	ExpectScriptErr(t, `(symnum)`)
+	ExpectScriptErr(t, `(symnum 1)`)
+	ExpectScriptErr(t, `(str)`)
+	ExpectScriptErr(t, `(str2int)`)
+	ExpectScriptErr(t, `(str2int 1)`)
+	ExpectScriptErr(t, `(bytes2str)`)
+	ExpectScriptErr(t, `(bytes2str 1)`)
+	ExpectScriptErr(t, `(str2bytes 1)`)
+	ExpectScriptErr(t, `(str2bytes)`)
+	ExpectScriptErr(t, `(str2float)`)
+	ExpectScriptErr(t, `(str2float 1)`)
+	ExpectScriptErr(t, `(float2int)`)
+	ExpectScriptErr(t, `(float2int "")`)
+	ExpectScriptErr(t, `(float2str)`)
+	ExpectScriptErr(t, `(float2str {})`)
+	ExpectScriptErr(t, `(float2str 1.0 "")`)
+	ExpectScriptErr(t, `(round)`)
+	ExpectScriptErr(t, `(round "")`)
+	ExpectScriptErr(t, `(foldl)`)
+	ExpectScriptErr(t, `(foldl + 1 1)`)
+	ExpectScriptErr(t, `(foldl "+" 1 1)`)
+	ExpectScriptErr(t, `(filter)`)
+	ExpectScriptErr(t, `(filter + 1)`)
+	ExpectScriptErr(t, `(filter "+" 1)`)
+	ExpectScriptErr(t, `(/ 1 "")`)
+	ExpectScriptErr(t, `(/ "" 1)`)
+	ExpectScriptErr(t, `(/ #a "")`)
+	ExpectScriptErr(t, `(/ #a 0)`)
+	ExpectScriptErr(t, `(/ 1.0 "")`)
+	ExpectScriptErr(t, `(assert)`)
+	ExpectScriptErr(t, `({'a})`)
+	ExpectScriptErr(t, `(rand 1 2)`)
+	ExpectScriptErr(t, `(rand "")`)
+	ExpectScriptErr(t, `(rand 0)`)
+	ExpectScriptErr(t, `(randf 1)`)
+	ExpectScriptErr(t, `(json/stringify)`)
+	ExpectScriptErr(t, `(json/parse)`)
+	ExpectScriptErr(t, `(regexp-compile)`)
+	ExpectScriptErr(t, `(regexp-compile 1)`)
+	ExpectScriptErr(t, `(regexp-compile "\\")`)
+	ExpectScriptErr(t, `(regexp-find)`)
+	ExpectScriptErr(t, `(regexp-find "h" 1)`)
+	ExpectScriptErr(t, `(regexp-find "h" "a")`)
+	ExpectScriptErr(t, `(time/now "a")`)
+	ExpectScriptErr(t, `(time/year)`)
+	ExpectScriptErr(t, `(time/year 1)`)
+	ExpectScriptErr(t, `(time/month)`)
+	ExpectScriptErr(t, `(time/month 1)`)
+	ExpectScriptErr(t, `(time/day)`)
+	ExpectScriptErr(t, `(time/day 1)`)
+	ExpectScriptErr(t, `(time/hour)`)
+	ExpectScriptErr(t, `(time/hour 1)`)
+	ExpectScriptErr(t, `(time/minute)`)
+	ExpectScriptErr(t, `(time/minute 1)`)
+	ExpectScriptErr(t, `(time/second)`)
+	ExpectScriptErr(t, `(time/second 1)`)
+	ExpectScriptErr(t, `(time/weekday)`)
+	ExpectScriptErr(t, `(time/weekday 1)`)
+	ExpectScriptErr(t, `(time/sub)`)
+	ExpectScriptErr(t, `(time/sub 1 2)`)
+	ExpectScriptErr(t, `(time/add)`)
+	ExpectScriptErr(t, `(time/add 1 2 3)`)
+	ExpectScriptErr(t, `(time/add (time/now) "a" 3)`)
+	ExpectScriptErr(t, `(time/add (time/now) 1 "a")`)
+	ExpectScriptErr(t, `(time/add (time/now) 1 1)`)
+	ExpectScriptErr(t, `(time/add-date)`)
+	ExpectScriptErr(t, `(time/add-date 1 2 3 4)`)
+	ExpectScriptErr(t, `(time/add-date (time/now) "a" 3 4)`)
+	ExpectScriptErr(t, `(time/parse)`)
+	ExpectScriptErr(t, `(time/parse "xyz")`)
+	ExpectScriptErr(t, `(time/parse 1.2)`)
+	ExpectScriptErr(t, `(time/parse 1.2 1)`)
+	ExpectScriptErr(t, `(time/parse "a" 1)`)
+	ExpectScriptErr(t, `(time/parse "a" 1 2)`)
+	ExpectScriptErr(t, `(time/format)`)
+	ExpectScriptErr(t, `(time/format 1 2)`)
+	ExpectScriptErr(t, `(time/format (time/now) 2)`)
+	ExpectScriptErr(t, `(time/format (time/now) "")`)
+	ExpectScriptErr(t, `(str/start-with?)`)
+	ExpectScriptErr(t, `(str/start-with? 1 2)`)
+	ExpectScriptErr(t, `(str/start-with? "" 2)`)
+	ExpectScriptErr(t, `(str/count)`)
+	ExpectScriptErr(t, `(str/count 1 2)`)
+	ExpectScriptErr(t, `(str/count "" 2)`)
+	ExpectScriptErr(t, `(str/split)`)
+	ExpectScriptErr(t, `(str/split 1 2)`)
+	ExpectScriptErr(t, `(str/split "" 2)`)
+	ExpectScriptErr(t, `(str/lower)`)
+	ExpectScriptErr(t, `(str/lower 1)`)
+	ExpectScriptErr(t, `(str/digit?)`)
+	ExpectScriptErr(t, `(str/digit? 1)`)
+	ExpectScriptErr(t, `(str/join)`)
+	ExpectScriptErr(t, `(str/join 1 2)`)
+	ExpectScriptErr(t, `(str/join [] 2)`)
+	ExpectScriptErr(t, `(str/join [1] "")`)
+	ExpectScriptErr(t, `(str/join [] "" 2)`)
+	ExpectScriptErr(t, `(str/trim-prefix)`)
+	ExpectScriptErr(t, `(str/trim-prefix 1 2)`)
+	ExpectScriptErr(t, `(str/trim-prefix "" 2)`)
+	ExpectScriptErr(t, `(str/replace)`)
+	ExpectScriptErr(t, `(str/replace 1 2 3)`)
+	ExpectScriptErr(t, `(str/replace "" 2 3)`)
+	ExpectScriptErr(t, `(str/replace "" "" 3)`)
+	ExpectScriptErr(t, `(str/mask)`)
+	ExpectScriptErr(t, `(str/mask 1 2 3 4)`)
+	ExpectScriptErr(t, `(str/mask "" "" 3 4)`)
+	ExpectScriptErr(t, `(str/mask "" 1 "" 4)`)
+	ExpectScriptErr(t, `(str/mask "" 1 1 4)`)
+	ExpectScriptErr(t, `(str/mask "" 1 0 4)`)
+	ExpectScriptErr(t, `(str/mask "abc" 1 0 "*")`)
+	ExpectScriptErr(t, `(str/mask "abc" 1 0 "")`)
+	ExpectScriptErr(t, `(str/mask "abc" 1 -1 "")`)
+	ExpectScriptErr(t, `(os/read-file)`)
+	ExpectScriptErr(t, `(os/read-file 1)`)
+	ExpectScriptErr(t, `(os/read-file "not-exist-file")`)
+	ExpectScriptErr(t, `(os/write-file)`)
+	ExpectScriptErr(t, `(os/write-file 1 2)`)
+	ExpectScriptErr(t, `(os/write-file "./test" 2)`)
 
 	notExistDir := `~/tmp/not-exist-dir/`
 	home, _ := os.UserHomeDir()
 	os.RemoveAll(filepath.Join(home, strings.TrimPrefix(notExistDir, "~")))
-	mustErr(fmt.Sprintf(`(os/write-file "%s" 2)`, notExistDir+"not-exit-file"))
+	ExpectScriptErr(t, fmt.Sprintf(`(os/write-file "%s" 2)`, notExistDir+"not-exit-file"))
 	os.RemoveAll(filepath.Join(home, strings.TrimPrefix(notExistDir, "~")))
 
-	mustErr(`(os/remove-file)`)
-	mustErr(`(os/remove-file 1)`)
-	mustErr(`(os/file-exist?)`)
-	mustErr(`(os/file-exist? 1)`)
-	mustErr(`(flatmap)`)
-	mustErr(`(flatmap 1 2)`)
-	mustErr(`(flatmap (fn [] 1) 2)`)
-	mustErr(`(compose)`)
-	mustErr(`(compose 1 2)`)
-	mustErr(`(make-chan 1 2 3)`)
-	mustErr(`(make-chan "a")`)
-	mustErr(`(send!)`)
-	mustErr(`(send! "a")`)
-	mustErr(`(send! (make-chan))`)
-	mustErr(`(base64/encode)`)
-	mustErr(`(base64/encode 1)`)
-	mustErr(`(base64/decode)`)
-	mustErr(`(base64/decode 1)`)
-	mustErr(`(base64/decode "^&*^*&%")`)
-	mustErr(`(mod "" "")`)
-	mustErr(`(mod 1 "")`)
-	mustErr(`(mod 1 0)`)
-	mustErr(`(bit-and)`)
-	mustErr(`(bit-and "" "")`)
-	mustErr(`(bit-not)`)
-	mustErr(`(bit-not "")`)
-	mustErr(`(sla)`)
-	mustErr(`(sll8)`)
-	mustErr(`(sll8 "" "")`)
-	mustErr(`(sll8 1 "")`)
-	mustErr(`(char2int)`)
-	mustErr(`(char2int "")`)
-	mustErr(`(char2str)`)
-	mustErr(`(char2str "")`)
-	mustErr(`(int2char)`)
-	mustErr(`(int2char "")`)
-	mustErr(`(json/query)`)
-	mustErr(`(json/query 1 2)`)
-	mustErr(`(json/query {} 2)`)
-	mustErr(`(os/exec)`)
-	mustErr(`(os/exec {})`)
-	mustErr(`(os/exec "aaa")`)
-	mustErr(`(json/set)`)
-	mustErr(`(json/set 1 2 3)`)
-	mustErr(`(json/set {} 2 3)`)
-	mustErr(`(json/set {} "" 3)`)
-	mustErr(`(json/set {"a" +} "a.1" 3)`)
-	expectErrorContains(t, `(json/set [] "a" 3)`, `strconv.Atoi: parsing`)
-	expectErrorContains(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
-	expectErrorContains(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
-	mustErr(`(json/del)`)
-	mustErr(`(json/del 1 2)`)
-	mustErr(`(json/del [] 2)`)
-	expectErrorContains(t, `(json/del [] "a")`, `strconv.Atoi: parsing`)
-	expectErrorContains(t, `(json/del [1] "0.a")`, `must del on hash/array but got glisp.SexpInt`)
-}
+	ExpectScriptErr(t, `(os/remove-file)`)
+	ExpectScriptErr(t, `(os/remove-file 1)`)
+	ExpectScriptErr(t, `(os/file-exist?)`)
+	ExpectScriptErr(t, `(os/file-exist? 1)`)
+	ExpectScriptErr(t, `(flatmap)`)
+	ExpectScriptErr(t, `(flatmap 1 2)`)
+	ExpectScriptErr(t, `(flatmap (fn [] 1) 2)`)
+	ExpectScriptErr(t, `(compose)`)
+	ExpectScriptErr(t, `(compose 1 2)`)
+	ExpectScriptErr(t, `(make-chan 1 2 3)`)
+	ExpectScriptErr(t, `(make-chan "a")`)
+	ExpectScriptErr(t, `(send!)`)
+	ExpectScriptErr(t, `(send! "a")`)
+	ExpectScriptErr(t, `(send! (make-chan))`)
+	ExpectScriptErr(t, `(base64/encode)`)
+	ExpectScriptErr(t, `(base64/encode 1)`)
+	ExpectScriptErr(t, `(base64/decode)`)
+	ExpectScriptErr(t, `(base64/decode 1)`)
+	ExpectScriptErr(t, `(base64/decode "^&*^*&%")`)
+	ExpectScriptErr(t, `(mod "" "")`)
+	ExpectScriptErr(t, `(mod 1 "")`)
+	ExpectScriptErr(t, `(mod 1 0)`)
+	ExpectScriptErr(t, `(bit-and)`)
+	ExpectScriptErr(t, `(bit-and "" "")`)
+	ExpectScriptErr(t, `(bit-not)`)
+	ExpectScriptErr(t, `(bit-not "")`)
+	ExpectScriptErr(t, `(sla)`)
+	ExpectScriptErr(t, `(sll8)`)
+	ExpectScriptErr(t, `(sll8 "" "")`)
+	ExpectScriptErr(t, `(sll8 1 "")`)
+	ExpectScriptErr(t, `(char2int)`)
+	ExpectScriptErr(t, `(char2int "")`)
+	ExpectScriptErr(t, `(char2str)`)
+	ExpectScriptErr(t, `(char2str "")`)
+	ExpectScriptErr(t, `(int2char)`)
+	ExpectScriptErr(t, `(int2char "")`)
+	ExpectScriptErr(t, `(json/query)`)
+	ExpectScriptErr(t, `(json/query 1 2)`)
+	ExpectScriptErr(t, `(json/query {} 2)`)
+	ExpectScriptErr(t, `(os/exec)`)
+	ExpectScriptErr(t, `(os/exec {})`)
+	ExpectScriptErr(t, `(os/exec "aaa")`)
+	ExpectScriptErr(t, `(json/set)`)
+	ExpectScriptErr(t, `(json/set 1 2 3)`)
+	ExpectScriptErr(t, `(json/set {} 2 3)`)
+	ExpectScriptErr(t, `(json/set {} "" 3)`)
+	ExpectScriptErr(t, `(json/set {"a" +} "a.1" 3)`)
+	ExpectScriptErr(t, `(json/set [] "a" 3)`, `strconv.Atoi: parsing`)
+	ExpectScriptErr(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
+	ExpectScriptErr(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
+	ExpectScriptErr(t, `(json/del)`)
+	ExpectScriptErr(t, `(json/del 1 2)`)
+	ExpectScriptErr(t, `(json/del [] 2)`)
+	ExpectScriptErr(t, `(json/del [] "a")`, `strconv.Atoi: parsing`)
+	ExpectScriptErr(t, `(json/del [1] "0.a")`, `must del on hash/array but got glisp.SexpInt`)
+	ExpectScriptErr(t, `(defn (list 1) [] 1)`, `bad function name`)
+	ExpectScriptErr(t, `(def x 1) (x)`, `is not a function`)
+	ExpectScriptErr(t, `(assert (= 1 2))`, `Assertion failed: (= 1 2)`)
+	ExpectScriptErr(t, `(source-file)`, "expect 1,... argument but got 0")
+	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given type glisp.SexpInt")
+	ExpectScriptErr(t, `(source-file "not-exist-source-file")`, "no such file or directory")
+	ExpectScriptErr(t, `(source-file ["not-exist-source-file"])`, "no such file or directory")
+	ExpectScriptErr(t, `(source-file '("not-exist-source-file"))`, "no such file or directory")
+	WithTempFile(`(`, func(file string) {
+		ExpectScriptErr(t, fmt.Sprintf(`(source-file '("%s"))`, file), "Error on line 1: Unexpected end of input")
+	})
+	ExpectScriptErr(t, `((compose (fn [e] e) (fn [e] (xxx))) 1)`, "symbol", "not found")
 
-func expectErrorContains(t *testing.T, script string, keyword string) {
-	expectErrorMatch(t, script, func(err error) bool { return strings.Contains(err.Error(), keyword) })
-}
-
-func expectErrorOccur(t *testing.T, script string) {
-	expectErrorMatch(t, script, func(err error) bool { return true })
-}
-
-func expectErrorMatch(t *testing.T, script string, expect func(err error) bool) {
-	env := newFullEnv()
-	expr, err := env.EvalString(script)
-	if err == nil {
-		t.Fatalf("expect error occur, but success with %v\n", expr.SexpString())
-	}
-	if !expect(err) {
-		t.Fatalf("error not match expect: %v", err)
-	}
+	_, err := glisp.GetConstructorFunction("")(glisp.New(), nil)
+	ExpectError(t, err, "invalid constructor")
+	h, _ := glisp.MakeHash(nil)
+	_, err = glisp.GetHashAccessFunction("")(glisp.New(), []glisp.Sexp{h, glisp.NewSexpInt(0)})
+	ExpectSuccess(t, err)
 }

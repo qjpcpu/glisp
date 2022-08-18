@@ -8,6 +8,13 @@ import (
 type Scope map[int]Sexp
 
 func (s Scope) IsStackElem() {}
+func (s Scope) Clone() StackElem {
+	newScope := make(Scope)
+	for k, v := range s {
+		newScope[k] = v
+	}
+	return newScope
+}
 
 func (stack *Stack) PushScope() {
 	stack.Push(Scope(make(map[int]Sexp)))
