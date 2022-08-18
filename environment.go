@@ -168,7 +168,7 @@ func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 		function.closeScope.PushAllTo(env.scopestack)
 	}
 
-	env.addrstack.PushAddr(env.curfunc, env.pc+1)
+	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
 	env.scopestack.PushScope()
 	env.curfunc = function
 	env.pc = 0
@@ -239,7 +239,7 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 
-	env.addrstack.PushAddr(env.curfunc, env.pc+1)
+	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
 	env.curfunc = function
 	env.pc = -1
 
@@ -478,7 +478,6 @@ func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 		return fun.userfun(env, args)
 	}
 
-	env.pc = -2
 	for _, expr := range args {
 		env.datastack.PushExpr(expr)
 	}

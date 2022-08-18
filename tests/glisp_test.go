@@ -276,3 +276,57 @@ func TestWrapExpressionsAsFunction(t *testing.T) {
 		t.Fatal("bad result")
 	}
 }
+
+func TestApplyMessupPC0(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	_, err := vm.EvalString(`(+ 1 2)`)
+	ShouldNoError(t, err)
+	expr, err := vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+
+	_, err = vm.EvalString(`(+ 1 2)`)
+	ShouldNoError(t, err)
+	expr, err = vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+}
+
+func TestApplyMessupPC(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	_, err := vm.EvalString(`(defn myfn [a b] (+ a b))`)
+	ShouldNoError(t, err)
+	expr, err := vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+
+	_, err = vm.EvalString(`(defn myfn2 [a b] (+ a b))`)
+	ShouldNoError(t, err)
+	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+
+	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (myfn2 2 3)`)
+	ShouldEqInteger(t, 5, expr, err)
+	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 9, expr, err)
+
+	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (apply myfn2 [2 3])`)
+	ShouldEqInteger(t, 5, expr, err)
+	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 9, expr, err)
+}
+
+func TestApplyMessupPCWithMacro(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	expr, err := vm.EvalString("(defmac myfnmac [a b] `(+ ~a ~b)) (defn myfn [a b] (myfnmac a b)) (+ 1 2)")
+	ShouldEqInteger(t, 3, expr, err)
+	expr, err = vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+
+	expr, err = vm.EvalString("(defmac myfnmac2 [a b] `(+ ~a ~b)) (defn myfn2 [a b] (myfnmac2 a b)) (+ 1 2)")
+	ShouldEqInteger(t, 3, expr, err)
+	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 3, expr, err)
+
+	expr, err = vm.EvalString("(defmac myfnmac3 [a b] `(+ ~a ~b)) (defn myfn3 [a b] (myfnmac3 (myfnmac2 a 1) (myfnmac b 1))) (+ 1 2)")
+	ShouldEqInteger(t, 3, expr, err)
+	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ShouldEqInteger(t, 5, expr, err)
+}

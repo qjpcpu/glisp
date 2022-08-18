@@ -28,3 +28,10 @@ func WrongGeneratorNumberArguments(funcname string, current int, expect ...int) 
 	_, err := WrongNumberArguments(funcname, current, expect...)
 	return err
 }
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
