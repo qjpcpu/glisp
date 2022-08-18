@@ -41,7 +41,7 @@ func ExecCommand(name string) glisp.UserFunction {
 			}
 		}
 		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
-		ret, err := cmd.CombinedOutput()
+		ret, err := cmd.Output()
 		if err != nil {
 			return glisp.SexpNull, fmt.Errorf("%v\n%v", err, string(ret))
 		}
