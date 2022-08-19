@@ -546,4 +546,15 @@ func TestWrongArgumentNumber(t *testing.T) {
 	h, _ := glisp.MakeHash(nil)
 	_, err = glisp.GetHashAccessFunction("")(glisp.New(), []glisp.Sexp{h, glisp.NewSexpInt(0)})
 	ExpectSuccess(t, err)
+
+	ExpectScriptErr(t, `(http/get)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/post)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/put)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/patch)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/delete)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/get "-H" 111)`, `-H option value must be a string but got "int"`)
+	ExpectScriptErr(t, `(http/get '-H)`, `-H need an argument but got nothing`)
+	ExpectScriptErr(t, `(http/get '-H "aaa")`, `bad format aaa, -H option value must like header:value`)
+	ExpectScriptErr(t, `(http/get 1)`, `unknown option 1("int")`)
+	ExpectScriptErr(t, `(http/curl '-X 123 "http://127.0.0.1:9880")`, `-X Method need string but got "int"`)
 }

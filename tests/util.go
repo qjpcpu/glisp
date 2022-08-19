@@ -29,6 +29,7 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	extensions.ImportTime(vm)
 	extensions.ImportString(vm)
 	extensions.ImportOS(vm)
+	extensions.ImportHTTP(vm)
 	return vm
 }
 
@@ -51,6 +52,19 @@ func ExpectEqStr(t *testing.T, expect string, expr glisp.Sexp) {
 	if v := string(expr.(glisp.SexpStr)); v != expect {
 		t.Log(getTestStack())
 		t.Fatalf("should get %v but got %v", expect, v)
+	}
+}
+
+func ExpectContainsStr(t *testing.T, expr glisp.Sexp, keywords ...string) {
+	if !glisp.IsString(expr) {
+		t.Log(getTestStack())
+		t.Fatalf("should get string but got %#T", expr)
+	}
+	for _, key := range keywords {
+		if v := string(expr.(glisp.SexpStr)); !strings.Contains(v, key) {
+			t.Log(getTestStack())
+			t.Fatalf("should contains %v but got %v", key, v)
+		}
 	}
 }
 
@@ -114,10 +128,16 @@ func ExpectScriptErr(t *testing.T, script string, keywords ...string) {
 	env.DumpEnvironment(ioutil.Discard)
 }
 
-func ExpectScriptSuccess(t *testing.T, script string) {
+func ExpectScriptSuccess(t *testing.T, script string, keywords ...string) {
 	env := newFullEnv()
-	_, err := env.EvalString(script)
+	ret, err := env.EvalString(script)
 	ExpectSuccess(t, err)
+	if len(keywords) > 0 {
+		if glisp.IsBytes(ret) {
+			ret = glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes()))
+		}
+		ExpectContainsStr(t, ret, keywords...)
+	}
 }
 
 func getTestStack() string {
@@ -146,4 +166,11 @@ func WithTempFile(content string, cb func(string)) {
 	file.Close()
 	defer os.RemoveAll(name)
 	cb(name)
+}
+
+func WithHttpServer(fn func(string)) {
+	server := NewMockServer()
+	defer server.ServeBackground()()
+	url := server.URLPrefix + `/echo`
+	fn(url)
 }

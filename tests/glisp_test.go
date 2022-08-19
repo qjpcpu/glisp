@@ -317,3 +317,166 @@ func TestSourceFile(t *testing.T) {
 		ExpectScriptSuccess(t, script)
 	})
 }
+
+func TestHTTPIncludeHeaderInOutput(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get '-i "%s")`, url)
+		ExpectScriptSuccess(t, script, "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+	})
+}
+
+func TestHTTPBadURL(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get '-i "%s")`, "ehttp://aa:db:4k")
+		ExpectScriptErr(t, script, `build request fail parse "ehttp://aa:db:4k"`)
+	})
+}
+
+func TestAddHeader(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get '-H {'header-aaa "header-value"} "%s")`, url)
+		ExpectScriptErr(t, script, `-H option value must be a string but got "hash"`)
+		script = fmt.Sprintf(`(http/get '-H "header-aaa: header-value" "%s")`, url)
+		ExpectScriptSuccess(t, script, `"Header-Aaa":"header-value"`)
+	})
+}
+
+func TestRequestFail(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get "%s")`, "http://127.0.0.1:1122")
+		ExpectScriptErr(t, script, `dial tcp 127.0.0.1:1122: connect: connection refused`)
+	})
+}
+
+func TestHTTPForm(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get '-H "content-type:application/x-www-form-urlencoded" "%s" '-d {"f1" "v1" 'f2 123})`, url)
+		ExpectScriptSuccess(t, script, `"body":"f1=v1&f2=123"`, `"Content-Type":"application/x-www-form-urlencoded"`)
+	})
+}
+
+func TestHTTPWithData(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get "%s" '-d "text")`, url)
+		ExpectScriptSuccess(t, script, `"body":"text"`)
+
+		script = fmt.Sprintf(`(http/get "%s" '-d (str2bytes "text"))`, url)
+		ExpectScriptSuccess(t, script, `"body":"text"`)
+
+		script = fmt.Sprintf(`(http/get "%s" '-d 123)`, url)
+		ExpectScriptSuccess(t, script, `"body":"123"`)
+
+		script = fmt.Sprintf(`(http/get "%s" '-d (fn [] 1))`, url)
+		ExpectScriptErr(t, script, `build request fail bad value of -d`)
+
+		script = fmt.Sprintf(`(http/get "%s" '-d '())`, url)
+		ExpectScriptSuccess(t, script, `"body":""`)
+	})
+}
+
+func TestHTTPWithJSON(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/post "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"body":"[1,2,3]"`, `"Content-Type":"application/json"`)
+
+		script = fmt.Sprintf(`(http/post "%s" '-d '(1 2 3))`, url)
+		ExpectScriptSuccess(t, script, `"body":"[1,2,3]"`, `"Content-Type":"application/json"`)
+
+		script = fmt.Sprintf(`(http/post "%s" '-d {'k1 1 'k2 "str"})`, url)
+		ExpectScriptSuccess(t, script, `"body":"{\"k1\":1,\"k2\":\"str\"}"`, `"Content-Type":"application/json"`)
+	})
+}
+
+func TestHTTPWith404(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/post '-i "%s" '-d [1 2 3])`, url+"/xxx")
+		ExpectScriptSuccess(t, script, `HTTP/1.1 404 Not Found`)
+	})
+}
+
+func TestHTTPMethods(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"GET"`)
+
+		script = fmt.Sprintf(`(http/get '-X "POST" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"GET"`)
+
+		script = fmt.Sprintf(`(http/post "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"POST"`)
+
+		script = fmt.Sprintf(`(http/post '-X "GET" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"POST"`)
+
+		script = fmt.Sprintf(`(http/put "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"PUT"`)
+
+		script = fmt.Sprintf(`(http/put '-X "GET" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"PUT"`)
+
+		script = fmt.Sprintf(`(http/patch "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"PATCH"`)
+
+		script = fmt.Sprintf(`(http/patch '-X "GET" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"PATCH"`)
+
+		script = fmt.Sprintf(`(http/head '-i "%s")`, url)
+		ExpectScriptSuccess(t, script)
+
+		script = fmt.Sprintf(`(http/head '-X "GET" "%s")`, url)
+		ExpectScriptSuccess(t, script)
+
+		script = fmt.Sprintf(`(http/delete "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"DELETE"`)
+
+		script = fmt.Sprintf(`(http/delete '-X "GET" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"DELETE"`)
+
+		script = fmt.Sprintf(`(http/options "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"OPTIONS"`)
+
+		script = fmt.Sprintf(`(http/options '-X "GET" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"OPTIONS"`)
+
+		script = fmt.Sprintf(`(cdr (http/curl "%s" '-d [1 2 3]))`, url)
+		ExpectScriptSuccess(t, script, `"method":"GET"`)
+
+		for _, method := range []string{`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`} {
+			script = fmt.Sprintf(`(cdr (http/curl '-X "%s" "%s" '-d [1 2 3]))`, method, url)
+			ExpectScriptSuccess(t, script, fmt.Sprintf(`"method":"%s"`, method))
+		}
+	})
+}
+
+func TestHTTPRaw(t *testing.T) {
+	WithHttpServer(func(url string) {
+		env := newFullEnv()
+		script := fmt.Sprintf(`(car (http/curl '-X "POST" '-i "%s" '-d [1 2 3]))`, url+"/xxx")
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqInteger(t, 404, ret)
+	})
+}
+
+func TestHTTPMultiHeaders(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get  "%s" '-H "h1:v1" '-H "h2:v2")`, url)
+		ExpectScriptSuccess(t, script, `"H1":"v1"`, `"H2":"v2"`)
+	})
+}
+
+func TestHTTPTimeout(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(http/get  "%s" '-timeout 5)`, url)
+		ExpectScriptSuccess(t, script)
+
+		script = fmt.Sprintf(`(http/get  "%s" '-timeout "1ns")`, url)
+		ExpectScriptErr(t, script, `context deadline exceeded (Client.Timeout exceeded while awaiting headers)`)
+
+		script = fmt.Sprintf(`(http/get  "%s" '-timeout (fn [] 1))`, url)
+		ExpectScriptErr(t, script, `-timeout value should be integer or duration string such as`)
+
+		script = fmt.Sprintf(`(http/get  "%s" '-timeout "xxxyyy")`, url)
+		ExpectScriptErr(t, script, `bad -timeout`)
+	})
+}
