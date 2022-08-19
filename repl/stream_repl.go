@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"io"
+	"sync/atomic"
 
 	"unicode/utf8"
 
@@ -15,10 +16,11 @@ type Result struct {
 }
 
 type StreamRepl struct {
-	env    *glisp.Environment
-	input  chan rune
-	output chan *Result
-	stopc  chan struct{}
+	env     *glisp.Environment
+	input   chan rune
+	output  chan *Result
+	stopc   chan struct{}
+	running int32
 }
 
 func NewStreamRepl(env *glisp.Environment) *StreamRepl {
@@ -60,11 +62,19 @@ func (sr *StreamRepl) replOnce(lexer *glisp.Lexer) (glisp.Sexp, error) {
 	if err = sr.env.LoadExpressions([]glisp.Sexp{expr}); err != nil {
 		return glisp.SexpNull, errors.New(sr.env.GetStackTrace(err))
 	}
+	atomic.StoreInt32(&sr.running, 1)
+	defer func() {
+		atomic.StoreInt32(&sr.running, 0)
+	}()
 	ret, err := sr.env.Run()
 	if err != nil {
 		return glisp.SexpNull, errors.New(sr.env.GetStackTrace(err))
 	}
 	return ret, nil
+}
+
+func (sr *StreamRepl) IsRunning() bool {
+	return atomic.LoadInt32(&sr.running) == 1
 }
 
 func (sr *StreamRepl) drainInput() {

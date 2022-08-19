@@ -91,6 +91,20 @@ func repl(env *glisp.Environment) {
 	stremRepl := NewStreamRepl(env)
 	var waitMore bool
 	var pendingCount int
+	handleOutput := func(ret *Result) {
+		waitMore = false
+		pendingCount = 0
+		expr, err := ret.Ret, ret.Err
+		if err != nil {
+			fmt.Println(ret.Err)
+			return
+		}
+
+		if expr != glisp.SexpNull {
+			fmt.Println(expr.SexpString())
+		}
+	}
+
 	for {
 		line, err := readLine(waitMore)
 		if err != nil {
@@ -100,21 +114,20 @@ func repl(env *glisp.Environment) {
 		stremRepl.Write(line + "\n")
 		pendingCount += len(strings.TrimSpace(line))
 
+	WAIT_OUTPUT:
 		select {
 		case <-time.After(time.Millisecond * 100):
 			waitMore = pendingCount > 0
+			if stremRepl.IsRunning() {
+				goto WAIT_OUTPUT
+			}
 		case ret := <-stremRepl.Out():
-			waitMore = false
-			pendingCount = 0
-			expr, err := ret.Ret, ret.Err
-			if err != nil {
-				fmt.Println(ret.Err)
-				break
-			}
-
-			if expr != glisp.SexpNull {
-				fmt.Println(expr.SexpString())
-			}
+			handleOutput(ret)
+		}
+		select {
+		case ret := <-stremRepl.Out():
+			handleOutput(ret)
+		default:
 		}
 
 	}
