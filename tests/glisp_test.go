@@ -97,6 +97,16 @@ func TestMakeScriptFunction(t *testing.T) {
 	ExpectTrue(t, ret)
 }
 
+func TestMakeScriptFunctionNoArgument(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	fn, err := vm.MakeScriptFunction(`(+ 1 2)`, ``)
+	ExpectSuccess(t, err)
+
+	ret, err := vm.Apply(fn, nil)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, ret)
+}
+
 func TestMakeComplexScriptFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	script := `

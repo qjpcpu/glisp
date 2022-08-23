@@ -486,7 +486,7 @@ func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 	}
 	fn, ok := f.(*SexpFunction)
 	if !ok {
-		return SexpNull, fmt.Errorf("%s(%T) is not a function", fun, f)
+		return SexpNull, fmt.Errorf("%s is not a function", Inspect(f))
 	}
 	return env.Apply(fn, args)
 }

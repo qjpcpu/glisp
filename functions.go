@@ -355,7 +355,7 @@ func GetLenFunction(name string) UserFunction {
 			return NewSexpInt(len(t.bytes)), nil
 		}
 
-		return NewSexpInt(0), fmt.Errorf("argument must be string/array/list/hash/bytes but got %s", args[0])
+		return NewSexpInt(0), fmt.Errorf("argument must be string/array/list/hash/bytes but got %s", Inspect(args[0]))
 	}
 }
 
@@ -547,7 +547,7 @@ func GetMapFunction(name string) UserFunction {
 		case *SexpFunction:
 			fun = e
 		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+			return SexpNull, fmt.Errorf("first argument of map must be function had %v", Inspect(e))
 		}
 
 		switch e := args[1].(type) {
@@ -571,7 +571,7 @@ func GetFlatMapFunction(name string) UserFunction {
 		case *SexpFunction:
 			fun = e
 		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+			return SexpNull, fmt.Errorf("first argument of map must be function had %v", Inspect(e))
 		}
 
 		switch e := args[1].(type) {
@@ -680,7 +680,7 @@ func GetSourceFileFunction(name string) UserFunction {
 					return err
 				}
 			default:
-				return fmt.Errorf("source-file: Expected `string`, `list`, `array` given type %T val %v", item, item)
+				return fmt.Errorf("source-file: Expected `string`, `list`, `array` given %v", Inspect(item))
 			}
 
 			return nil
@@ -892,7 +892,7 @@ func GetFoldlFunction(name string) UserFunction {
 		case *SexpFunction:
 			fun = e
 		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+			return SexpNull, fmt.Errorf("first argument of map must be function had %v", Inspect(e))
 		}
 
 		switch e := args[2].(type) {
@@ -923,7 +923,7 @@ func GetFilterFunction(name string) UserFunction {
 		case *SexpFunction:
 			fun = e
 		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %T %v", e, e)
+			return SexpNull, fmt.Errorf("first argument of map must be function had %v", Inspect(e))
 		}
 
 		switch e := args[1].(type) {

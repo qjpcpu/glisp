@@ -13,7 +13,7 @@ import (
 
 func TestCompareFloatWithString(t *testing.T) {
 	script := `(= 1.0 "a")`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpFloat(1.0) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `cannot compare 1.0<float> to "a"<string>`)
 }
 
 func TestMapListFail(t *testing.T) {
@@ -92,7 +92,7 @@ func TestMarshalAny(t *testing.T) {
 
 func TestCompareIntWithString(t *testing.T) {
 	script := `(= 1 "a")`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `cannot compare 1<int> to "a"<string>`)
 }
 
 func TestIsZero(t *testing.T) {
@@ -103,47 +103,47 @@ func TestIsZero(t *testing.T) {
 
 func TestCompareStringWithInt(t *testing.T) {
 	script := `(= "a" 1)`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
 }
 
 func TestCompareCharWithHash(t *testing.T) {
 	script := `(= #a {})`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpChar(#a) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare #a<char> to {}<hash>`)
 }
 
 func TestCompareBytesWithHash(t *testing.T) {
 	script := `(= 0B6869 {})`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpBytes(0B6869) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare 0B6869<bytes> to {}<hash>`)
 }
 
 func TestCompareHashWithList(t *testing.T) {
 	script := `(=  {} '(1))`
-	ExpectScriptErr(t, script, `cannot compare *glisp.SexpHash({}) to *glisp.SexpPair((1))`)
+	ExpectScriptErr(t, script, `cannot compare {}<hash> to (1)<list>`)
 }
 
 func TestCompareListWithHash(t *testing.T) {
 	script := `(= '(1) {})`
-	ExpectScriptErr(t, script, `cannot compare *glisp.SexpPair((1)) to *glisp.SexpHash({})`)
+	ExpectScriptErr(t, script, `cannot compare (1)<list> to {}<hash>`)
 }
 
 func TestCompareBoolWithInt(t *testing.T) {
 	script := `(= true 1)`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpBool(true) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare true<bool> to 1<int>`)
 }
 
 func TestCompareListStringWithListInt(t *testing.T) {
 	script := `(= '("a") '(1))`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
 }
 
 func TestCompareArrayStringWithArrayInt(t *testing.T) {
 	script := `(= ["a"] [1])`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
 }
 
 func TestCompareArrayWithInt(t *testing.T) {
 	script := `(= [] 1)`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpArray([]) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare []<array> to 1<int>`)
 }
 
 func TestDiv0(t *testing.T) {
@@ -153,12 +153,12 @@ func TestDiv0(t *testing.T) {
 
 func TestNotComparable(t *testing.T) {
 	script := `(= (make-chan) 1)`
-	ExpectScriptErr(t, script, `cannot compare extensions.SexpChannel([chan]) to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare [chan]<channel> to 1<int>`)
 }
 
 func TestErrorExistInList(t *testing.T) {
 	script := `(exist? '("a") 1)`
-	ExpectScriptErr(t, script, `cannot compare glisp.SexpStr("a") to glisp.SexpInt(1)`)
+	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
 }
 
 func TestConcatStringErr(t *testing.T) {
@@ -178,7 +178,7 @@ func TestAppendStringErr(t *testing.T) {
 
 func TestHashKey(t *testing.T) {
 	script := `(exist? {} {})`
-	ExpectScriptErr(t, script, `cannot hash type *glisp.SexpHash`)
+	ExpectScriptErr(t, script, `cannot hash type {}<hash>`)
 }
 
 func TestEvalNothing(t *testing.T) {
@@ -188,7 +188,7 @@ func TestEvalNothing(t *testing.T) {
 
 func TestExistArrayNotCompare(t *testing.T) {
 	script := `(exist? [1] "a")`
-	ExpectScriptErr(t, script, `compare glisp.SexpInt(1) to glisp.SexpStr("a")`)
+	ExpectScriptErr(t, script, `cannot compare 1<int> to "a"<string>`)
 }
 
 func TestApplySymbolNotFound(t *testing.T) {
@@ -521,18 +521,18 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(json/set {} "" 3)`)
 	ExpectScriptErr(t, `(json/set {"a" +} "a.1" 3)`)
 	ExpectScriptErr(t, `(json/set [] "a" 3)`, `strconv.Atoi: parsing`)
-	ExpectScriptErr(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
-	ExpectScriptErr(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got glisp.SexpInt`)
+	ExpectScriptErr(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got 1<int>`)
+	ExpectScriptErr(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got 1<int>`)
 	ExpectScriptErr(t, `(json/del)`)
 	ExpectScriptErr(t, `(json/del 1 2)`)
 	ExpectScriptErr(t, `(json/del [] 2)`)
 	ExpectScriptErr(t, `(json/del [] "a")`, `strconv.Atoi: parsing`)
-	ExpectScriptErr(t, `(json/del [1] "0.a")`, `must del on hash/array but got glisp.SexpInt`)
+	ExpectScriptErr(t, `(json/del [1] "0.a")`, `must del on hash/array but got 1<int>`)
 	ExpectScriptErr(t, `(defn (list 1) [] 1)`, `bad function name`)
 	ExpectScriptErr(t, `(def x 1) (x)`, `is not a function`)
 	ExpectScriptErr(t, `(assert (= 1 2))`, `Assertion failed: (= 1 2)`)
 	ExpectScriptErr(t, `(source-file)`, "expect 1,... argument but got 0")
-	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given type glisp.SexpInt")
+	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given 1<int>")
 	ExpectScriptErr(t, `(source-file "not-exist-source-file")`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file ["not-exist-source-file"])`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file '("not-exist-source-file"))`, "no such file or directory")

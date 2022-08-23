@@ -37,7 +37,7 @@ func ExecCommand(name string) glisp.UserFunction {
 			case glisp.SexpBytes:
 				arguments = append(arguments, string(expr.Bytes()))
 			default:
-				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %T", arg)
+				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.Inspect(arg))
 			}
 		}
 		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))

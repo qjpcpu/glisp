@@ -48,7 +48,7 @@ func (t SexpTime) MarshalJSON() ([]byte, error) {
 
 func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
 	if _, ok := b.(SexpTime); !ok {
-		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", t, t.SexpString(), b, b.SexpString())
+		return 0, fmt.Errorf("cannot compare %s to %s", glisp.Inspect(t), glisp.Inspect(b))
 	}
 	t1 := time.Time(t)
 	t2 := time.Time(b.(SexpTime))

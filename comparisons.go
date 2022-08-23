@@ -2,7 +2,6 @@ package glisp
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -48,7 +47,7 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	if isComparable(a) && isComparable(b) {
 		return a.(Comparable).Cmp(b.(Comparable))
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(a), Inspect(b))
 }
 
 func compareFloat(f SexpFloat, expr Sexp) (int, error) {
@@ -60,7 +59,7 @@ func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	case SexpChar:
 		return f.Cmp(NewSexpFloat(float64(e))), nil
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", f, f.SexpString(), expr, expr.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(f), Inspect(expr))
 }
 
 func compareIntAndFloat(e SexpInt, f SexpFloat) int {
@@ -85,7 +84,7 @@ func compareInt(i SexpInt, expr Sexp) (int, error) {
 		si, _ := NewSexpIntStr(strconv.FormatInt(int64(byte(e)), 10))
 		return compareBetweenInt(i, si), nil
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", i, i.SexpString(), expr, expr.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(i), Inspect(expr))
 }
 
 func compareChar(c SexpChar, expr Sexp) (int, error) {
@@ -99,7 +98,7 @@ func compareChar(c SexpChar, expr Sexp) (int, error) {
 		ei := NewSexpInt64(int64(byte(e)))
 		return compareBetweenInt(ci, ei), nil
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", c, c.SexpString(), expr, expr.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(c), Inspect(expr))
 }
 
 func compareString(s SexpStr, expr Sexp) (int, error) {
@@ -109,7 +108,7 @@ func compareString(s SexpStr, expr Sexp) (int, error) {
 	case SexpBytes:
 		return bytes.Compare([]byte(s), e.bytes), nil
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", s, s.SexpString(), expr, expr.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(s), Inspect(expr))
 }
 
 func compareBytes(s SexpBytes, expr Sexp) (int, error) {
@@ -119,7 +118,7 @@ func compareBytes(s SexpBytes, expr Sexp) (int, error) {
 	case SexpStr:
 		return bytes.Compare(s.bytes, []byte(e)), nil
 	}
-	return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", s, s.SexpString(), expr, expr.SexpString())
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(s), Inspect(expr))
 }
 
 func compareSymbol(sym SexpSymbol, expr Sexp) (int, error) {
@@ -127,8 +126,7 @@ func compareSymbol(sym SexpSymbol, expr Sexp) (int, error) {
 	case SexpSymbol:
 		return compareBetweenInt(NewSexpInt(sym.Number()), NewSexpInt(e.Number())), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T(%s) to %T(%s)", sym, sym.SexpString(), expr, expr.SexpString())
-	return 0, errors.New(errmsg)
+	return 0, fmt.Errorf("cannot compare %s to %s", Inspect(sym), Inspect(expr))
 }
 
 func comparePair(a *SexpPair, b Sexp) (int, error) {
@@ -137,7 +135,7 @@ func comparePair(a *SexpPair, b Sexp) (int, error) {
 	case *SexpPair:
 		bp = t
 	default:
-		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
+		return 0, fmt.Errorf("cannot compare %s to %s", Inspect(a), Inspect(b))
 	}
 	res, err := Compare(a.head, bp.head)
 	if err != nil {
@@ -155,7 +153,7 @@ func compareArray(a SexpArray, b Sexp) (int, error) {
 	case SexpArray:
 		ba = t
 	default:
-		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
+		return 0, fmt.Errorf("cannot compare %s to %s", Inspect(a), Inspect(b))
 	}
 	var length int
 	if len(a) < len(ba) {
@@ -183,7 +181,7 @@ func compareBool(a SexpBool, b Sexp) (int, error) {
 	case SexpBool:
 		bb = bt
 	default:
-		return 0, fmt.Errorf("cannot compare %T(%s) to %T(%s)", a, a.SexpString(), b, b.SexpString())
+		return 0, fmt.Errorf("cannot compare %s to %s", Inspect(a), Inspect(b))
 	}
 
 	// true > false
