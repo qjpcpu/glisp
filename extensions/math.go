@@ -82,8 +82,8 @@ func IntegerDo(op IntegerOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 
 func GetBitwiseFunction(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
 		}
 
 		var op IntegerOp
