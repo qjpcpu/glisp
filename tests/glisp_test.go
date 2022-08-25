@@ -490,3 +490,29 @@ func TestHTTPTimeout(t *testing.T) {
 		ExpectScriptErr(t, script, `bad -timeout`)
 	})
 }
+
+func TestParseJSONStable(t *testing.T) {
+	fn := func(data string) glisp.SexpStr {
+		expr, _ := extensions.ParseJSON([]byte(data))
+		out, _ := glisp.Marshal(expr)
+		return glisp.SexpStr(string(out))
+	}
+	for i := 0; i < 1000; i++ {
+		orig := `{"a":1,"b":2,3:"c"}`
+		ExpectEqStr(t, orig, fn(orig))
+		orig = `{"b":2,3:"c","a":1}`
+		ExpectEqStr(t, orig, fn(orig))
+	}
+}
+
+func TestParseJSON(t *testing.T) {
+	fn := func(data string) glisp.SexpStr {
+		expr, _ := extensions.ParseJSON([]byte(data))
+		out, _ := glisp.Marshal(expr)
+		return glisp.SexpStr(string(out))
+	}
+	orig := `{"a":null,"b":"val","c":[],"d":[null],"e":false,"f":12,"g":3.14}`
+	ExpectEqStr(t, orig, fn(orig))
+	orig = `null`
+	ExpectEqStr(t, orig, fn(orig))
+}

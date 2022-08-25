@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/qjpcpu/glisp"
+	"github.com/qjpcpu/qjson"
 )
 
 func ImportJSON(env *glisp.Environment) {
@@ -59,62 +59,64 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 }
 
 func ParseJSON(rawBytes []byte) (glisp.Sexp, error) {
-	var v interface{}
 	if len(rawBytes) == 0 {
 		return glisp.SexpNull, nil
 	}
-	if err := stdUnmarshal(rawBytes, &v); err != nil {
+	tree, err := qjson.Decode(rawBytes)
+	if err != nil {
 		return glisp.SexpNull, fmt.Errorf("decode json fail %v", err)
 	}
-	return mapInterfaceToSexp(v), nil
+	defer tree.Release()
+	return mapJsonNodeToSexp(tree.Root), nil
 }
 
-func stdUnmarshal(data []byte, v interface{}) error {
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	dec.UseNumber()
-	return dec.Decode(v)
+func mapJsonKeyNodeToSexp(v *qjson.Node) glisp.Sexp {
+	/* in fact, json key should only be string */
+	switch v.Type {
+	case qjson.Bool:
+		return glisp.SexpBool(v.Value == `true`)
+	case qjson.Integer:
+		v, _ := glisp.NewSexpIntStr(v.Value)
+		return v
+	case qjson.String:
+		return glisp.SexpStr(v.AsString())
+	}
+	return glisp.SexpStr(v.Value)
 }
 
-func mapInterfaceToSexp(v interface{}) glisp.Sexp {
+func mapJsonNodeToSexp(v *qjson.Node) glisp.Sexp {
 	if v == nil {
 		return glisp.SexpNull
 	}
-	switch val := v.(type) {
-	case map[string]interface{}:
-		arr := make(glisp.SexpArray, 0, 10)
-		for k, v := range val {
+	switch v.Type {
+	case qjson.Null:
+		return glisp.SexpNull
+	case qjson.Object:
+		arr := make(glisp.SexpArray, 0, len(v.ObjectValues)*2)
+		for _, elem := range v.ObjectValues {
 			arr = append(arr,
-				glisp.SexpStr(k),
-				mapInterfaceToSexp(v),
+				mapJsonKeyNodeToSexp(elem.Key),
+				mapJsonNodeToSexp(elem.Value),
 			)
 		}
 		hash, _ := glisp.MakeHash(arr)
 		return hash
-	case []interface{}:
-		arr := make(glisp.SexpArray, 0, 10)
-		for _, item := range val {
-			arr = append(arr, mapInterfaceToSexp(item))
+	case qjson.Array:
+		arr := make(glisp.SexpArray, 0, len(v.ArrayValues))
+		for _, item := range v.ArrayValues {
+			arr = append(arr, mapJsonNodeToSexp(item))
 		}
 		return arr
-	case bool:
-		return glisp.SexpBool(val)
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		expr, _ := glisp.NewSexpIntStrWithBase(fmt.Sprint(val), 10)
+	case qjson.Bool:
+		return glisp.SexpBool(v.Value == `true`)
+	case qjson.Integer:
+		expr, _ := glisp.NewSexpIntStr(v.Value)
 		return expr
-	case float32:
-		return glisp.NewSexpFloat(float64(val))
-	case float64:
-		return glisp.NewSexpFloat(val)
-	case string:
-		return glisp.SexpStr(val)
-	case json.Number:
-		str := val.String()
-		if strings.Contains(str, ".") {
-			num, _ := glisp.NewSexpFloatStr(str)
-			return num
-		}
-		expr, _ := glisp.NewSexpIntStrWithBase(str, 10)
-		return expr
+	case qjson.Float:
+		v, _ := glisp.NewSexpFloatStr(v.Value)
+		return v
+	case qjson.String:
+		return glisp.SexpStr(v.AsString())
 	}
 	return glisp.SexpNull
 }
