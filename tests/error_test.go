@@ -203,7 +203,7 @@ func TestJSONParse(t *testing.T) {
 
 func TestApplyArgMustBeList(t *testing.T) {
 	script := `(apply + (cons 1 2))`
-	ExpectScriptErr(t, script, `not a list`)
+	ExpectScriptErr(t, script, `expect list but got (1 . 2)<list>`)
 }
 
 func TestDefensiveCornor(t *testing.T) {

@@ -372,7 +372,7 @@ func GetAppendFunction(name string) UserFunction {
 			return AppendStr(t, args[1:]...)
 		}
 
-		return SexpNull, errors.New("First argument of append must be array or string")
+		return SexpNull, errors.New("First argument of append must be array or string but got " + Inspect(args[0]))
 	}
 }
 

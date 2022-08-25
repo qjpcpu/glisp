@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-var NotAList = errors.New("not a list")
-
 type SexpPair struct {
 	head Sexp
 	tail Sexp
@@ -50,7 +48,7 @@ func (pair *SexpPair) SexpString() string {
 
 func ListToArray(expr Sexp) ([]Sexp, error) {
 	if !IsList(expr) {
-		return nil, NotAList
+		return nil, fmt.Errorf("expect list but got %s", Inspect(expr))
 	}
 	arr := make([]Sexp, 0)
 
@@ -81,7 +79,7 @@ func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	case *SexpPair:
 		*list = *e
 	default:
-		return SexpNull, NotAList
+		return SexpNull, fmt.Errorf("expect list but got %s", Inspect(expr))
 	}
 
 	var err error
@@ -111,7 +109,7 @@ func FlatMapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	case *SexpPair:
 		*list = *e
 	default:
-		return SexpNull, NotAList
+		return SexpNull, fmt.Errorf("expect list but got %s", Inspect(expr))
 	}
 
 	oldlist := list
@@ -164,7 +162,7 @@ func ConcatList(a *SexpPair, b ...Sexp) (Sexp, error) {
 
 func concatList(a *SexpPair, b Sexp) (Sexp, error) {
 	if !IsList(b) {
-		return SexpNull, NotAList
+		return SexpNull, fmt.Errorf("expect list but got %s", Inspect(b))
 	}
 
 	if a.tail == SexpNull {
@@ -180,7 +178,7 @@ func concatList(a *SexpPair, b Sexp) (Sexp, error) {
 		return Cons(a.head, newtail), nil
 	}
 
-	return SexpNull, NotAList
+	return SexpNull, fmt.Errorf("expect list but got %s", Inspect(b))
 }
 
 func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error) {
@@ -193,7 +191,7 @@ func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error)
 	case *SexpPair:
 		*list = *e
 	default:
-		return SexpNull, NotAList
+		return SexpNull, fmt.Errorf("expect list but got %s", Inspect(lst))
 	}
 
 	var err error
