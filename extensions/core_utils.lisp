@@ -22,4 +22,4 @@
 
 ;; override
 (defmac override [function new_function]
-  `(def ~function (apply ~new_function [~function])))
+  `(def ~function (let [~function ~function] ~new_function)))
