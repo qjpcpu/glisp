@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 type SexpArray []Sexp
@@ -82,7 +83,7 @@ func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
 		case SexpArray:
 			ret = append(ret, t...)
 		default:
-			return arr, errors.New("second argument is not an array")
+			return arr, fmt.Errorf("second argument(%s) is not an array", Inspect(expr))
 		}
 	}
 

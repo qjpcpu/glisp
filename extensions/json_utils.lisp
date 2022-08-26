@@ -3,23 +3,29 @@
                  (foldl (fn [k v acc]
                                    (cond (array? v) (append acc (concat indent "    " (json/stringify k) ": " (sprintf "[<len=%v>]" (len v))))
                                          (hash? v) (append acc (concat indent "    " (json/stringify k) ": {" (str/join  (foldl (fn [k1 v1 acc1] (append acc1 (json/stringify k1))) [] v) ",") "}"))
+                                         (string? v) (append acc (concat indent "    " (json/stringify k) ": " (json/__q_str v)))
                                          (append acc (concat indent "    " (json/stringify k) ": " (json/stringify v))))) [] js)
                  [(concat indent "}")]) "\n"))
+
+(defn json/__q_str [js]
+  (cond (> (len js) 64) (json/stringify (sprintf "%s...<len=%v>" (slice js 0 64) (len js))) (json/stringify js)))
 
 (defn json/q [js & args]
   (cond (null? args)
           (cond (null? js) (println (json/stringify js))
                 (array? js) (println (str/join (concat ["["]
                                            (append (map (fn [e]
-                                                            (cond (array? e) (sprintf "    [<len=%v>]" (len e))
-                                                                  (hash? e) (json/__q_hash e "    ")
-                                                                  (concat "    " (json/stringify e)))
-                                                            ) (slice js 0 3))
+                                              (cond (array? e) (sprintf "    [<len=%v>]" (len e))
+                                                    (hash? e) (json/__q_hash e "    ")
+                                                    (string? e) (concat "    " (json/__q_str e))
+                                                    (concat "    " (json/stringify e)))
+                                              ) (slice js 0 3))
                         "    ......"
-                        (sprintf "    <total=%v>" (len js))
+                        (sprintf "    <len=%v>" (len js))
                         "]"))
                           "\n"))
                 (hash? js)  (println (json/__q_hash js ""))
+                (string? js) (println (json/__q_str js))
                 (println (json/stringify js)))
         (bool? (car args)) (println (json/stringify js (car args)))
         (null? (cdr args)) (json/q (json/query js (car args)))

@@ -557,4 +557,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(http/get '-H "aaa")`, `bad format aaa, -H option value must like header:value`)
 	ExpectScriptErr(t, `(http/get 1)`, `unknown option 1("int")`)
 	ExpectScriptErr(t, `(http/curl '-X 123 "http://127.0.0.1:9880")`, `-X Method need string but got "int"`)
+	ExpectScriptErr(t, `(concat [] 1)`, `second argument(1<int>) is not an array`)
+	ExpectScriptErr(t, `(json/parse "{{")`, `json/parse: decode json fail unexpected json char {`)
 }

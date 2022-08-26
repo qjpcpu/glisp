@@ -511,8 +511,61 @@ func TestParseJSON(t *testing.T) {
 		out, _ := glisp.Marshal(expr)
 		return glisp.SexpStr(string(out))
 	}
-	orig := `{"a":null,"b":"val","c":[],"d":[null],"e":false,"f":12,"g":3.14}`
+	orig := `{"a":null,"b":"val","c":[],"d":[null],"e":false,"f":12,"g":3.14,true:1}`
 	ExpectEqStr(t, orig, fn(orig))
 	orig = `null`
 	ExpectEqStr(t, orig, fn(orig))
+}
+
+func TestJSONPrettyPrint(t *testing.T) {
+	testFn := func(expect, script string) {
+		var buf bytes.Buffer
+		vm := loadAllExtensions(glisp.New())
+		vm.AddNamedFunction("print", extensions.GetPrintFunction(&buf))
+		vm.AddNamedFunction("println", extensions.GetPrintFunction(&buf))
+		vm.AddNamedFunction("printf", extensions.GetPrintFunction(&buf))
+		_, err := vm.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqStr(t, strings.TrimSpace(expect), glisp.SexpStr(strings.TrimSpace(buf.String())))
+	}
+	testFn(
+		`1
+true
+3.14
+null
+"str"
+`,
+		`(json/q 1) (json/q true) (json/q 3.14) (json/q '()) (json/q "str")`,
+	)
+	testFn(
+		`[
+    1
+    2
+    3
+    ......
+    <len=3>
+]`,
+		`(json/q [1 2 3])`,
+	)
+	testFn(
+		`{
+    "a": 1
+    "b": 2
+    "c": [<len=3>]
+    "d": {"a1","b1"}
+}`,
+		`(json/q {"a" 1 "b" 2 "c" [1 2 3] "d" {"a1" 1 "b1" 2}})`,
+	)
+	testFn(
+		`{
+    "a": "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-...<len=68>"
+}`,
+		`(json/q {"a" "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/%$"})`,
+	)
+	testFn(
+		`{
+  "a": "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/%$"
+}`,
+		`(json/q {"a" "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/%$"} true)`,
+	)
 }
