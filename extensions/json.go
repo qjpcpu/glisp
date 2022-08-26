@@ -5,16 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 
+	_ "embed"
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/qjson"
 )
 
-func ImportJSON(env *glisp.Environment) {
+var (
+	//go:embed json_utils.lisp
+	json_scripts string
+)
+
+func ImportJSON(env *glisp.Environment) error {
 	env.AddNamedFunction("json/stringify", jsonMarshal)
 	env.AddNamedFunction("json/parse", jsonUnmarshal)
 	env.AddNamedFunction("json/query", QueryJSONSexp)
 	env.AddNamedFunction("json/set", SetJSONSexp)
 	env.AddNamedFunction("json/del", DelJSONSexp)
+	return env.SourceStream(bytes.NewBufferString(json_scripts))
 }
 
 func jsonMarshal(name string) glisp.UserFunction {
