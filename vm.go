@@ -222,6 +222,43 @@ func (c CallInstr) Execute(env *Environment) error {
 	return fmt.Errorf("%s is not a function", c.sym.name)
 }
 
+type PrepareCallInstr struct {
+	sym   SexpSymbol
+	nargs int
+}
+
+func (c PrepareCallInstr) InstrString() string {
+	return fmt.Sprintf("preparecall %s %d", c.sym.name, c.nargs)
+}
+
+func (c PrepareCallInstr) Execute(env *Environment) error {
+	if err := c.execute(env); err != nil {
+		return err
+	}
+	env.pc++
+	return nil
+}
+
+func (c PrepareCallInstr) execute(env *Environment) error {
+	_, ok := env.builtins[c.sym.number]
+	if ok {
+		return nil
+	}
+
+	funcobj, err := env.scopestack.LookupSymbol(c.sym)
+	if err != nil {
+		return err
+	}
+	switch f := funcobj.(type) {
+	case *SexpFunction:
+		if !f.user && f.varargs {
+			return env.wrangleOptargs(f.nargs, c.nargs)
+		}
+		return nil
+	}
+	return nil
+}
+
 type DispatchInstr struct {
 	nargs int
 }

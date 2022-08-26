@@ -577,6 +577,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		for i := 0; i < gen.scopes; i++ {
 			gen.AddInstruction(RemoveScopeInstr(0))
 		}
+		gen.AddInstruction(PrepareCallInstr{sym, len(args)})
 		gen.AddInstruction(GotoInstr{0})
 	} else {
 		gen.AddInstruction(CallInstr{sym, len(args)})
