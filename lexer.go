@@ -20,7 +20,6 @@ const (
 	TokenRCurly
 	TokenDot
 	TokenQuote
-	TokenSharpQuote
 	TokenBacktick
 	TokenTilde
 	TokenTildeAt
@@ -60,8 +59,6 @@ func (t Token) String() string {
 		return "."
 	case TokenQuote:
 		return "'"
-	case TokenSharpQuote:
-		return "#'"
 	case TokenBacktick:
 		return "`"
 	case TokenTilde:
@@ -89,6 +86,7 @@ const (
 	LexerNormal LexerState = iota
 	LexerComment
 	LexerStrLit
+	LexerRawStrLit
 	LexerStrEscaped
 	LexerUnquote
 	LexerSharp
@@ -286,6 +284,15 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		lexer.buffer.WriteRune(r)
 		return nil
 	}
+	if lexer.state == LexerRawStrLit {
+		if r == '`' {
+			lexer.dumpString()
+			lexer.state = LexerNormal
+			return nil
+		}
+		lexer.buffer.WriteRune(r)
+		return nil
+	}
 	if lexer.state == LexerStrEscaped {
 		char, err := EscapeChar(r)
 		if err != nil {
@@ -308,10 +315,9 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 	if lexer.state == LexerSharp {
-		if r == '\'' && lexer.buffer.Len() == 1 {
+		if r == '`' && lexer.buffer.Len() == 1 {
 			lexer.buffer.Reset()
-			lexer.tokens = append(lexer.tokens, Token{TokenSharpQuote, ""})
-			lexer.state = LexerNormal
+			lexer.state = LexerRawStrLit
 			return nil
 		} else if r == '\\' && lexer.buffer.Len() == 1 {
 			_, err := lexer.buffer.WriteRune(r)

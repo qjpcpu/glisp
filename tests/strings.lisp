@@ -58,3 +58,9 @@
 (assert (str/integer? "123"))
 (assert (str/float? "0.123"))
 (assert (str/bool? "false"))
+
+;; raw string
+(assert (= "start\\n\\t\\e# \" \" '' ~ ~@ " #`start\n\t\e# " " '' ~ ~@ `))
+(assert (= "line1\n           line2\n           line3" #`line1
+           line2
+           line3`))

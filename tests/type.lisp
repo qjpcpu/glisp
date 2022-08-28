@@ -5,7 +5,7 @@
 (assert (= (typestr #a) "char"))
 (assert (= (typestr 1.1) "float"))
 (assert (= (typestr (fn [a] ())) "function"))
-(assert (= (typestr #'(fn [a] ())) "function"))
+(assert (= (typestr (fn [a] ())) "function"))
 (assert (= (typestr {'a 1} ) "hash"))
 (assert (= (typestr 1) "int"))
 (assert (= (typestr '('a)) "list"))

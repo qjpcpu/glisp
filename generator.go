@@ -548,8 +548,6 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateSyntaxQuote(args)
 	case "include":
 		return gen.GenerateInclude(args)
-	case "sharp-quote":
-		return gen.GenerateSharpQuote(args)
 	}
 
 	macro, found := gen.env.macros[sym.number]
@@ -680,31 +678,6 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 	}
 	gen.AddInstruction(PushInstr{arg})
 	return nil
-}
-
-func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
-	if len(args) != 1 {
-		return errors.New("sharp-quote takes exactly one argument")
-	}
-	arg := args[0]
-
-	switch expr := arg.(type) {
-	case SexpSymbol:
-		gen.AddInstruction(GetInstr{sym: expr})
-		return nil
-	case *SexpPair:
-		if !IsList(arg) {
-			return fmt.Errorf("sharp-quote only support function, not %s", arg.SexpString())
-		}
-		if _, ok := expr.head.(SexpSymbol); !ok {
-			return fmt.Errorf("sharp-quote only support function, not %s", arg.SexpString())
-		}
-		arr, _ := ListToArray(expr.tail)
-		gen.GenerateCallBySymbol(expr.head.(SexpSymbol), arr)
-		return nil
-	default:
-		return fmt.Errorf("sharp-quote only support function, not %s", arg.SexpString())
-	}
 }
 
 func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
