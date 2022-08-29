@@ -64,3 +64,6 @@
 (assert (= "line1\n           line2\n           line3" #`line1
            line2
            line3`))
+
+(assert (empty? ""))
+(assert (empty? (str2bytes "")))

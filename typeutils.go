@@ -127,6 +127,10 @@ func IsEmpty(expr Sexp) bool {
 		return len(e) == 0
 	case *SexpHash:
 		return HashIsEmpty(e)
+	case SexpStr:
+		return len(e) == 0
+	case SexpBytes:
+		return len(e.bytes) == 0
 	}
 
 	return false
