@@ -3,7 +3,6 @@
 *.mprof
 *.out
 .idea
-/repl/repl
 /repl/*.lisp
-/repl/glisp
+/repl/glisp/glisp
 /*.dat

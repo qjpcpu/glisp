@@ -1,7 +1,6 @@
-package main
+package repl
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -18,6 +17,7 @@ var (
 )
 
 func registKeywords(vm *glisp.Environment) {
+	keywords = nil
 	for _, fn := range vm.GlobalFunctions() {
 		if len(fn) > 1 {
 			keywords = append(keywords, fn)
@@ -163,29 +163,6 @@ func fmtScript(env *glisp.Environment, fname string) {
 	fmt.Println(glisp.FormatPretty(expressions))
 }
 
-var (
-	fmtFile string
-)
-
-func main() {
-	flag.StringVar(&fmtFile, "f", "", "format file")
-	flag.Parse()
-
-	env := newEnv()
-	registKeywords(env)
-
-	if fmtFile != "" {
-		fmtScript(env, fmtFile)
-		return
-	}
-
-	if args := os.Args; len(args) > 1 {
-		runScript(env, args[1])
-	} else {
-		repl(env)
-	}
-}
-
 func newEnv() *glisp.Environment {
 	env := glisp.New()
 	env.ImportEval()
@@ -203,4 +180,31 @@ func newEnv() *glisp.Environment {
 	extensions.ImportOS(env)
 	extensions.ImportHTTP(env)
 	return env
+}
+
+type EnvOption func(*glisp.Environment)
+
+func RunScript(file string, opts ...EnvOption) {
+	env := newEnv()
+	for _, fn := range opts {
+		fn(env)
+	}
+	runScript(env, file)
+}
+
+func FormatScript(file string, opts ...EnvOption) {
+	env := newEnv()
+	for _, fn := range opts {
+		fn(env)
+	}
+	fmtScript(env, file)
+}
+
+func Run(opts ...EnvOption) {
+	env := newEnv()
+	for _, fn := range opts {
+		fn(env)
+	}
+	registKeywords(env)
+	repl(env)
 }
