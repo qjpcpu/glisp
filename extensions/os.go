@@ -19,6 +19,8 @@ func ImportOS(env *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
 	env.AddNamedFunction("os/exec", ExecCommand)
+	env.AddNamedFunction("os/env", Getenv)
+	env.AddNamedFunction("os/setenv", Setenv)
 	return nil
 }
 
@@ -129,4 +131,36 @@ func replaceHomeDirSymbol(file string) string {
 		}
 	}
 	return file
+}
+
+func Getenv(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) == 0 {
+			return glisp.SexpNull, errors.New("no arguments")
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[0]))
+		}
+		return glisp.SexpStr(os.Getenv(string(args[0].(glisp.SexpStr)))), nil
+	}
+}
+
+func Setenv(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2)
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[0]))
+		}
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[1]))
+		}
+		name := string(args[0].(glisp.SexpStr))
+		if name == `` {
+			return glisp.SexpNull, errors.New("env variable name can't be empty")
+		}
+		os.Setenv(name, string(args[1].(glisp.SexpStr)))
+		return glisp.SexpNull, nil
+	}
 }

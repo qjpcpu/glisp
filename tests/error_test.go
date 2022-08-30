@@ -562,4 +562,10 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `((`, `Error on line 1,2: Unexpected end of input`)
 	multiLine := "(len #`" + "\na)`)\n)"
 	ExpectScriptErr(t, multiLine, `Error on line 3,1`)
+	ExpectScriptErr(t, `(os/env)`, `no arguments`)
+	ExpectScriptErr(t, `(os/setenv)`, `expect 2 argument but got 0`)
+	ExpectScriptErr(t, `(os/env 1)`, `env variable should be string but got 1<int>`)
+	ExpectScriptErr(t, `(os/setenv 1 1)`, `env variable should be string but got 1<int>`)
+	ExpectScriptErr(t, `(os/setenv "d" 1)`, `env variable should be string but got 1<int>`)
+	ExpectScriptErr(t, `(os/setenv "" "")`, `env variable name can't be empty`)
 }

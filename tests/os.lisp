@@ -14,3 +14,8 @@
 (assert (os/file-exist? file))
 (os/remove-file dir)
 (assert (not (os/file-exist? file)))
+
+(assert (empty? (os/env "AAAABBBBCCCC")))
+(os/setenv "AAAABBBBCCCC" "111")
+(assert (= "111" (os/env "AAAABBBBCCCC")))
+(os/setenv "AAAABBBBCCCC" "")
