@@ -537,7 +537,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(source-file ["not-exist-source-file"])`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file '("not-exist-source-file"))`, "no such file or directory")
 	WithTempFile(`(`, func(file string) {
-		ExpectScriptErr(t, fmt.Sprintf(`(source-file '("%s"))`, file), "Error on line 1: Unexpected end of input")
+		ExpectScriptErr(t, fmt.Sprintf(`(source-file '("%s"))`, file), "Unexpected end of input")
 	})
 	ExpectScriptErr(t, `((compose (fn [e] e) (fn [e] (xxx))) 1)`, "symbol", "not found")
 
@@ -559,4 +559,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(http/curl '-X 123 "http://127.0.0.1:9880")`, `-X Method need string but got "int"`)
 	ExpectScriptErr(t, `(concat [] 1)`, `second argument(1<int>) is not an array`)
 	ExpectScriptErr(t, `(json/parse "{{")`, `json/parse: decode json fail unexpected json char {`)
+	ExpectScriptErr(t, `((`, `Error on line 1,2: Unexpected end of input`)
+	multiLine := "(len #`" + "\na)`)\n)"
+	ExpectScriptErr(t, multiLine, `Error on line 3,1`)
 }

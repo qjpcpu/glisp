@@ -280,7 +280,7 @@ func (env *Environment) ParseStream(in io.Reader) ([]Sexp, error) {
 
 	exp, err = ParseTokens(env, lexer)
 	if err != nil {
-		return nil, fmt.Errorf("Error on line %d: %v\n", lexer.Linenum(), err)
+		return nil, fmt.Errorf("Error on line %d,%d: %v\n", lexer.Linenum(), lexer.LineOffset(), err)
 	}
 
 	return exp, nil
