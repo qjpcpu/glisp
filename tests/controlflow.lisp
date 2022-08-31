@@ -13,6 +13,10 @@
 (assert (= 1 (or 0 1)))
 (assert (= 1 (or 1 0)))
 (assert (= 1 (or 1 2)))
+(assert (= "a" (bytes2str (or (str2bytes "") (str2bytes "a")))))
+(assert (= "" (bytes2str(and (str2bytes "") (str2bytes "a")))))
+(assert (= "a" (or "" "a")))
+(assert (= "" (and "" "a")))
 
 (assert (= 'a
   (cond true 'a 'b)))

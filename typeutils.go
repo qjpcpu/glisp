@@ -151,6 +151,10 @@ func IsTruthy(expr Sexp) bool {
 		return e != 0
 	case SexpSentinel:
 		return e != SexpNull
+	case SexpStr:
+		return len(e) > 0
+	case SexpBytes:
+		return len(e.bytes) > 0
 	}
 	return true
 }
