@@ -4,5 +4,6 @@
 *.out
 .idea
 /repl/*.lisp
+/repl/glisp/*.lisp
 /repl/glisp/glisp
 /*.dat

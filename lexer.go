@@ -99,6 +99,8 @@ type Lexer struct {
 	stream     io.RuneReader
 	linenum    int
 	lineoffset int
+	curline    *bytes.Buffer
+	newline    bool
 	finished   bool
 }
 
@@ -292,9 +294,6 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 			return nil
 		}
 		lexer.buffer.WriteRune(r)
-		if r == '\n' {
-			lexer.NewLine()
-		}
 		return nil
 	}
 	if lexer.state == LexerStrEscaped {
@@ -384,9 +383,6 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 	if r == ' ' || r == '\n' || r == '\t' || r == '\r' {
-		if r == '\n' {
-			lexer.NewLine()
-		}
 		err := lexer.dumpBuffer()
 		if err != nil {
 			return err
@@ -406,6 +402,11 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 		return Token{TokenEnd, ""}, nil
 	}
 	for len(lexer.tokens) == 0 {
+		if lexer.newline {
+			lexer.linenum++
+			lexer.lineoffset = 0
+			lexer.curline.Reset()
+		}
 		r, _, err := lexer.stream.ReadRune()
 		if err != nil {
 			lexer.finished = true
@@ -416,6 +417,8 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 			return Token{TokenEnd, ""}, nil
 		}
 		lexer.lineoffset++
+		lexer.newline = r == '\n'
+		lexer.curline.WriteRune(r)
 
 		err = lexer.LexNextRune(r)
 		if err != nil {
@@ -440,6 +443,7 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 	return &Lexer{
 		tokens:   make([]Token, 0, 10),
 		buffer:   new(bytes.Buffer),
+		curline:  new(bytes.Buffer),
 		state:    LexerNormal,
 		stream:   stream,
 		linenum:  1,
@@ -455,7 +459,6 @@ func (lexer *Lexer) LineOffset() int {
 	return lexer.lineoffset
 }
 
-func (lexer *Lexer) NewLine() {
-	lexer.linenum++
-	lexer.lineoffset = 0
+func (lexer *Lexer) CurLine() string {
+	return lexer.curline.String()
 }

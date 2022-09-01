@@ -39,7 +39,7 @@ func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error) {
 			}
 		}
 	}
-	return SexpNull, fmt.Errorf("symbol %v not found", sym)
+	return SexpNull, fmt.Errorf("symbol `%v` not found", sym.Name())
 }
 
 func (stack *Stack) LookupSymbol(sym SexpSymbol) (Sexp, error) {

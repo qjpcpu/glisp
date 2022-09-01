@@ -202,7 +202,7 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 	case TokenEnd:
 		return SexpEnd, nil
 	}
-	return SexpNull, fmt.Errorf("Invalid syntax, didn't know what to do with `%v`", tok)
+	return SexpNull, fmt.Errorf("Invalid syntax, didn't know what to do with `%v`\n%s", tok, lexer.CurLine())
 }
 
 func ParseTokens(env *Environment, lexer *Lexer) ([]Sexp, error) {
