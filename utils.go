@@ -35,3 +35,11 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+func copyFuncMap(fm map[int]*SexpFunction) map[int]*SexpFunction {
+	out := make(map[int]*SexpFunction)
+	for k, v := range fm {
+		out[k] = v
+	}
+	return out
+}

@@ -93,15 +93,11 @@ const (
 )
 
 type Lexer struct {
-	state      LexerState
-	tokens     []Token
-	buffer     *bytes.Buffer
-	stream     io.RuneReader
-	linenum    int
-	lineoffset int
-	curline    *bytes.Buffer
-	newline    bool
-	finished   bool
+	state    LexerState
+	tokens   []Token
+	buffer   *bytes.Buffer
+	stream   RuneReader
+	finished bool
 }
 
 var (
@@ -402,11 +398,6 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 		return Token{TokenEnd, ""}, nil
 	}
 	for len(lexer.tokens) == 0 {
-		if lexer.newline {
-			lexer.linenum++
-			lexer.lineoffset = 0
-			lexer.curline.Reset()
-		}
 		r, _, err := lexer.stream.ReadRune()
 		if err != nil {
 			lexer.finished = true
@@ -416,9 +407,6 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 			}
 			return Token{TokenEnd, ""}, nil
 		}
-		lexer.lineoffset++
-		lexer.newline = r == '\n'
-		lexer.curline.WriteRune(r)
 
 		err = lexer.LexNextRune(r)
 		if err != nil {
@@ -443,22 +431,62 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 	return &Lexer{
 		tokens:   make([]Token, 0, 10),
 		buffer:   new(bytes.Buffer),
-		curline:  new(bytes.Buffer),
 		state:    LexerNormal,
-		stream:   stream,
-		linenum:  1,
+		stream:   NewRuneReader(stream),
 		finished: false,
 	}
 }
 
 func (lexer *Lexer) Linenum() int {
-	return lexer.linenum
+	n, _ := lexer.stream.Offset()
+	return n
 }
 
 func (lexer *Lexer) LineOffset() int {
-	return lexer.lineoffset
+	_, n := lexer.stream.Offset()
+	return n
 }
 
 func (lexer *Lexer) CurLine() string {
-	return lexer.curline.String()
+	return lexer.stream.CurLine()
+}
+
+type RuneReader interface {
+	Offset() (line int, offset int)
+	CurLine() string
+	ReadRune() (r rune, size int, err error)
+}
+
+func NewRuneReader(r io.RuneReader) RuneReader {
+	return &runeReader{r: r, linenum: 1, curline: new(bytes.Buffer)}
+}
+
+type runeReader struct {
+	r               io.RuneReader
+	linenum, offset int
+	curline         *bytes.Buffer
+	newline         bool
+}
+
+func (reader *runeReader) Offset() (int, int) {
+	return reader.linenum, reader.offset
+}
+
+func (reader *runeReader) CurLine() string {
+	return reader.curline.String()
+}
+
+func (reader *runeReader) ReadRune() (r rune, size int, err error) {
+	r, size, err = reader.r.ReadRune()
+	if reader.newline {
+		reader.linenum++
+		reader.offset = 0
+		reader.curline.Reset()
+	}
+	if err == nil {
+		reader.offset++
+		reader.newline = r == '\n'
+		reader.curline.WriteRune(r)
+	}
+	return
 }

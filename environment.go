@@ -66,14 +66,8 @@ func (env *Environment) Clone() *Environment {
 	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
-	dupenv.builtins = make(map[int]*SexpFunction)
-	for k, v := range env.builtins {
-		dupenv.builtins[k] = v
-	}
-	dupenv.macros = make(map[int]*SexpFunction)
-	for k, v := range env.macros {
-		dupenv.macros[k] = v
-	}
+	dupenv.builtins = copyFuncMap(env.builtins)
+	dupenv.macros = copyFuncMap(env.macros)
 	dupenv.symtable = make(map[string]int)
 	for k, v := range env.symtable {
 		dupenv.symtable[k] = v
@@ -106,7 +100,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.stackstack = NewStack(StackStackSize)
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
-	dupenv.macros = env.macros
+	dupenv.macros = copyFuncMap(env.macros)
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
