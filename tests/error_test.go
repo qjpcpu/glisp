@@ -253,7 +253,10 @@ func TestLetListFail(t *testing.T) {
 	ExpectError(t, err, `not a function`)
 
 	err = env.SourceStream(bytes.NewBufferString(`(let (list 1) 1)`))
-	ExpectError(t, err, "not an array")
+	ExpectError(t, err, "bad let binding type")
+
+	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] {1 2})) 1)`))
+	ExpectError(t, err, "hash key must be symbol but got 1<int>")
 
 	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1])) 1)`))
 	ExpectError(t, err, "bind list length must be even")

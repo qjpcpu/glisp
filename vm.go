@@ -438,20 +438,33 @@ func (b BindlistInstr) Execute(env *Environment) error {
 		return err
 	}
 
-	if !IsArray(expr) {
-		return fmt.Errorf("%s not an array", expr.SexpString())
-	}
-	arr := expr.(SexpArray)
-
-	if len(arr)%2 != 0 {
-		return errors.New("bind list length must be even")
-	}
-
-	for i := 0; i*2+1 < len(arr); i++ {
-		if !IsSymbol(arr[i*2]) {
-			return errors.New("odd argument of bind list must be symbol")
+	switch arr := expr.(type) {
+	case SexpArray:
+		if len(arr)%2 != 0 {
+			return errors.New("bind list length must be even")
 		}
-		env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
+
+		for i := 0; i*2+1 < len(arr); i++ {
+			if !IsSymbol(arr[i*2]) {
+				return errors.New("odd argument of bind list must be symbol but got " + Inspect(arr[i*2]))
+			}
+			env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
+		}
+	case *SexpHash:
+		var err error
+		arr.Foreach(func(k Sexp, v Sexp) bool {
+			if IsSymbol(k) {
+				env.scopestack.BindSymbol(k.(SexpSymbol), v)
+				return true
+			}
+			err = errors.New("hash key must be symbol but got " + Inspect(k))
+			return false
+		})
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf(`bad let binding type %v`, Inspect(expr))
 	}
 
 	env.pc++
