@@ -47,7 +47,7 @@ func ExecCommand(name string) glisp.UserFunction {
 		if err != nil {
 			return glisp.SexpNull, fmt.Errorf("%v\n%v", err, string(ret))
 		}
-		return glisp.SexpStr(ret), nil
+		return glisp.SexpStr(chomp(ret)), nil
 	}
 }
 
@@ -163,4 +163,11 @@ func Setenv(name string) glisp.UserFunction {
 		os.Setenv(name, string(args[1].(glisp.SexpStr)))
 		return glisp.SexpNull, nil
 	}
+}
+
+func chomp(b []byte) []byte {
+	if len(b) > 0 && b[len(b)-1] == '\n' {
+		return b[:len(b)-1]
+	}
+	return b
 }
