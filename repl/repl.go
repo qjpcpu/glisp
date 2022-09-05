@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	history  []string
+	history  = GetHistory()
 	keywords []string
 )
 
@@ -39,7 +39,7 @@ func getLine(prefix string) (string, error) {
 	defer line.Close()
 
 	line.SetCtrlCAborts(true)
-	for _, kw := range history {
+	for _, kw := range history.Get() {
 		line.AppendHistory(kw)
 	}
 
@@ -56,7 +56,7 @@ func getLine(prefix string) (string, error) {
 
 	if sentence, err := line.Prompt(prefix); err == nil {
 		line.AppendHistory(sentence)
-		history = append(history, sentence)
+		history.Append(sentence)
 		return sentence, nil
 	} else {
 		return "", err
@@ -72,7 +72,6 @@ func readLine(waitMore bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	history = append(history, strings.ReplaceAll(line, "\n", " "))
 	return line, nil
 }
 
