@@ -67,3 +67,6 @@
 
 (assert (empty? ""))
 (assert (empty? (str2bytes "")))
+
+(assert (= 3 (str/len "中国人")))
+(assert (not= 3 (len "中国人")))

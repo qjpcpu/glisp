@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/qjpcpu/glisp"
 )
@@ -23,6 +24,7 @@ func ImportString(env *glisp.Environment) {
 	env.AddNamedFunction("str/index", StringSearch(strings.Index))
 	env.AddNamedFunction("str/split", StringSplit(strings.Split))
 	env.AddNamedFunction("str/join", StringJoin(strings.Join))
+	env.AddNamedFunction("str/len", StringInt(utf8.RuneCountInString))
 	env.AddNamedFunction("str/digit?", isDigit())
 	env.AddNamedFunction("str/alpha?", isAlpha())
 	env.AddNamedFunction("str/title?", isTitle())
@@ -113,6 +115,20 @@ func StringBool(fn func(string) bool) glisp.NamedUserFunction {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
 			return glisp.SexpBool((fn(toStr(args[0])))), nil
+		}
+	}
+}
+
+func StringInt(fn func(string) int) glisp.NamedUserFunction {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			if len(args) != 1 {
+				return glisp.WrongNumberArguments(name, len(args), 1)
+			}
+			if !glisp.IsString(args[0]) {
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+			}
+			return glisp.NewSexpInt((fn(toStr(args[0])))), nil
 		}
 	}
 }

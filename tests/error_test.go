@@ -571,4 +571,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(os/setenv 1 1)`, `env variable should be string but got 1<int>`)
 	ExpectScriptErr(t, `(os/setenv "d" 1)`, `env variable should be string but got 1<int>`)
 	ExpectScriptErr(t, `(os/setenv "" "")`, `env variable name can't be empty`)
+	ExpectScriptErr(t, `(str/len)`, `str/len expect 1 argument but got 0`)
+	ExpectScriptErr(t, `(str/len 1)`, `str/len first argument should be string`)
 }
