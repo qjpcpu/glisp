@@ -60,6 +60,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"int":        GetAnyToInteger,
 	"float":      GetAnyToFloat,
 	"char":       GetAnyToChar,
+	"bool":       GetAnyToBool,
 	"typestr":    GetTypeFunction,
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
@@ -763,6 +764,21 @@ func GetAnyToChar(name string) UserFunction {
 			return SexpNull, fmt.Errorf(`%s argument should be integer`, name)
 		}
 		return SexpChar(rune(integer.ToInt())), nil
+	}
+}
+
+func GetAnyToBool(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		switch val := args[0].(type) {
+		case SexpBool:
+			return val, nil
+		case SexpStr:
+			return SexpBool(string(val) == `true`), nil
+		}
+		return SexpNull, fmt.Errorf(`%s argument should be string/bool`, name)
 	}
 }
 

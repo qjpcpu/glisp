@@ -576,4 +576,5 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(os/setenv "" "")`, `env variable name can't be empty`)
 	ExpectScriptErr(t, `(str/len)`, `str/len expect 1 argument but got 0`)
 	ExpectScriptErr(t, `(str/len 1)`, `str/len first argument should be string`)
+	ExpectScriptErr(t, `(bool 1)`, `bool argument should be string/bool`)
 }

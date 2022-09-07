@@ -70,3 +70,8 @@
 
 (assert (= 3 (str/len "中国人")))
 (assert (not= 3 (len "中国人")))
+
+(assert (bool "true"))
+(assert (not (bool "false")))
+(assert (bool true))
+(assert (not (bool false)))
