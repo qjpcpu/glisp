@@ -40,10 +40,6 @@
 
 (assert (= -0.1 (- 0 0.1)))
 
-(assert (= 2 (round 1.7)))
-(assert (= 2 (round 2.4)))
-(assert (= 1 (round 0.5)))
-
 (assert (zero? 0.0000000001))
 (assert (not (zero? 0.000000001)))
 
@@ -99,8 +95,39 @@
 
 (assert (= "a" (char2str #a)))
 
-(assert (= #a (int2char 97)))
+(assert (= #a (char 97)))
 
 (assert (= 1.0 (float "1.0")))
 (assert (= 1.0 (float 1.0)))
 (assert (= 1.0 (float 1)))
+
+
+(assert (= 2 (round 1.7)))
+(assert (= 2 (round 2.4)))
+(assert (= 1 (round 0.5)))
+(assert (= -1 (round -1.2)))
+(assert (= -2 (round -1.9)))
+(assert (= 0 (round 0.1)))
+(assert (= 0 (round -0.1)))
+(assert (= 1 (round 0.9)))
+(assert (= -1 (round -0.9)))
+
+(assert (= 2 (ceil 1.7)))
+(assert (= 3 (ceil 2.4)))
+(assert (= 1 (ceil 0.5)))
+(assert (= -1 (ceil -1.2)))
+(assert (= -1 (ceil -1.9)))
+(assert (= 1 (ceil 0.1)))
+(assert (= 0 (ceil -0.1)))
+(assert (= 1 (ceil 0.9)))
+(assert (= 0 (ceil -0.9)))
+
+(assert (= 1 (floor 1.7)))
+(assert (= 2 (floor 2.4)))
+(assert (= 0 (floor 0.5)))
+(assert (= -2 (floor -1.2)))
+(assert (= -2 (floor -1.9)))
+(assert (= 0 (floor 0.1)))
+(assert (= -1 (floor -0.1)))
+(assert (= 0 (floor 0.9)))
+(assert (= -1 (floor -0.9)))

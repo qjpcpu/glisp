@@ -83,19 +83,34 @@ func (f SexpFloat) ToFloat64() float64 {
 }
 
 func (f SexpFloat) Round() SexpInt {
-	integer := new(big.Int)
-	f.v.Int(integer)
-	integer1 := new(big.Int).Add(integer, big.NewInt(1))
-	l, _ := new(big.Float).Sub(f.v, new(big.Float).SetInt(integer)).Float64()
-	r, _ := new(big.Float).Sub(new(big.Float).SetInt(integer1), f.v).Float64()
-	if l < 0 {
-		l = -l
-	}
-	if r < 0 {
-		r = -r
-	}
+	leftInt, rightInt := f.intRange()
+	l, _ := new(big.Float).Sub(f.v, new(big.Float).SetInt(leftInt)).Float64()
+	r, _ := new(big.Float).Sub(new(big.Float).SetInt(rightInt), f.v).Float64()
 	if l < r {
-		return SexpInt{v: integer}
+		return SexpInt{v: leftInt}
 	}
-	return SexpInt{v: integer1}
+	return SexpInt{v: rightInt}
+}
+
+func (f SexpFloat) intRange() (*big.Int, *big.Int) {
+	if res := f.v.Cmp(big.NewFloat(0)); res >= 0 {
+		leftInt := new(big.Int)
+		f.v.Int(leftInt)
+		rightInt := new(big.Int).Add(leftInt, big.NewInt(1))
+		return leftInt, rightInt
+	}
+	rightInt := new(big.Int)
+	f.v.Int(rightInt)
+	leftInt := new(big.Int).Sub(rightInt, big.NewInt(1))
+	return leftInt, rightInt
+}
+
+func (f SexpFloat) Ceil() SexpInt {
+	_, rightInt := f.intRange()
+	return SexpInt{v: rightInt}
+}
+
+func (f SexpFloat) Floor() SexpInt {
+	leftInt, _ := f.intRange()
+	return SexpInt{v: leftInt}
 }

@@ -18,27 +18,18 @@ func GetGenSymFunction(name string) UserFunction {
 	}
 }
 
-func GetStr2SymFunction(name string) UserFunction {
+func GetAnyToSymbolFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
-		if !IsString(args[0]) {
-			return SexpNull, fmt.Errorf(`%s first argument bad type %v`, name, args[0])
+		switch val := args[0].(type) {
+		case SexpStr:
+			return env.MakeSymbol(string(args[0].(SexpStr))), nil
+		case SexpSymbol:
+			return val, nil
 		}
-		return env.MakeSymbol(string(args[0].(SexpStr))), nil
-	}
-}
-
-func GetSym2StrFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		if !IsSymbol(args[0]) {
-			return SexpNull, fmt.Errorf(`%s first argument bad type %v`, name, args[0])
-		}
-		return SexpStr(args[0].(SexpSymbol).Name()), nil
+		return SexpNull, fmt.Errorf(`%s first argument bad type %v`, name, args[0])
 	}
 }
 

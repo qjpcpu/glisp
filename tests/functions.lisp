@@ -46,5 +46,5 @@
 (assert (= 1 (sub -  2 1)))
 
 ;; dynamic function name
-(defn (str2sym (concat "ab" "c")) [] "abc")
+(defn (symbol (concat "ab" "c")) [] "abc")
 (assert (= "abc" (abc)))

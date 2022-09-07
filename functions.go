@@ -59,15 +59,14 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"str":        GetStringifyFunction,
 	"int":        GetAnyToInteger,
 	"float":      GetAnyToFloat,
-	"float2str":  GetFloatToString,
-	"int2char":   GetIntToChar,
-	"char2str":   GetCharToStr,
+	"char":       GetAnyToChar,
 	"typestr":    GetTypeFunction,
 	"gensym":     GetGenSymFunction,
-	"sym2str":    GetSym2StrFunction,
-	"str2sym":    GetStr2SymFunction,
+	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,
 	"bytes2str":  GetBytesToString,
+	"float2str":  GetFloatToString,
+	"char2str":   GetCharToStr,
 }
 
 func GetConsFunction(name string) UserFunction {
@@ -754,7 +753,7 @@ func GetAnyToInteger(name string) UserFunction {
 	}
 }
 
-func GetIntToChar(name string) UserFunction {
+func GetAnyToChar(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
