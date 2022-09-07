@@ -268,7 +268,7 @@ var availableHttpOptions = map[string]httpOption{
 }
 
 func querySexpType(env *glisp.Environment, val glisp.Sexp) string {
-	t, _ := glisp.GetTypeFunction("typestr")(env, []glisp.Sexp{val})
+	t, _ := glisp.GetTypeFunction("type")(env, []glisp.Sexp{val})
 	return t.SexpString()
 }
 

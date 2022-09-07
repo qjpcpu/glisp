@@ -1,4 +1,4 @@
-(assert (= "function" (typestr +)))
+(assert (= "function" (type +)))
 
 (assert (= 3 (apply + '(1 2))))
 (assert (= 3 (apply + '(1 2))))

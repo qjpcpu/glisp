@@ -143,7 +143,7 @@ func (testSexp2) SexpString() string { return "yyyy" }
 
 func TestCustomType(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	fn, _ := vm.FindObject("typestr")
+	fn, _ := vm.FindObject("type")
 	ret, err := vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{&testSexp{}})
 	ExpectSuccess(t, err)
 	ExpectEqStr(t, "*tests.testSexp", ret)

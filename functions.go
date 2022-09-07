@@ -62,7 +62,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"float":      GetAnyToFloat,
 	"char":       GetAnyToChar,
 	"bool":       GetAnyToBool,
-	"typestr":    GetTypeFunction,
+	"type":       GetTypeFunction,
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,

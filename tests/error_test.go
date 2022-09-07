@@ -294,7 +294,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(symbol)`)
 	ExpectScriptErr(t, `(symbol 1)`)
 	ExpectScriptErr(t, `(str)`)
-	ExpectScriptErr(t, `(typestr)`)
+	ExpectScriptErr(t, `(type)`)
 	ExpectScriptErr(t, `(>)`)
 	ExpectScriptErr(t, `(+)`)
 	ExpectScriptErr(t, `(+ 1 "a")`)
