@@ -25,8 +25,8 @@
 
 (assert (= 1024 (int "1024")))
 
-(assert (= "1024" (str 1024)))
-(assert (= "true" (str true)))
+(assert (= "1024" (string 1024)))
+(assert (= "true" (string true)))
 
 (assert (= ["a" "b"] (str/split "a b" " ")))
 
@@ -75,3 +75,5 @@
 (assert (not (bool "false")))
 (assert (bool true))
 (assert (not (bool false)))
+
+(assert (= #a (char "a")))

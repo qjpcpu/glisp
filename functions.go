@@ -56,7 +56,8 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"list":       GetConstructorFunction,
 	"hash":       GetConstructorFunction,
 	"symnum":     GetSymnumFunction,
-	"str":        GetStringifyFunction,
+	"string":     GetStringifyFunction,
+	"sexp-str":   GetSexpString,
 	"int":        GetAnyToInteger,
 	"float":      GetAnyToFloat,
 	"char":       GetAnyToChar,
@@ -65,9 +66,6 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,
-	"bytes2str":  GetBytesToString,
-	"float2str":  GetFloatToString,
-	"char2str":   GetCharToStr,
 }
 
 func GetConsFunction(name string) UserFunction {
@@ -725,10 +723,33 @@ func BuiltinFunctions() map[string]UserFunction {
 // GetStringifyFunction return s-expr's SexpString representation
 func GetStringifyFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 && len(args) != 2 {
+			return WrongNumberArguments(name, len(args), 1, 2)
+		}
+		switch val := args[0].(type) {
+		case SexpBytes:
+			return SexpStr(string(val.bytes)), nil
+		case SexpFloat:
+			if len(args) == 2 {
+				if !IsInt(args[1]) {
+					return SexpNull, errors.New("prec should be integer")
+				}
+				return SexpStr(val.ToString(args[1].(SexpInt).ToInt())), nil
+			}
+			return SexpStr(val.SexpString()), nil
+		case SexpChar:
+			return SexpStr([]rune{rune(val)}), nil
+		}
+
+		return SexpStr(args[0].SexpString()), nil
+	}
+}
+
+func GetSexpString(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return WrongNumberArguments(name, len(args), 1)
 		}
-
 		return SexpStr(args[0].SexpString()), nil
 	}
 }
@@ -759,11 +780,17 @@ func GetAnyToChar(name string) UserFunction {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
-		integer, ok := args[0].(SexpInt)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be integer`, name)
+		switch val := args[0].(type) {
+		case SexpInt:
+			return SexpChar(rune(val.ToInt())), nil
+		case SexpStr:
+			rs := []rune(val)
+			if len(rs) != 1 {
+				return SexpNull, fmt.Errorf("%s expect string only contains 1 char but got %v", name, len(rs))
+			}
+			return SexpChar(rs[0]), nil
 		}
-		return SexpChar(rune(integer.ToInt())), nil
+		return SexpNull, fmt.Errorf(`%s argument should be integer`, name)
 	}
 }
 
@@ -779,32 +806,6 @@ func GetAnyToBool(name string) UserFunction {
 			return SexpBool(string(val) == `true`), nil
 		}
 		return SexpNull, fmt.Errorf(`%s argument should be string/bool`, name)
-	}
-}
-
-func GetCharToStr(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		ch, ok := args[0].(SexpChar)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be char`, name)
-		}
-		return SexpStr([]rune{rune(ch)}), nil
-	}
-}
-
-func GetBytesToString(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		str, ok := args[0].(SexpBytes)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be bytes`, name)
-		}
-		return SexpStr(string(str.bytes)), nil
 	}
 }
 
@@ -835,27 +836,6 @@ func GetAnyToFloat(name string) UserFunction {
 			return NewSexpFloatInt(val), nil
 		}
 		return SexpNull, fmt.Errorf(`%s argument should be string/int/float`, name)
-	}
-}
-
-func GetFloatToString(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return SexpNull, fmt.Errorf(`%s expect 1/2 argument but got %v`, name, len(args))
-		}
-		switch val := args[0].(type) {
-		case SexpFloat:
-			if len(args) == 2 {
-				if !IsInt(args[1]) {
-					return SexpNull, errors.New("prec should be integer")
-				}
-				return SexpStr(val.ToString(args[1].(SexpInt).ToInt())), nil
-			}
-			return SexpStr(val.SexpString()), nil
-		case SexpInt:
-			return SexpStr(val.SexpString()), nil
-		}
-		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
 	}
 }
 

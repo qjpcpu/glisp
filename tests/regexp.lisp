@@ -7,5 +7,5 @@
   (assert (regexp-match re "hello"))
   (assert (not (regexp-match re "hell"))))
 
-(assert (str/contains?  (str (regexp-compile "hello")) "hello"))
-(assert (= "(time/parse 1659438315220 'timestamp-ms)" (str (time/parse 1659438315220 'timestamp-ms))))
+(assert (str/contains?  (string (regexp-compile "hello")) "hello"))
+(assert (= "(time/parse 1659438315220 'timestamp-ms)" (sexp-str (time/parse 1659438315220 'timestamp-ms))))

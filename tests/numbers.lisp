@@ -45,17 +45,17 @@
 
 
 ;; 14.285714285714286
-(assert (= "14.286" (float2str 14.285714285714286 3)))
-(assert (= "14" (float2str 14.285714285714286 0)))
-(assert (= "14" (float2str 14.00000000001 3)))
-(assert (= "0" (float2str 0.00000000001 3)))
-(assert (= "0" (float2str 0.0 3)))
+(assert (= "14.286" (string 14.285714285714286 3)))
+(assert (= "14" (string 14.285714285714286 0)))
+(assert (= "14" (string 14.00000000001 3)))
+(assert (= "0" (string 0.00000000001 3)))
+(assert (= "0" (string 0.0 3)))
 
 (assert (= 1.0 1))
 (assert (= 97.0 #a))
 (assert (= 1 (int 1)))
-(assert (= "1" (float2str 1)))
-(assert (= "1.00" (float2str 1.00)))
+(assert (= "1" (string 1)))
+(assert (= "1.00" (string 1.00)))
 (assert (= 1 (round 1)))
 (assert (= 2 (/ 10 5)))
 (assert (= 18446744073709551614 (- 18446744073709551615 1)))
@@ -69,8 +69,8 @@
 (assert (= 1 (/ #a #a)))
 (assert (= 1 (/ 97 #a)))
 
-(assert (= "1.0" (float2str 1.0 -1)))
-(assert (= "0" (float2str 0.0 0)))
+(assert (= "1.0" (string 1.0 -1)))
+(assert (= "0" (string 0.0 0)))
 
 (assert (= 97 (mod #a #b)))
 (assert (= -99 (int (bit-not #b))))
@@ -93,7 +93,7 @@
 (assert (= 1 (srl64 2 1)))
 (assert (= 9223372036854775807 (srl64 -2 1)))
 
-(assert (= "a" (char2str #a)))
+(assert (= "a" (string #a)))
 
 (assert (= #a (char 97)))
 
@@ -131,3 +131,6 @@
 (assert (= -1 (floor -0.1)))
 (assert (= 0 (floor 0.9)))
 (assert (= -1 (floor -0.9)))
+
+(assert (= 1 (floor 1)))
+(assert (= 1 (ceil 1)))

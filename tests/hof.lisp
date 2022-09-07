@@ -41,7 +41,7 @@
             ;; add 1 to every integer
             (fn [a] (+ a 1))
             ;; convert integer to string
-            str
+            string
             ;; append char ! to string
             (fn [a] (append a #!))
             )
