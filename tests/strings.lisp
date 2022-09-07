@@ -23,7 +23,7 @@
 (assert (= 2 (str/count " abc cd" "c")))
 (assert (= 1 (str/count "abc cd" "b")))
 
-(assert (= 1024 (str2int "1024")))
+(assert (= 1024 (int "1024")))
 
 (assert (= "1024" (str 1024)))
 (assert (= "true" (str true)))
@@ -44,8 +44,8 @@
 (assert (not (str/title? "aBc")))
 (assert (not (str/title? "")))
 
-(assert (= 1.1 (str2float "1.1")))
-(assert (= 1 (str2float "1")))
+(assert (= 1.1 (float "1.1")))
+(assert (= 1 (float "1")))
 
 (assert (= "51225783c75fde283cf746a2904c7920" (str/md5 "glisp")))
 
@@ -66,7 +66,7 @@
            line3`))
 
 (assert (empty? ""))
-(assert (empty? (str2bytes "")))
+(assert (empty? (bytes "")))
 
 (assert (= 3 (str/len "中国人")))
 (assert (not= 3 (len "中国人")))

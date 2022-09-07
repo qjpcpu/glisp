@@ -1,5 +1,5 @@
 (assert (= "hello world" (os/exec "echo" "-n" "hello world")))
-(assert (= "1 hello world" (os/exec "echo" "-n" 1 (str2bytes "hello world"))))
+(assert (= "1 hello world" (os/exec "echo" "-n" 1 (bytes "hello world"))))
 (def name "jack")
 (assert (= "hello jack" (os/exec "echo -n hello" name)))
 
@@ -9,7 +9,7 @@
 (assert (not (os/file-exist? file)))
 (os/write-file file "hello")
 (assert (= "hello" (bytes2str (os/read-file file))))
-(os/write-file file (str2bytes "hello"))
+(os/write-file file (bytes "hello"))
 (assert (= "hello" (bytes2str (os/read-file file))))
 (assert (os/file-exist? file))
 (os/remove-file dir)

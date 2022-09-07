@@ -370,7 +370,7 @@ func TestHTTPWithData(t *testing.T) {
 		script := fmt.Sprintf(`(http/get "%s" '-d "text")`, url)
 		ExpectScriptSuccess(t, script, `"body":"text"`)
 
-		script = fmt.Sprintf(`(http/get "%s" '-d (str2bytes "text"))`, url)
+		script = fmt.Sprintf(`(http/get "%s" '-d (bytes "text"))`, url)
 		ExpectScriptSuccess(t, script, `"body":"text"`)
 
 		script = fmt.Sprintf(`(http/get "%s" '-d 123)`, url)

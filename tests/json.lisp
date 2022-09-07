@@ -48,9 +48,9 @@
 
 ;; parse empty string
 (assert (= '() (json/parse "")))
-(assert (= '() (json/parse (str2bytes ""))))
+(assert (= '() (json/parse (bytes ""))))
 (assert (= '() (json/parse "null")))
-(assert (= '() (json/parse (str2bytes "null"))))
+(assert (= '() (json/parse (bytes "null"))))
 
 ;; parse json atom
 (assert (= 1 (json/parse 1)))

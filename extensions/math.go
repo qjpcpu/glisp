@@ -22,6 +22,7 @@ func ImportMathUtils(env *glisp.Environment) error {
 	env.AddNamedFunction("srl16", GetLogicalShiftFunction)
 	env.AddNamedFunction("srl32", GetLogicalShiftFunction)
 	env.AddNamedFunction("srl64", GetLogicalShiftFunction)
+	env.AddNamedFunction("round", GetRoundFloat)
 	return nil
 }
 
@@ -228,5 +229,20 @@ func GetLogicalShiftFunction(name string) glisp.UserFunction {
 		}
 
 		return glisp.SexpNull, errors.New("unrecognized shift operation")
+	}
+}
+
+func GetRoundFloat(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		switch val := args[0].(type) {
+		case glisp.SexpFloat:
+			return val.Round(), nil
+		case glisp.SexpInt:
+			return val, nil
+		}
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float`, name)
 	}
 }

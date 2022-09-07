@@ -17,7 +17,7 @@
 (assert (= "#\\#" (str #\#)))
 (assert (= "#\\~" (str #\~)))
 (assert (= "#\\`" (str #\`)))
-(assert (= 96 (char2int #\`)))
+(assert (= 96 (int #\`)))
 (assert (= "#\\{" (str #\{)))
 (assert (= "#\\}" (str #\})))
 (assert (= "#\\\"" (str #\")))

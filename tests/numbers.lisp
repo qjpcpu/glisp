@@ -35,8 +35,8 @@
 (assert (= 5.5 (/ 1.1 0.2)))
 
 (assert (= 1.2 (* 0.2 6)))
-(assert (= 1 (float2int (* 0.2 6))))
-(assert (= 2 (float2int (* 0.4 6))))
+(assert (= 1 (int (* 0.2 6))))
+(assert (= 2 (int (* 0.4 6))))
 
 (assert (= -0.1 (- 0 0.1)))
 
@@ -57,7 +57,7 @@
 
 (assert (= 1.0 1))
 (assert (= 97.0 #a))
-(assert (= 1 (float2int 1)))
+(assert (= 1 (int 1)))
 (assert (= "1" (float2str 1)))
 (assert (= "1.00" (float2str 1.00)))
 (assert (= 1 (round 1)))
@@ -77,7 +77,7 @@
 (assert (= "0" (float2str 0.0 0)))
 
 (assert (= 97 (mod #a #b)))
-(assert (= -99 (char2int (bit-not #b))))
+(assert (= -99 (int (bit-not #b))))
 
 (assert (= 2 (sll8 1 1)))
 (assert (= 254 (sll8 -1 1)))
@@ -100,3 +100,7 @@
 (assert (= "a" (char2str #a)))
 
 (assert (= #a (int2char 97)))
+
+(assert (= 1.0 (float "1.0")))
+(assert (= 1.0 (float 1.0)))
+(assert (= 1.0 (float 1)))

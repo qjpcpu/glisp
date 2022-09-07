@@ -57,19 +57,16 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"hash":       GetConstructorFunction,
 	"symnum":     GetSymnumFunction,
 	"str":        GetStringifyFunction,
-	"str2int":    GetStringToNumber,
-	"str2float":  GetStringToFloat,
-	"float2int":  GetFloatToInt,
+	"int":        GetAnyToInteger,
+	"float":      GetAnyToFloat,
 	"float2str":  GetFloatToString,
-	"char2int":   GetCharToNumber,
 	"int2char":   GetIntToChar,
 	"char2str":   GetCharToStr,
-	"round":      GetRoundFloat,
 	"typestr":    GetTypeFunction,
 	"gensym":     GetGenSymFunction,
 	"sym2str":    GetSym2StrFunction,
 	"str2sym":    GetStr2SymFunction,
-	"str2bytes":  GetStringToBytes,
+	"bytes":      GetAnyToBytes,
 	"bytes2str":  GetBytesToString,
 }
 
@@ -736,29 +733,24 @@ func GetStringifyFunction(name string) UserFunction {
 	}
 }
 
-func GetStringToNumber(name string) UserFunction {
+func GetAnyToInteger(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
-		str, ok := args[0].(SexpStr)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		switch val := args[0].(type) {
+		case SexpChar:
+			return NewSexpInt64(int64(val)), nil
+		case SexpFloat:
+			integer := new(big.Int)
+			val.v.Int(integer)
+			return SexpInt{v: integer}, nil
+		case SexpInt:
+			return val, nil
+		case SexpStr:
+			return NewSexpIntStr(string(val))
 		}
-		return NewSexpIntStr(string(str))
-	}
-}
-
-func GetCharToNumber(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		ch, ok := args[0].(SexpChar)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be char`, name)
-		}
-		return NewSexpInt64(int64(ch)), nil
+		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int`, name)
 	}
 }
 
@@ -801,7 +793,7 @@ func GetBytesToString(name string) UserFunction {
 	}
 }
 
-func GetStringToBytes(name string) UserFunction {
+func GetAnyToBytes(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
@@ -814,33 +806,20 @@ func GetStringToBytes(name string) UserFunction {
 	}
 }
 
-func GetStringToFloat(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		str, ok := args[0].(SexpStr)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
-		}
-		return NewSexpFloatStr(string(str))
-	}
-}
-
-func GetFloatToInt(name string) UserFunction {
+func GetAnyToFloat(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
 		switch val := args[0].(type) {
+		case SexpStr:
+			return NewSexpFloatStr(string(val))
 		case SexpFloat:
-			integer := new(big.Int)
-			val.v.Int(integer)
-			return SexpInt{v: integer}, nil
-		case SexpInt:
 			return val, nil
+		case SexpInt:
+			return NewSexpFloatInt(val), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
+		return SexpNull, fmt.Errorf(`%s argument should be string/int/float`, name)
 	}
 }
 
@@ -860,21 +839,6 @@ func GetFloatToString(name string) UserFunction {
 			return SexpStr(val.SexpString()), nil
 		case SexpInt:
 			return SexpStr(val.SexpString()), nil
-		}
-		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
-	}
-}
-
-func GetRoundFloat(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
-		}
-		switch val := args[0].(type) {
-		case SexpFloat:
-			return val.Round(), nil
-		case SexpInt:
-			return val, nil
 		}
 		return SexpNull, fmt.Errorf(`%s argument should be float`, name)
 	}
