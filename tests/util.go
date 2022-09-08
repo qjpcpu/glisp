@@ -16,20 +16,29 @@ func newFullEnv() *glisp.Environment {
 }
 
 func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
-	vm.ImportEval()
-	extensions.ImportCoreUtils(vm)
-	extensions.ImportContainerUtils(vm)
-	extensions.ImportJSON(vm)
-	extensions.ImportMathUtils(vm)
-	extensions.ImportBase64(vm)
-	extensions.ImportChannels(vm)
-	extensions.ImportCoroutines(vm)
-	extensions.ImportRandom(vm)
-	extensions.ImportRegex(vm)
-	extensions.ImportTime(vm)
-	extensions.ImportString(vm)
-	extensions.ImportOS(vm)
-	extensions.ImportHTTP(vm)
+	imports := []func(*glisp.Environment) error{
+		func(e *glisp.Environment) error {
+			return e.ImportEval()
+		},
+		extensions.ImportCoreUtils,
+		extensions.ImportContainerUtils,
+		extensions.ImportJSON,
+		extensions.ImportMathUtils,
+		extensions.ImportBase64,
+		extensions.ImportChannels,
+		extensions.ImportCoroutines,
+		extensions.ImportRandom,
+		extensions.ImportRegex,
+		extensions.ImportTime,
+		extensions.ImportString,
+		extensions.ImportOS,
+		extensions.ImportHTTP,
+	}
+	for _, fn := range imports {
+		if err := fn(vm); err != nil {
+			panic(err)
+		}
+	}
 	return vm
 }
 

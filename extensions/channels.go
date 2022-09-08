@@ -63,8 +63,9 @@ func ChanTxFunction(name string) glisp.UserFunction {
 	}
 }
 
-func ImportChannels(env *glisp.Environment) {
+func ImportChannels(env *glisp.Environment) error {
 	env.AddNamedFunction("make-chan", MakeChanFunction)
 	env.AddNamedFunction("send!", ChanTxFunction)
 	env.AddNamedFunction("<!", ChanTxFunction)
+	return nil
 }

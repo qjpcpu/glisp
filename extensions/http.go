@@ -13,7 +13,8 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportHTTP(env *glisp.Environment) error {
+func ImportHTTP(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("http/get", DoHTTP(false))
 	env.AddNamedFunction("http/post", DoHTTP(false))
 	env.AddNamedFunction("http/put", DoHTTP(false))

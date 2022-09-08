@@ -1,0 +1,505 @@
+========== time/now ==========
+Usage: (time/now)
+
+Returns current time.
+
+========== time/format ==========
+Usage:
+(time/format Time 'timestamp) => Time to unix timestamp(integer)
+(time/format Time 'timestamp-ms) => Time to unix timestamp mills(integer)
+(time/format Time 'timestamp-micro) => Time to unix timestamp microseconds(integer)
+(time/format Time 'timestamp-nano) => Time to unix timestamp nanoseconds(integer)
+(time/format Time "2006-01-02 15:04:05") => Time to string by layout(string)
+
+Format time to string.
+
+========== time/parse ==========
+Usage:
+(time/parse 1655967400280) => parse unix timestamp to Time
+(time/parse 1655967400280000 'timestamp-ms) => parse unix milli timestamp to Time
+(time/parse 1655967400280000 'timestamp-micro) => parse unix micro timestamp to Time
+(time/parse 1655967400280000 'timestamp-nano) => parse unix nano timestamp to Time
+(time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
+(time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
+(time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
+
+Parse timestamp or time string to time.
+
+========== time/add-date ==========
+Usage: (time/add-date Time year month day)
+
+example:
+(time/add-date (time/now) 3 2 1)
+
+========== time/add ==========
+Usage: (time/add Time x unit)
+
+Add x year/month/day/hour/minute/second to time.
+
+examples:
+(time/add (time/now) 2 'year)
+(time/add (time/now) 3 'month)
+(time/add (time/now) 1 'day)
+
+========== time/sub ==========
+Usage: (time/sub t1 t2)
+
+Returns t1 - t2 in seconds.
+
+========== time/year ==========
+Usage: (time/year t)
+
+Returns year number of time.
+
+========== time/month ==========
+Usage: (time/month t)
+
+Returns month number of time.
+
+========== time/day ==========
+Usage: (time/day t)
+
+Returns day number of time.
+
+========== time/hour ==========
+Usage: (time/hour t)
+
+Returns hour number of time.
+
+========== time/minute ==========
+Usage: (time/minute t)
+
+Returns minute number of time.
+
+========== time/second ==========
+Usage: (time/second t)
+
+Returns second number of time.
+
+========== time/weekday ==========
+Usage: (time/weekday t)
+
+Returns weekday number of time, range [0,6] from sunday to saturday.
+
+========== base64/decode ==========
+Usage: (base64/decode str)
+
+Decode base64 encoded string to bytes.
+
+========== base64/encode ==========
+Usage: (base64/encode bytes)
+
+Encode bytes to string.
+
+========== http/get ==========
+Usage: (http/get options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/post ==========
+Usage: (http/post options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/put ==========
+Usage: (http/put options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/patch ==========
+Usage: (http/patch options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/delete ==========
+Usage: (http/delete options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/options ==========
+Usage: (http/options options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/head ==========
+Usage: (http/head options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== http/curl ==========
+Usage: (http/curl options url)
+
+Available options:
+'-H "key:val"
+  add custom header with key-val pair string.
+
+'-i
+  include response header in output.
+
+'-timeout val
+  set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
+  "300ms", "1.5h", "2h45m" etc.
+  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+'-X method
+  custom http method, only make sense in fucntion http/curl.
+
+'-d data
+  data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+========== json/stringify ==========
+Usage: (json/stringify x)
+(json/stringify x true)
+
+Stringify json object. The json string would be indented with extra bool argument.
+
+========== json/parse ==========
+Usage: (json/parse str)
+
+Parse json string to object.
+
+========== json/query ==========
+Usage: (json/query x path)
+
+Query json object by path.
+
+========== json/set ==========
+Usage: (json/set x path value)
+
+Set json object by path.
+
+example:
+
+(json/set {"a" {"b" 1}} "a.b" 2) ; return {"a" {"b" 2}}
+
+========== json/del ==========
+Usage: (json/del x path)
+
+Remove json node by path.
+
+example:
+
+(json/del {"a" {"b" 1}} "a.b") ; return {"a" {}}
+
+========== os/read-file ==========
+Usage: (os/read-file file)
+
+Return file content as bytes.
+
+========== os/write-file ==========
+Usage: (os/write-file file x)
+
+Write string or bytes to file.
+
+========== os/file-exist? ==========
+Usage: (os/file-exist? file)
+
+Check file existence.
+
+========== os/remove-file ==========
+Usage: (os/remove-file file)
+
+Remove file from disk.
+
+========== os/exec ==========
+Usage: (os/exec & args)
+
+Execute os command. Returns command output as string.
+
+examples:
+(os/exec "ls -l")
+(os/exec "ps -ef | grep glisp")
+
+========== os/env ==========
+Usage: (os/env name)
+
+Get environment variable.
+
+========== os/setenv ==========
+Usage: (os/setenv name value)
+
+Set environment variable.
+
+========== rand ==========
+Usage: (rand)
+(rand n)
+
+Generate random integer in [0,100) or [0,n).
+
+========== randf ==========
+Usage: (randf)
+
+Generate random integer in [0,1).
+
+========== regexp-compile ==========
+Usage: (regexp-compile str)
+
+Generate a regexp expression.
+
+========== regexp-find-index ==========
+Usage: (regexp-find-index regexp str)
+
+Returns location index array.
+
+========== regexp-find ==========
+Usage: (regexp-find regexp str)
+
+Returns found string.
+
+========== regexp-match ==========
+Usage: (regexp-match regexp str)
+
+Returns true if matched.
+
+========== str/start-with? ==========
+Usage: (str/start-with? s substr)
+
+Tests whether the string s begins with prefix.
+
+========== str/end-with? ==========
+Usage: (str/end-with? s substr)
+
+Tests whether the string s ends with suffix.
+
+========== str/contains? ==========
+Usage: (str/contains? s substr)
+
+Reports whether substr is within s.
+
+========== str/title ==========
+Usage: (str/title s)
+
+Returns a copy of the string s with all Unicode letters that begin words
+mapped to their Unicode title case.
+
+
+========== str/lower ==========
+Usage: (str/lower s)
+
+Returns s with all Unicode letters mapped to their lower case.
+
+========== str/upper ==========
+Usage: (str/upper s)
+
+Returns s with all Unicode letters mapped to their upper case.
+
+========== str/replace ==========
+Usage: (str/replace s old new)
+
+Returns a copy of the string s with all
+non-overlapping instances of old replaced by new.
+If old is empty, it matches at the beginning of the string
+and after each UTF-8 sequence, yielding up to k+1 replacements
+for a k-rune string.
+
+========== str/trim-prefix ==========
+Usage: (str/trim-prefix s prefix)
+
+Returns s without the provided leading prefix string.
+If s doesn't start with prefix, s is returned unchanged.
+
+
+========== str/trim-suffix ==========
+Usage: (str/trim-suffix s suffix)
+
+Returns s without the provided trailing suffix string.
+If s doesn't end with suffix, s is returned unchanged.
+
+
+========== str/trim-space ==========
+Usage: (str/trim-space s)
+
+Returns a slice of the string s, with all leading
+and trailing white space removed, as defined by Unicode.
+
+========== str/count ==========
+Usage: (str/count str substr)
+
+Counts the number of non-overlapping instances of substr in str.
+If substr is an empty string, Count returns 1 + the number of Unicode code points in str.
+
+========== str/index ==========
+Usage: (str/index s substr)
+
+Returns the index of the first instance of substr in s, or -1 if substr is not present in s.
+
+========== str/split ==========
+Usage: (str/split s sep)
+
+Slices s into all substrings separated by sep and returns a slice of
+the substrings between those separators.
+
+If s does not contain sep and sep is not empty, Split returns a
+slice of length 1 whose only element is s.
+
+If sep is empty, Split splits after each UTF-8 sequence. If both s
+and sep are empty, Split returns an empty slice.
+
+========== str/join ==========
+Usage: (str/join elems sep)
+
+Concatenates the elements of its first argument to create a single string. The separator
+string sep is placed between elements in the resulting string.
+
+========== str/len ==========
+Usage: (str/len s)
+
+Returns the number of runes in s. Erroneous and short
+encodings are treated as single runes of width 1 byte.
+
+========== str/digit? ==========
+Usage: (str/digit? s)
+
+Test whether s only contains char 0-9.
+
+========== str/alpha? ==========
+Usage: (str/alpha? s)
+
+Test whether s only contains char a-z A-Z.
+
+========== str/title? ==========
+Usage: (str/title? s)
+
+Test whether s is title case.
+
+========== str/integer? ==========
+Usage: (str/integer? s)
+
+Test whether s can be converted to an integer.
+
+========== str/float? ==========
+Usage: (str/float? s)
+
+Test whether s can be converted to a float.
+
+========== str/bool? ==========
+Usage: (str/bool? s)
+
+Test whether s can be converted to a bool.
+
+========== str/md5 ==========
+Usage: (str/md5 s)
+
+Returns md5 of s.
+
+========== str/mask ==========
+Usage: (str/mask s start-idx length mask-str)
+
+Mask substr from start-idx to start-idx+length by mask-str.
+If length is -1, mask all substring from start-idx to the end.
+
+example:
+(str/mask "hello world" 5 2 "*") ; return "hello**orld"
+(str/mask "hello world" 5 -1 "*") ; return "hello******"

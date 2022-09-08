@@ -1,0 +1,296 @@
+========== cons ==========
+Usage: (cons x seq)
+
+Returns a new seq where x is the first element and seq is
+the rest.
+
+========== car ==========
+Usage: (car coll)
+
+Returns the first item in the collection. coll can be list or array. Calls seq on its
+argument. If coll is nil, returns nil.
+
+========== cdr ==========
+Usage: (cdr coll)
+
+Returns a possibly empty seq of the items after the first. Calls seq on its
+argument.
+
+========== list? ==========
+Usage: (list? x)
+
+Returns true if x is a list.
+
+========== null? ==========
+Usage: (null? x)
+
+Returns true if x is nil.
+
+========== array? ==========
+Usage: (array? x)
+
+Returns true if x is an array.
+
+========== hash? ==========
+Usage: (hash? x)
+
+Returns true if x is a hash.
+
+========== number? ==========
+Usage: (number? x)
+
+Returns true if x is an integer or float or char.
+
+========== int? ==========
+Usage: (int? x)
+
+Returns true if x is an integer.
+
+========== float? ==========
+Usage: (float? x)
+
+Returns true if x is float.
+
+========== char? ==========
+Usage: (char? x)
+
+Returns true if x is a char.
+
+========== symbol? ==========
+Usage: (symbol? x)
+
+Returns true if x is a symbol.
+
+========== string? ==========
+Usage: (string? x)
+
+Returns true if x is a string.
+
+========== zero? ==========
+Usage: (zero? x)
+
+Returns true if x is 0, 0.0 or #\x00.
+
+========== bool? ==========
+Usage: (bool? x)
+
+Returns true if x is true/false.
+
+========== empty? ==========
+Usage: (empty? x)
+
+Returns true if x is empty array/hash/string/bytes.
+
+========== bytes? ==========
+Usage: (bytes? x)
+
+Returns true if x is empty bytes.
+
+========== not ==========
+Usage: (not x)
+
+Returns true if x is logical false, false otherwise.
+
+========== apply ==========
+Usage: (apply f args)
+
+Applies fn f to the argument list. `f` can be function or symbol refer to a function, args can be list or array.
+
+========== map ==========
+Usage: (map f coll)
+
+Returns a sequence consisting of the result of applying f to
+the set of first items of each coll, followed by applying f to the
+set of second items in each coll, until any one of the colls is
+exhausted. coll can be array or list.
+
+========== flatmap ==========
+Usage: (flatmap f coll)
+
+Applies f to every value in the reduction of coll, concatenating the result
+colls of (f val). Foldable.
+
+========== compose ==========
+Usage: (compose f1 f2 & more)
+
+Composes its arguments into a single composite function. All its arguments are assumed to designate functions which take one argument and return one argument.
+
+((compose f g) 42) is equivalent to (f (g 42)). Composition is right-associative.
+
+========== foldl ==========
+Usage: (foldl f accumulate coll)
+
+Reduce a list/array/hash by function f.
+
+When coll is array or list, function `f` should take 2 arguments, first is element of coll, second argument is accumulate value.
+When coll is hash, function `f` should take 3 arguments, first and second is hash key-value pair, and the third argument is accumulate value.
+
+example:
+(foldl + 0 [1 2 3])
+(foldl (fn [k v acc] (+ acc v)) {"a" 1 "b" 2})
+
+========== filter ==========
+Usage: (filter pred coll)
+
+Returns a sequence of the items in coll for which
+(pred item) returns logical true. pred must be free of side-effects.
+
+When coll is hash, pred function should take 2 arguments, which are hash key-value pair.
+
+========== make-array ==========
+Usage: (make-array len)
+       (make-array len init-value)
+
+Creates and returns an array, which length is len.
+
+========== aget ==========
+Usage: (aget array idx)
+
+Returns the value at the index.
+
+========== aset! ==========
+Usage: (aset! array idx val)
+
+Sets the value at the index.
+
+========== sget ==========
+Usage: (sget string idx)
+
+Returns the char at the index.
+
+========== hget ==========
+Usage: (hget hash key)
+(hget hash key default-value)
+
+Returns the value by key.
+Returns the default-value if the key doesn't exist.
+
+========== hset! ==========
+Usage: (hget! hash key value)
+
+Set or update hash value by given key.
+
+========== hdel! ==========
+Usage: (hdel! hash key)
+
+Delete hash value by given key.
+
+========== exist? ==========
+Usage: (exist? hash key)
+(exist? array element)
+(exist? list element)
+
+Check whether an element or key exist in array/list/hash.
+
+========== slice ==========
+Usage: (slice array/string/bytes start-idx)
+(slice array/string/bytes start-idx end-idx)
+
+Returns sub sequence of array/string/bytes in range [start-idx,end-idx).
+Returns sub sequence from start-idx to end if no end-idx.
+
+========== len ==========
+Usage: (len string/array/hash/bytes)
+
+Returns length of string/array/hash/bytes.
+
+========== append ==========
+Usage: (append array x)
+(append string char)
+
+Append element to array, or append char to string.
+
+========== concat ==========
+Usage: (concat array1 array2 & more)
+(concat str1 str2 & more)
+(concat list1 list2 & more)
+(concat bytes1 bytes2 & more)
+
+Concat array/string/list/bytes.
+
+========== array ==========
+Usage: (array element1 & more)
+
+Construct array by elements.
+
+========== list ==========
+Usage: (list element1 & more)
+
+Construct list by elements.
+
+========== hash ==========
+Usage: (hash key1 value1 key2 value2 & more)
+
+Construct hash by elements.
+
+========== symnum ==========
+Usage: (symnum symbol)
+
+Returns symbol number.
+
+========== string ==========
+Usage: (string x)
+
+Convert any expression to string.
+
+examples:
+(string bytes) ; return plain string
+(string float) ; return float string
+(string float prec) ; return float string with precision
+(string char)  ; return single char string
+
+========== sexp-str ==========
+Usage: (sexp-str x)
+
+Show expression literal s-expression string.
+
+examples:
+(string bytes) ; return base64 encoded string
+(string char)  ; return sharp prefix char string
+
+========== int ==========
+Usage: (int x)
+
+Convert char/float/int/string to integer.
+
+========== float ==========
+Usage: (float x)
+
+Convert string/float/int to float.
+
+========== char ==========
+Usage: (char x)
+
+Convert string/int to char.
+
+========== bool ==========
+Usage: (bool x)
+
+Convert string/bool to bool.
+
+========== type ==========
+Usage: (type x)
+
+Returns x's type string.
+
+examples:
+(type "str") ; return "string"
+(type 123)   ; return "int"
+(type 3.14)  ; return "float"
+(type [])    ; return "array"
+(type '(1))   ; return "list"
+
+========== gensym ==========
+Usage: (gensym)
+
+Returns a random symbol.
+
+========== symbol ==========
+Usage: (symbol str)
+
+Convert a string to symbol.
+
+========== bytes ==========
+Usage: (bytes str)
+
+Convert string to bytes.

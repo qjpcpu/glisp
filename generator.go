@@ -98,6 +98,13 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	for i := len(argsyms) - 1; i >= 0; i-- {
 		gen.AddInstruction(PutInstr{argsyms[i]})
 	}
+
+	var doc string
+	if len(funcbody) > 1 && IsString(funcbody[0]) {
+		doc = string(funcbody[0].(SexpStr))
+		funcbody = funcbody[1:]
+	}
+
 	err := gen.GenerateBegin(funcbody)
 	if err != nil {
 		return MissingFunction, err
@@ -105,7 +112,7 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := Function(gen.instructions)
-	return MakeFunction(gen.funcname, nargs, varargs, newfunc), nil
+	return MakeFunction(gen.funcname, nargs, varargs, newfunc, WithDoc(doc)), nil
 }
 
 func (gen *Generator) GenerateFn(args []Sexp) error {

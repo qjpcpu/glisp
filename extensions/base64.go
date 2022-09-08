@@ -7,9 +7,11 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportBase64(env *glisp.Environment) {
+func ImportBase64(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("base64/decode", Base64StringToBytes)
 	env.AddNamedFunction("base64/encode", BytesToBase64String)
+	return nil
 }
 
 func Base64StringToBytes(name string) glisp.UserFunction {

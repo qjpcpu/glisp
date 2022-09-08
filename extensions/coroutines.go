@@ -41,6 +41,7 @@ func CreateCoroutineMacro(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp
 		glisp.SexpArray([]glisp.Sexp{coro})}), nil
 }
 
-func ImportCoroutines(env *glisp.Environment) {
+func ImportCoroutines(env *glisp.Environment) error {
 	env.AddMacro("go", CreateCoroutineMacro)
+	return nil
 }

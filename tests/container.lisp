@@ -32,3 +32,5 @@
 
 (assert (= ["a" "b" "c"] (list/union ["a"] ["b" "c"])))
 (assert (= '("a" "b" "c") (list/union '("a") '("b" "c"))))
+
+(assert (null? (car '())))

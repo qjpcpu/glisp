@@ -8,6 +8,7 @@ type SexpFunction struct {
 	fun        Function
 	userfun    UserFunction
 	closeScope *Stack
+	doc        string
 }
 
 func (sf *SexpFunction) SexpString() string {
@@ -18,3 +19,5 @@ func (sf *SexpFunction) Clone() *SexpFunction {
 	cp := *sf
 	return &cp
 }
+
+func (sf *SexpFunction) Doc() string { return sf.doc }

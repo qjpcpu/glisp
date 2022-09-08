@@ -178,7 +178,26 @@ func newEnv() *glisp.Environment {
 	extensions.ImportContainerUtils(env)
 	extensions.ImportOS(env)
 	extensions.ImportHTTP(env)
+	env.AddNamedFunction(`doc`, GetDocFunction, glisp.WithDoc(`Show function documentation.`))
 	return env
+}
+
+func GetDocFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !glisp.IsFunction(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be function", name)
+		}
+		fn := args[0].(*glisp.SexpFunction)
+		if fn.Doc() == `` {
+			fmt.Println("No document found.")
+		} else {
+			fmt.Println(fn.Doc())
+		}
+		return glisp.SexpNull, nil
+	}
 }
 
 type EnvOption func(*glisp.Environment)

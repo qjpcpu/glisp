@@ -15,7 +15,8 @@ var (
 	json_scripts string
 )
 
-func ImportJSON(env *glisp.Environment) error {
+func ImportJSON(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("json/stringify", jsonMarshal)
 	env.AddNamedFunction("json/parse", jsonUnmarshal)
 	env.AddNamedFunction("json/query", QueryJSONSexp)

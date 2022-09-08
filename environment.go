@@ -47,8 +47,8 @@ func New() *Environment {
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
-		env.builtins[sym.number] = MakeUserFunction(key, function)
-		env.AddFunction(key, function)
+		env.builtins[sym.number] = MakeUserFunction(key, function, WithDoc(getBuiltinDoc(key)))
+		env.AddFunction(key, function, WithDoc(getBuiltinDoc(key)))
 	}
 
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
@@ -385,12 +385,12 @@ func (env *Environment) LoadString(str string) error {
 	return env.LoadStream(bytes.NewBuffer([]byte(str)))
 }
 
-func (env *Environment) AddFunction(name string, function UserFunction) {
-	env.BindGlobal(name, MakeUserFunction(name, function))
+func (env *Environment) AddFunction(name string, function UserFunction, opts ...FuntionOption) {
+	env.BindGlobal(name, MakeUserFunction(name, function, opts...))
 }
 
-func (env *Environment) AddNamedFunction(name string, function NamedUserFunction) {
-	env.BindGlobal(name, MakeUserFunction(name, function(name)))
+func (env *Environment) AddNamedFunction(name string, function NamedUserFunction, opts ...FuntionOption) {
+	env.BindGlobal(name, MakeUserFunction(name, function(name), opts...))
 }
 
 func (env *Environment) AddMacro(name string, function UserFunction) {
@@ -398,9 +398,10 @@ func (env *Environment) AddMacro(name string, function UserFunction) {
 	env.macros[sym.number] = MakeUserFunction(name, function)
 }
 
-func (env *Environment) ImportEval() {
+func (env *Environment) ImportEval() error {
 	env.AddNamedFunction("source-file", GetSourceFileFunction)
 	env.AddNamedFunction("eval", GetEvalFunction)
+	return nil
 }
 
 func (env *Environment) DumpFunctionByName(w io.Writer, name string) error {

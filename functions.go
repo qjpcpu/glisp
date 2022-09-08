@@ -85,6 +85,10 @@ func GetFirstFunction(name string) UserFunction {
 		}
 
 		switch expr := args[0].(type) {
+		case SexpSentinel:
+			if expr == SexpNull {
+				return SexpNull, nil
+			}
 		case *SexpPair:
 			return expr.head, nil
 		case SexpArray:
@@ -691,25 +695,35 @@ func GetSourceFileFunction(name string) UserFunction {
 	}
 }
 
-var MissingFunction = &SexpFunction{"__missing", true, 0, false, nil, nil, nil}
+var MissingFunction = &SexpFunction{"__missing", true, 0, false, nil, nil, nil, ``}
 
-func MakeFunction(name string, nargs int, varargs bool,
-	fun Function) *SexpFunction {
+type FuntionOption func(*SexpFunction)
+
+func WithDoc(doc string) FuntionOption { return func(f *SexpFunction) { f.doc = doc } }
+
+func MakeFunction(name string, nargs int, varargs bool, fun Function, opts ...FuntionOption) *SexpFunction {
 	var sfun = &SexpFunction{}
 	sfun.name = name
 	sfun.user = false
 	sfun.nargs = nargs
 	sfun.varargs = varargs
 	sfun.fun = fun
-	return sfun
+	return setFuncOpts(sfun, opts...)
 }
 
-func MakeUserFunction(name string, ufun UserFunction) *SexpFunction {
+func MakeUserFunction(name string, ufun UserFunction, opts ...FuntionOption) *SexpFunction {
 	var sfun = &SexpFunction{}
 	sfun.name = name
 	sfun.user = true
 	sfun.userfun = ufun
-	return sfun
+	return setFuncOpts(sfun, opts...)
+}
+
+func setFuncOpts(f *SexpFunction, opts ...FuntionOption) *SexpFunction {
+	for _, fn := range opts {
+		fn(f)
+	}
+	return f
 }
 
 func BuiltinFunctions() map[string]UserFunction {

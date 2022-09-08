@@ -8,7 +8,8 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportTime(env *glisp.Environment) {
+func ImportTime(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("time/now", TimeNow)
 	env.AddNamedFunction("time/format", TimeFormatFunction)
 	env.AddNamedFunction("time/parse", ParseTime)
@@ -22,6 +23,7 @@ func ImportTime(env *glisp.Environment) {
 	env.AddNamedFunction("time/minute", TimeMinuteOf)
 	env.AddNamedFunction("time/second", TimeSecondOf)
 	env.AddNamedFunction("time/weekday", TimeWeekdayOf)
+	return nil
 }
 
 const (

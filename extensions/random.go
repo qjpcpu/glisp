@@ -38,7 +38,9 @@ func RandomFloatFunction(name string) glisp.UserFunction {
 	}
 }
 
-func ImportRandom(env *glisp.Environment) {
+func ImportRandom(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("rand", RandomIntegerFunction)
 	env.AddNamedFunction("randf", RandomFloatFunction)
+	return nil
 }

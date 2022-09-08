@@ -11,6 +11,9 @@
   (cond (> (len js) 64) (json/stringify (sprintf "%s...<len=%v>" (slice js 0 64) (len js))) (json/stringify js)))
 
 (defn json/q [js & args]
+  "Usage: (json/q hash & args)
+
+Query json object by path."
   (cond (null? args)
           (cond (null? js) (println (json/stringify js))
                 (array? js) (println (str/join (concat ["["]

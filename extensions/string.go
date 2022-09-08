@@ -9,7 +9,8 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportString(env *glisp.Environment) {
+func ImportString(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("str/start-with?", StringPredict(strings.HasPrefix))
 	env.AddNamedFunction("str/end-with?", StringPredict(strings.HasSuffix))
 	env.AddNamedFunction("str/contains?", StringPredict(strings.Contains))
@@ -33,6 +34,7 @@ func ImportString(env *glisp.Environment) {
 	env.AddNamedFunction("str/bool?", isBool())
 	env.AddNamedFunction("str/md5", strMD5())
 	env.AddNamedFunction("str/mask", strMask)
+	return nil
 }
 
 func StringPredict(fn func(string, string) bool) glisp.NamedUserFunction {

@@ -9,11 +9,13 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportRegex(env *glisp.Environment) {
+func ImportRegex(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("regexp-compile", RegexpCompile)
 	env.AddNamedFunction("regexp-find-index", RegexpFind)
 	env.AddNamedFunction("regexp-find", RegexpFind)
 	env.AddNamedFunction("regexp-match", RegexpFind)
+	return nil
 }
 
 type SexpRegexp struct {

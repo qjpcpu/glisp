@@ -13,7 +13,8 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportOS(env *glisp.Environment) error {
+func ImportOS(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("os/read-file", GetReadFile)
 	env.AddNamedFunction("os/write-file", GetWriteFile)
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
