@@ -528,7 +528,7 @@ func GetApplyFunction(name string) UserFunction {
 				return SexpNull, err
 			}
 		default:
-			return SexpNull, errors.New("second argument must be array or list")
+			return SexpNull, fmt.Errorf("second argument must be array or list but got %v", Inspect(args[1]))
 		}
 
 		return env.Apply(fun, funargs)

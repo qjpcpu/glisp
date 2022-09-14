@@ -33,6 +33,7 @@ func ImportCoreUtils(env *glisp.Environment) error {
 	env.AddNamedFunction("*", GetNumericFunction)
 	env.AddNamedFunction("/", GetNumericFunction)
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
+	env.AddNamedFunction("__doc__", GetDocFunction)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 
@@ -129,4 +130,27 @@ func refactFmtStr(str string) string {
 		}
 	}
 	return string(ret)
+}
+
+func GetDocFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		name = `doc`
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !glisp.IsSymbol(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol", name)
+		}
+		name := args[0].(glisp.SexpSymbol).Name()
+		var doc string
+		if expr, ok := env.FindObject(name); ok && glisp.IsFunction(expr) {
+			doc = expr.(*glisp.SexpFunction).Doc()
+		} else if mac, ok := env.FindMacro(name); ok {
+			doc = mac.Doc()
+		}
+		if doc == `` {
+			doc = `No document found.`
+		}
+		return glisp.SexpStr(doc), nil
+	}
 }

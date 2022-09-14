@@ -12,6 +12,9 @@
 
 (defn json/q [js & args]
   "Usage: (json/q hash & args)
+(json/q hash path) ; show data summary by path
+(json/q hash true) ; show full json data
+(json/q hash path true) ; show full json data by path
 
 Query json object by path."
   (cond (null? args)

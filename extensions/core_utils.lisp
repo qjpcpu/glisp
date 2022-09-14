@@ -1,5 +1,8 @@
 ;; alias function
 (defmac alias [new old]
+  "Usage: (alias new_name orig_name)
+
+Set alias for function."
  `(defn ~new [& body] (apply ~old body))
 )
 
@@ -31,4 +34,22 @@ Takes a function f and fewer than the normal arguments to f. Returns a function 
 
 ;; override
 (defmac override [function new_function]
+  "Usage: (override original_func_symbol anonymous_function_implement)
+
+example:
+;; original function addone
+(defn addone [a] (+ a 1))
+
+;; override function addone, printing input before calculate
+(override addone (fn [a]
+    (println a)
+    (addone a) ;; invoke original function
+))
+"
   `(def ~function (let [~function ~function] ~new_function)))
+
+(defmac doc [name]
+  "Usage: (doc f)
+
+Display document of function."
+  `(println (__doc__ (quote ~name))))

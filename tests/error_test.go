@@ -577,4 +577,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(str/len)`, `str/len expect 1 argument but got 0`)
 	ExpectScriptErr(t, `(str/len 1)`, `str/len first argument should be string`)
 	ExpectScriptErr(t, `(bool 1)`, `bool argument should be string/bool`)
+	ExpectScriptErr(t, `(doc)`, `doc expected 1 arguments, got 0`)
+	ExpectScriptErr(t, `(doc 1)`, `should be symbol`)
 }

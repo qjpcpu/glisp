@@ -474,6 +474,12 @@ func (env *Environment) FindObject(name string) (Sexp, bool) {
 	return obj, true
 }
 
+func (env *Environment) FindMacro(name string) (*SexpFunction, bool) {
+	sym := env.MakeSymbol(name)
+	m, ok := env.macros[sym.number]
+	return m, ok
+}
+
 func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 	f, ok := env.FindObject(fun)
 	if !ok {

@@ -569,3 +569,17 @@ null
 		`(json/q {"a" "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/%$"} true)`,
 	)
 }
+
+func TestDoc(t *testing.T) {
+	testDoc := func(script, docstr string) {
+		vm := loadAllExtensions(glisp.New())
+		var buf bytes.Buffer
+		vm.AddNamedFunction("println", extensions.GetPrintFunction(&buf))
+		_, err := vm.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectContainsStr(t, glisp.SexpStr(buf.String()), docstr)
+	}
+	testDoc(`(defmac xyz [] "doc-xyz" 1) (doc xyz)`, `doc-xyz`)
+	testDoc(`(defn xyz [] "doc-xyz" 1) (doc xyz)`, `doc-xyz`)
+	testDoc(`(defn xyz [] 1) (doc xyz)`, `No document found.`)
+}
