@@ -25,6 +25,7 @@ func registKeywords(vm *glisp.Environment) {
 	}
 }
 
+// find word backward until space or tab or newline
 func findWordBackward(line string) (string, int) {
 	for i := len(line) - 1; i >= 0; i-- {
 		if line[i] == ' ' || line[i] == '\t' || line[i] == '\n' {
@@ -44,9 +45,12 @@ func getLine(prefix string) (string, error) {
 	}
 
 	line.SetCompleter(func(line string) (c []string) {
+		word, idx := findWordBackward(line)
+		prependLParen := strings.HasPrefix(word, "(") || line == ""
 		for _, n := range keywords {
-			n = "(" + n
-			word, idx := findWordBackward(line)
+			if prependLParen {
+				n = "(" + n
+			}
 			if strings.HasPrefix(n, word) {
 				c = append(c, line[0:idx]+n)
 			}
