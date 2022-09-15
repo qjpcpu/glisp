@@ -187,12 +187,16 @@ func newEnv() *glisp.Environment {
 
 type EnvOption func(*glisp.Environment)
 
-func RunScript(file string, opts ...EnvOption) {
+func RunScript(file string, interactive bool, opts ...EnvOption) {
 	env := newEnv()
 	for _, fn := range opts {
 		fn(env)
 	}
 	runScript(env, file)
+	if interactive {
+		registKeywords(env)
+		repl(env)
+	}
 }
 
 func FormatScript(file string, opts ...EnvOption) {

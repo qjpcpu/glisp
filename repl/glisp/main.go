@@ -3,24 +3,20 @@ package main
 import (
 	"flag"
 	"github.com/qjpcpu/glisp/repl"
-	"os"
 )
 
 var (
-	fmtFile string
+	scriptFile  string
+	interactive bool
 )
 
 func main() {
-	flag.StringVar(&fmtFile, "f", "", "format file")
+	flag.StringVar(&scriptFile, "f", "", "script file")
+	flag.BoolVar(&interactive, "i", false, "enter repl mode")
 	flag.Parse()
 
-	if fmtFile != "" {
-		repl.FormatScript(fmtFile)
-		return
-	}
-
-	if args := os.Args; len(args) > 1 {
-		repl.RunScript(args[1])
+	if scriptFile != `` {
+		repl.RunScript(scriptFile, interactive)
 	} else {
 		repl.Run()
 	}

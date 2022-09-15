@@ -1,57 +1,85 @@
 package repl
 
 import (
-	"encoding/json"
+	"bufio"
+	"bytes"
+	"encoding/base64"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sync"
-	"time"
+	"strings"
 )
 
+const maxHistoryLines = 10000
+
 func GetHistory() *History {
-	h := &History{RWMutex: new(sync.RWMutex)}
-	h.sync()
+	h := &History{}
+	h.setup()
 	return h
 }
 
 type History struct {
-	*sync.RWMutex
+	file *os.File
 	List []string
 }
 
 func (h *History) Get() []string {
-	h.RLock()
-	defer h.RUnlock()
-	ret := make([]string, len(h.List))
-	copy(ret, h.List)
-	return ret
+	return h.List
 }
 
 func (h *History) Append(v string) {
-	h.Lock()
-	defer h.Unlock()
 	if v != `` {
 		h.List = append(h.List, v)
+		if h.file != nil {
+			h.file.WriteString(h.encodeLine(v) + "\n")
+		}
 	}
 }
 
-func (h *History) sync() {
-	file := filepath.Join(os.TempDir(), `.glisp_history`)
-	data, _ := ioutil.ReadFile(file)
-	h.Lock()
-	json.Unmarshal(data, &h.List)
-	h.Unlock()
-	go func() {
-		timer := time.NewTicker(time.Second * 3)
-		for range timer.C {
-			h.Lock()
-			if len(h.List) > 1000 {
-				h.List = h.List[len(h.List)-1000:]
+func (h *History) setup() {
+	h.List = h.readAll()
+	h.rotate()
+	ofile, err := os.OpenFile(h.filename(), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0755)
+	if err != nil {
+		return
+	}
+	h.file = ofile
+}
+
+func (h *History) filename() string {
+	return filepath.Join(os.TempDir(), `.glisp_history`)
+}
+
+func (h *History) rotate() {
+	if len(h.List) > maxHistoryLines {
+		h.List = h.List[len(h.List)-maxHistoryLines:]
+	}
+	buf := new(bytes.Buffer)
+	for _, item := range h.List {
+		buf.WriteString(h.encodeLine(item) + "\n")
+	}
+	ioutil.WriteFile(h.filename(), buf.Bytes(), 0755)
+}
+
+func (h *History) readAll() (ret []string) {
+	file, err := os.Open(h.filename())
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if bs, err := base64.StdEncoding.DecodeString(line); err == nil {
+			if len(bs) > 0 {
+				ret = append(ret, string(bs))
 			}
-			data, _ = json.Marshal(h.List)
-			ioutil.WriteFile(file, data, 0755)
-			h.Unlock()
 		}
-	}()
+	}
+	return
+}
+
+func (h *History) encodeLine(str string) string {
+	return base64.StdEncoding.EncodeToString([]byte(str))
 }
