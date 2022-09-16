@@ -109,7 +109,7 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	if err != nil {
 		return MissingFunction, err
 	}
-	gen.AddInstruction(ReturnInstr{nil})
+	gen.AddInstruction(ReturnInstr{})
 
 	newfunc := Function(gen.instructions)
 	return MakeFunction(gen.funcname, nargs, varargs, newfunc, WithDoc(doc)), nil
@@ -452,18 +452,33 @@ func (gen *Generator) generateLetList(name string, bindings *SexpPair, args []Se
 }
 
 func (gen *Generator) GenerateAssert(args []Sexp) error {
-	if len(args) != 1 {
-		return WrongGeneratorNumberArguments("assert", len(args), 1)
+	if len(args) != 1 && len(args) != 2 {
+		return WrongGeneratorNumberArguments("assert", len(args), 1, 2)
 	}
 	err := gen.Generate(args[0])
 	if err != nil {
 		return err
 	}
 
-	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
-		args[0].SexpString())
-	gen.AddInstruction(BranchInstr{true, 2})
-	gen.AddInstruction(ReturnInstr{errors.New(reterrmsg)})
+	if len(args) == 1 {
+		reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
+			args[0].SexpString())
+		gen.AddInstruction(BranchInstr{true, 2})
+		gen.AddInstruction(ReturnInstr{err: errors.New(reterrmsg)})
+		gen.AddInstruction(PushInstr{SexpNull})
+		return nil
+	}
+
+	subgen := NewGenerator(gen.env)
+	subgen.scopes = gen.scopes
+	subgen.tail = gen.tail
+	subgen.funcname = gen.funcname
+	subgen.Generate(args[1])
+	instructions := subgen.instructions
+
+	gen.AddInstruction(BranchInstr{true, 2 + len(instructions)})
+	gen.AddInstructions(instructions)
+	gen.AddInstruction(ReturnInstr{dynamicErr: true})
 	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }

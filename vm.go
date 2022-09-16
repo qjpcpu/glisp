@@ -284,12 +284,23 @@ func (d DispatchInstr) Execute(env *Environment) error {
 }
 
 type ReturnInstr struct {
-	err error
+	err        error
+	dynamicErr bool
 }
 
 func (r ReturnInstr) Execute(env *Environment) error {
 	if r.err != nil {
 		return r.err
+	}
+	if r.dynamicErr {
+		elem, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		if IsString(elem) {
+			return errors.New(string(elem.(SexpStr)))
+		}
+		return errors.New(elem.SexpString())
 	}
 	return env.ReturnFromFunction()
 }

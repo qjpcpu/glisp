@@ -579,4 +579,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(bool 1)`, `bool argument should be string/bool`)
 	ExpectScriptErr(t, `(doc)`, `doc expected 1 arguments, got 0`)
 	ExpectScriptErr(t, `(doc 1)`, `should be symbol`)
+	ExpectScriptErr(t, `(assert false 100)`, `100`)
+	ExpectScriptErr(t, `(assert false "error message-x")`, `error message-x`)
+	ExpectScriptErr(t, `(assert false (begin ((fn [a] (sprintf "--%s--" a)) "ERROR") ))`, `--ERROR--`)
 }
