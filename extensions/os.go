@@ -11,7 +11,13 @@ import (
 
 	"os/exec"
 
+	_ "embed"
 	"github.com/qjpcpu/glisp"
+)
+
+var (
+	//go:embed os.lisp
+	os_scripts string
 )
 
 func ImportOS(vm *glisp.Environment) error {
@@ -23,7 +29,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/exec", ExecCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
-	return nil
+	return env.SourceStream(bytes.NewBufferString(os_scripts))
 }
 
 func ExecCommand(name string) glisp.UserFunction {
