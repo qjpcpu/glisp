@@ -1,7 +1,7 @@
-(assert (= "hello world" (os/exec "echo" "-n" "hello world")))
-(assert (= "1 hello world" (os/exec "echo" "-n" 1 (bytes "hello world"))))
+(assert (= "hello world" (cdr (os/exec "echo" "-n" "hello world"))))
+(assert (= "1 hello world" (cdr (os/exec "echo" "-n" 1 (bytes "hello world")))))
 (def name "jack")
-(assert (= "hello jack" (os/exec "echo -n hello" name)))
+(assert (= "hello jack" (cdr (os/exec "echo -n hello" name))))
 
 ;; file
 (def dir "./not-exist-dir/")

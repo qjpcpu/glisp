@@ -520,7 +520,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(json/query {} 2)`)
 	ExpectScriptErr(t, `(os/exec)`)
 	ExpectScriptErr(t, `(os/exec {})`)
-	ExpectScriptErr(t, `(os/exec "aaa")`)
+	ExpectScriptErr(t, `(assert (= 0 (car (os/exec "aaa"))))`)
 	ExpectScriptErr(t, `(json/set)`)
 	ExpectScriptErr(t, `(json/set 1 2 3)`)
 	ExpectScriptErr(t, `(json/set {} 2 3)`)

@@ -1,6 +1,7 @@
 package extensions
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -43,12 +44,14 @@ func ExecCommand(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.Inspect(arg))
 			}
 		}
+		var buf bytes.Buffer
 		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
+		cmd.Stderr = &buf
 		ret, err := cmd.Output()
 		if err != nil {
-			return glisp.SexpNull, fmt.Errorf("%v\n%v", err, string(ret))
+			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 		}
-		return glisp.SexpStr(chomp(ret)), nil
+		return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(ret))), nil
 	}
 }
 

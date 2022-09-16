@@ -316,7 +316,7 @@ Remove file from disk.
 ========== os/exec ==========
 Usage: (os/exec & args)
 
-Execute os command. Returns command output as string.
+Execute os command. Returns command result conscell (status . stdout/stderr).
 
 examples:
 (os/exec "ls -l")
