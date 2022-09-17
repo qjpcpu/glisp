@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/qjpcpu/glisp"
 )
 
 const maxHistoryLines = 10000
@@ -34,6 +37,14 @@ func (h *History) Append(v string) {
 			h.file.WriteString(h.encodeLine(v) + "\n")
 		}
 	}
+}
+
+func (h *History) Truncate() {
+	if h.file != nil {
+		h.file.Close()
+	}
+	os.Remove(h.filename())
+	h.setup()
 }
 
 func (h *History) setup() {
@@ -82,4 +93,38 @@ func (h *History) readAll() (ret []string) {
 
 func (h *History) encodeLine(str string) string {
 	return base64.StdEncoding.EncodeToString([]byte(str))
+}
+
+func exportHistory(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("filename should be string but got %v", args[0].SexpString())
+		}
+		var buf bytes.Buffer
+		for _, line := range history.Get() {
+			buf.WriteString(line + "\n")
+		}
+		file := string(args[0].(glisp.SexpStr))
+		if strings.HasPrefix(file, "~") {
+			home, _ := os.UserHomeDir()
+			file = filepath.Join(home, strings.TrimPrefix(file, "~"))
+		}
+		ioutil.WriteFile(file, buf.Bytes(), 0755)
+		fmt.Printf("save history to %s\n", args[0].(glisp.SexpStr))
+		return glisp.SexpNull, nil
+	}
+}
+
+func clearHistory(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 0 {
+			return glisp.WrongNumberArguments(name, len(args), 0)
+		}
+		history.Truncate()
+		fmt.Println("history truncated.")
+		return glisp.SexpNull, nil
+	}
 }
