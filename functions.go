@@ -402,7 +402,7 @@ func concatSexp(args []Sexp) (Sexp, error) {
 			return concatSexp(args[1:])
 		}
 	}
-	return SexpNull, errors.New("expected strings/arrays/lists/bytes or lists")
+	return SexpNull, errors.New("expected strings/arrays/lists/bytes but got " + InspectType(args[0]))
 }
 
 func GetReadFunction(name string) UserFunction {
@@ -554,8 +554,12 @@ func GetMapFunction(name string) UserFunction {
 			return MapArray(env, fun, e)
 		case *SexpPair:
 			return MapList(env, fun, e)
+		case SexpSentinel:
+			if e == SexpNull {
+				return SexpNull, nil
+			}
 		}
-		return SexpNull, errors.New("second argument of map must be array/list")
+		return SexpNull, errors.New("second argument of map must be array/list but got " + InspectType(args[1]))
 	}
 }
 
@@ -578,6 +582,10 @@ func GetFlatMapFunction(name string) UserFunction {
 			return FlatMapArray(env, fun, e)
 		case *SexpPair:
 			return FlatMapList(env, fun, e)
+		case SexpSentinel:
+			if e == SexpNull {
+				return SexpNull, nil
+			}
 		}
 		return SexpNull, errors.New("second argument of map must be array/list")
 	}

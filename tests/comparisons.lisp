@@ -16,6 +16,8 @@
 (assert (= 97 #a))
 
 (assert (< '() 1))
+(assert (> 1 '()))
+(assert (= '() '()))
 (assert (= #a 97))
 (assert (= #a 97.0))
 (assert (= 0B6869 "hi"))

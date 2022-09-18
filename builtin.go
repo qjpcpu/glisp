@@ -84,3 +84,8 @@ func Inspect(expr Sexp) string {
 	t, _ := GetTypeFunction(`type`)(nil, []Sexp{expr})
 	return fmt.Sprintf(`%s<%s>`, expr.SexpString(), string(t.(SexpStr)))
 }
+
+func InspectType(expr Sexp) string {
+	t, _ := GetTypeFunction(`type`)(nil, []Sexp{expr})
+	return string(t.(SexpStr))
+}

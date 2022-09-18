@@ -18,6 +18,9 @@ type Comparable interface {
 }
 
 func Compare(a Sexp, b Sexp) (int, error) {
+	if a != SexpNull && b == SexpNull {
+		return 1, nil
+	}
 	switch at := a.(type) {
 	case SexpInt:
 		return compareInt(at, b)

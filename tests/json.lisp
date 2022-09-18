@@ -61,3 +61,7 @@
 (assert (= "{
   \"a\": 1
 }" (json/stringify {"a" 1} true)))
+
+
+(assert (= 1 (json/query {"a" 1} "b" 1)))
+(assert (= 1 (json/query '() "b" 1)))

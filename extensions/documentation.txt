@@ -272,6 +272,7 @@ Parse json string to object.
 
 ========== json/query ==========
 Usage: (json/query x path)
+(json/query x path DEFAULT)
 
 Query json object by path.
 

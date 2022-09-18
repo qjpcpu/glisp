@@ -10,11 +10,17 @@ import (
 
 func QueryJSONSexp(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+		if len(args) != 2 && len(args) != 3 {
+			return glisp.WrongNumberArguments(name, len(args), 2, 3)
+		}
+		makeRes := func(s glisp.Sexp) glisp.Sexp {
+			if s == glisp.SexpNull && len(args) == 3 {
+				return args[2]
+			}
+			return s
 		}
 		if args[0] == glisp.SexpNull {
-			return glisp.SexpNull, nil
+			return makeRes(glisp.SexpNull), nil
 		}
 		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
@@ -24,9 +30,9 @@ func QueryJSONSexp(name string) glisp.UserFunction {
 		}
 		p, ok := makeStPath(string(args[1].(glisp.SexpStr)))
 		if !ok {
-			return glisp.SexpNull, nil
+			return makeRes(glisp.SexpNull), nil
 		}
-		return findSexp(args[0], p), nil
+		return makeRes(findSexp(args[0], p)), nil
 	}
 }
 
