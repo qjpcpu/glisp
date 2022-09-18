@@ -48,3 +48,7 @@
 (def hh {'a 1 'b 2 'c 3 'd 4})
 (def hhres (filter (fn [k v] (not= 0 (mod v 2))) hh))
 (assert (= 2 (len hhres)))
+
+(def h3 {'a 1 'b 2})
+(assert (= 1 (len (hdel! h3 'a))))
+(assert (= 2 (len (hset! h3 'a 1))))

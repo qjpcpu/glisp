@@ -160,7 +160,7 @@ func GetArrayAccessFunction(name string) UserFunction {
 		}
 		arr[i] = args[2]
 
-		return SexpNull, nil
+		return arr, nil
 	}
 }
 
@@ -256,16 +256,16 @@ func GetHashAccessFunction(name string) UserFunction {
 			return hash.HashGet(args[1])
 		case "hset!":
 			err := hash.HashSet(args[1], args[2])
-			return SexpNull, err
+			return hash, err
 		case "hdel!":
 			if len(args) != 2 {
 				return WrongNumberArguments(name, len(args), 2)
 			}
 			err := hash.HashDelete(args[1])
-			return SexpNull, err
+			return hash, err
 		}
 
-		return SexpNull, nil
+		return hash, nil
 	}
 }
 

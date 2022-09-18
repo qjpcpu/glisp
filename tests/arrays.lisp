@@ -31,3 +31,5 @@
 (assert (empty? (cdr [])))
 (assert (= "a" (slice "a" 0 100)))
 (assert (= "a" (slice "ba" 1)))
+
+(assert (= [1 2 1] (aset! [1 2 3] 2 1)))
