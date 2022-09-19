@@ -182,7 +182,7 @@ func newEnv() *glisp.Environment {
 	extensions.ImportContainerUtils(env)
 	extensions.ImportOS(env)
 	extensions.ImportHTTP(env)
-	env.AddNamedFunction("save-history", exportHistory, glisp.WithDoc(`(save-history FILE)`))
+	env.AddNamedFunction("export-history", exportHistory, glisp.WithDoc(`(export-history FILE)`))
 	env.AddNamedFunction("clear-history", clearHistory, glisp.WithDoc(`(clear-history)`))
 	return env
 }
