@@ -45,15 +45,21 @@ func jsonMarshal(name string) glisp.UserFunction {
 
 func jsonUnmarshal(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+		if len(args) != 1 && len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 1, 2)
+		}
+		makeRes := func(s glisp.Sexp, err error) (glisp.Sexp, error) {
+			if len(args) == 2 && err != nil {
+				return args[1], nil
+			}
+			return s, err
 		}
 		switch val := args[0].(type) {
 		case glisp.SexpStr:
 			rawBytes := []byte(string(val))
-			return ParseJSON(rawBytes)
+			return makeRes(ParseJSON(rawBytes))
 		case glisp.SexpBytes:
-			return ParseJSON(val.Bytes())
+			return makeRes(ParseJSON(val.Bytes()))
 		case glisp.SexpInt:
 			return val, nil
 		case glisp.SexpBool:

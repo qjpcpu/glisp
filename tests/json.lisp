@@ -65,3 +65,6 @@
 
 (assert (= 1 (json/query {"a" 1} "b" 1)))
 (assert (= 1 (json/query '() "b" 1)))
+
+(assert (= [1] (json/parse "[1" [1])))
+(assert (= "hash" (type (json/parse "[1" {}))))

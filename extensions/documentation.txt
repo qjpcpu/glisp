@@ -267,8 +267,9 @@ Stringify json object. The json string would be indented with extra bool argumen
 
 ========== json/parse ==========
 Usage: (json/parse str)
+(json/parse str DEFAULT)
 
-Parse json string to object.
+Parse json string to object. return DEFAULT if input str is invalid.
 
 ========== json/query ==========
 Usage: (json/query x path)
