@@ -209,6 +209,15 @@ func FormatScript(file string, opts ...EnvOption) {
 	fmtScript(env, file)
 }
 
+func CompileScript(file string, opts ...EnvOption) error {
+	env := newEnv()
+	for _, fn := range opts {
+		fn(env)
+	}
+	_, err := env.ParseFile(file)
+	return err
+}
+
 func Run(opts ...EnvOption) {
 	env := newEnv()
 	for _, fn := range opts {
