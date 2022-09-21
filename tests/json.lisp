@@ -68,3 +68,5 @@
 
 (assert (= [1] (json/parse "[1" [1])))
 (assert (= "hash" (type (json/parse "[1" {}))))
+
+(assert (null? (json/parse '())))
