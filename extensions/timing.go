@@ -244,16 +244,11 @@ func TimeAddDate(name string) glisp.UserFunction {
 	}
 }
 
-/*
-  (time/parse 1655967400280) => parse unix timestamp to SexpTime
-  (time/parse 1655967400280000 'timestamp-ms) => parse unix milli timestamp to SexpTime
-  (time/parse 1655967400280000 'timestamp-micro) => parse unix micro timestamp to SexpTime
-  (time/parse 1655967400280000 'timestamp-nano) => parse unix nano timestamp to SexpTime
-  (time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
-  (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
-  (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
-*/
 func ParseTime(name string) glisp.UserFunction {
+	layoutCandidates := []string{
+		`2006-01-02 15:04:05`,
+		time.RFC3339,
+	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		switch len(args) {
 		case 1:
@@ -262,11 +257,15 @@ func ParseTime(name string) glisp.UserFunction {
 			case glisp.SexpInt:
 				return SexpTime(time.Unix(arg.(glisp.SexpInt).ToInt64(), 0)), nil
 			case glisp.SexpStr:
-				tm, err := time.Parse(`2006-01-02 15:04:05`, string(val))
-				if err != nil {
-					return glisp.SexpNull, err
+				err := fmt.Errorf("can't parse time `%s`", string(val))
+				for _, layout := range layoutCandidates {
+					if tm, err0 := time.Parse(layout, string(val)); err0 == nil {
+						return SexpTime(tm), nil
+					} else {
+						err = err0
+					}
 				}
-				return SexpTime(tm), nil
+				return glisp.SexpNull, err
 			default:
 				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
 			}
@@ -314,7 +313,7 @@ func ParseTime(name string) glisp.UserFunction {
 			}
 			tm, err := parseTimeFn()
 			if err != nil {
-				return glisp.SexpNull, err
+				return glisp.SexpNull, fmt.Errorf(`parse time %s with layout %s fail %v`, value, layout, err)
 			}
 			return SexpTime(tm), nil
 		}
@@ -322,16 +321,9 @@ func ParseTime(name string) glisp.UserFunction {
 	}
 }
 
-/*
-  (time/format SexpTime 'timestamp) => SexpTime to unix timestamp
-  (time/format SexpTime 'timestamp-ms) => SexpTime to unix timestamp mills
-  (time/format SexpTime 'timestamp-micro) => SexpTime to unix timestamp microseconds
-  (time/format SexpTime 'timestamp-nano) => SexpTime to unix timestamp nanoseconds
-  (time/format SexpTime "2006-01-02 15:04:05") => SexpTime to string by layout
-*/
 func TimeFormatFunction(fname string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
+		if len(args) != 2 && len(args) != 3 {
 			return glisp.SexpNull, fmt.Errorf(`wrong argument number of function %s`, fname)
 		}
 		stm, ok := args[0].(SexpTime)
@@ -346,6 +338,9 @@ func TimeFormatFunction(fname string) glisp.UserFunction {
 		} else {
 			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be symbol/string`, fname)
 		}
+		if len(args) == 3 && !glisp.IsString(args[2]) {
+			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.InspectType(args[2]))
+		}
 		tm := time.Time(stm)
 		switch format {
 		case sym_timestamp:
@@ -359,7 +354,15 @@ func TimeFormatFunction(fname string) glisp.UserFunction {
 		case "":
 			return glisp.SexpNull, errors.New(`blank time format symbol`)
 		default:
-			return glisp.SexpStr(tm.Format(format)), nil
+			if len(args) == 3 {
+				locStr := string(string(args[2].(glisp.SexpStr)))
+				loc, err := time.LoadLocation(locStr)
+				if err != nil {
+					return glisp.SexpNull, fmt.Errorf("parse location `%s` fail %v", locStr, err)
+				}
+				return glisp.SexpStr(tm.In(loc).Format(format)), nil
+			}
+			return glisp.SexpStr(tm.UTC().Format(format)), nil
 		}
 	}
 }

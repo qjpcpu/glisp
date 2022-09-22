@@ -10,6 +10,7 @@ Usage:
 (time/format Time 'timestamp-micro) => Time to unix timestamp microseconds(integer)
 (time/format Time 'timestamp-nano) => Time to unix timestamp nanoseconds(integer)
 (time/format Time "2006-01-02 15:04:05") => Time to string by layout(string)
+(time/format Time "2006-01-02 15:04:05" "Asia/Shanghai") => Time to string by layout(string) and location
 
 Format time to string.
 
@@ -19,7 +20,7 @@ Usage:
 (time/parse 1655967400280000 'timestamp-ms) => parse unix milli timestamp to Time
 (time/parse 1655967400280000 'timestamp-micro) => parse unix micro timestamp to Time
 (time/parse 1655967400280000 'timestamp-nano) => parse unix nano timestamp to Time
-(time/parse "2015-02-23 23:54:55") => parse time by value, use default layout 2006-01-02 15:04:05
+(time/parse "2015-02-23 23:54:55") => parse time by value, try with layout 2006-01-02 15:04:05 or  2006-01-02T15:04:05Z07:00
 (time/parse "2006-Jan-02" "2014-Feb-04") => parse time by layout and value
 (time/parse "2006-Jan-02" "2014-Feb-04" "Asia/Shanghai") => parse time by layout and value and location
 

@@ -6,7 +6,7 @@
 
 (let [now (time/parse "2006-01-02 15:04:05" "2001-10-01 00:00:00" "Asia/Shanghai")]
      (assert (= 1001865600 (time/format now 'timestamp)))
-     (assert (= "2001-10-01" (time/format (time/parse 1001865600) "2006-01-02")))
+     (assert (= "2001-10-01" (time/format (time/parse 1001865600) "2006-01-02" "Asia/Shanghai")))
      (assert (= "2001-10-01" (time/format (time/parse "2006-01-02 15:04:05" "2001-10-01 00:00:00") "2006-01-02")))
      )
 
@@ -50,3 +50,14 @@
 (assert (= (time/format t2 'timestamp) (time/format (time/parse (time/format t2 'timestamp) 'timestamp) 'timestamp)))
 (assert (= (time/format t2 'timestamp-micro) (time/format (time/parse (time/format t2 'timestamp-micro) 'timestamp-micro) 'timestamp-micro)))
 (assert (= (time/format t2 'timestamp-nano) (time/format (time/parse (time/format t2 'timestamp-nano) 'timestamp-nano) 'timestamp-nano)))
+
+
+;; parse ok
+(time/parse "2022-09-19T08:25:26Z")
+(time/parse "2006-01-02T15:04:05+07:00")
+(let [now (time/now)]
+     (assert (!=
+                (time/format now "15:04:05" "Asia/Shanghai")
+                (time/format now "15:04:05" "UTC")
+              ))
+     )
