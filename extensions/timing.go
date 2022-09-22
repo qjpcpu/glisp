@@ -68,7 +68,7 @@ func TimeNow(name string) glisp.UserFunction {
 		if len(args) != 0 {
 			return glisp.WrongNumberArguments(name, len(args), 0)
 		}
-		return SexpTime(time.Now()), nil
+		return SexpTime(time.Now().In(time.UTC)), nil
 	}
 }
 
@@ -324,7 +324,7 @@ func ParseTime(name string) glisp.UserFunction {
 func TimeFormatFunction(fname string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 && len(args) != 3 {
-			return glisp.SexpNull, fmt.Errorf(`wrong argument number of function %s`, fname)
+			return glisp.SexpNull, glisp.WrongGeneratorNumberArguments(fname, len(args), 2, 3)
 		}
 		stm, ok := args[0].(SexpTime)
 		if !ok {
