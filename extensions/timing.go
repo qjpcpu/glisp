@@ -259,7 +259,7 @@ func ParseTime(name string) glisp.UserFunction {
 			case glisp.SexpStr:
 				err := fmt.Errorf("can't parse time `%s`", string(val))
 				for _, layout := range layoutCandidates {
-					if tm, err0 := time.Parse(layout, string(val)); err0 == nil {
+					if tm, err0 := time.ParseInLocation(layout, string(val), time.UTC); err0 == nil {
 						return SexpTime(tm), nil
 					} else {
 						err = err0
@@ -309,7 +309,7 @@ func ParseTime(name string) glisp.UserFunction {
 				}
 				parseTimeFn = func() (time.Time, error) { return time.ParseInLocation(layout, value, location) }
 			} else {
-				parseTimeFn = func() (time.Time, error) { return time.Parse(layout, value) }
+				parseTimeFn = func() (time.Time, error) { return time.ParseInLocation(layout, value, time.UTC) }
 			}
 			tm, err := parseTimeFn()
 			if err != nil {
