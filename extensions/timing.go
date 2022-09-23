@@ -248,6 +248,8 @@ func ParseTime(name string) glisp.UserFunction {
 	layoutCandidates := []string{
 		`2006-01-02 15:04:05`,
 		time.RFC3339,
+		`2006-01-02`,
+		`15:04:05`,
 	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		switch len(args) {

@@ -55,6 +55,9 @@
 ;; parse ok
 (time/parse "2022-09-19T08:25:26Z")
 (time/parse "2006-01-02T15:04:05+07:00")
+(time/parse "2001-01-01")
+(time/parse "01:01:01")
+
 (let [now (time/now)]
      (assert (!=
                 (time/format now "15:04:05" "Asia/Shanghai")
