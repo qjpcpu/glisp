@@ -1,3 +1,6 @@
+;; define global variables
+(def null '())
+
 ;; alias function
 (defmac alias [new old]
   "Usage: (alias new_name orig_name)
