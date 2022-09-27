@@ -3,9 +3,11 @@ package extensions
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	_ "embed"
+
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/qjson"
 )
@@ -76,8 +78,8 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 }
 
 func ParseJSON(rawBytes []byte) (glisp.Sexp, error) {
-	if len(rawBytes) == 0 {
-		return glisp.SexpNull, nil
+	if len(bytes.TrimSpace(rawBytes)) == 0 {
+		return glisp.SexpNull, errors.New(`unexpected end of JSON empty input`)
 	}
 	tree, err := qjson.Decode(rawBytes)
 	if err != nil {

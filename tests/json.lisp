@@ -47,8 +47,10 @@
 (assert (= "[1,2,3]" (json/stringify '(1 2 3))))
 
 ;; parse empty string
-(assert (= '() (json/parse "")))
-(assert (= '() (json/parse (bytes ""))))
+(assert (= '() (json/parse "" '())))
+(assert (= '() (json/parse "  " '())))
+(assert (= '() (json/parse " \t " '())))
+(assert (= '() (json/parse (bytes "") '())))
 (assert (= '() (json/parse "null")))
 (assert (= '() (json/parse (bytes "null"))))
 
