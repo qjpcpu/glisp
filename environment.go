@@ -239,6 +239,7 @@ func (env *Environment) ReturnFromFunction() error {
 	if err != nil {
 		return err
 	}
+	recycleStack(env.scopestack)
 	env.scopestack = scopestack.(*Stack)
 
 	return nil

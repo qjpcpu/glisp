@@ -17,11 +17,12 @@ func (s Scope) Clone() StackElem {
 }
 
 func (stack *Stack) PushScope() {
-	stack.Push(Scope(make(map[int]Sexp)))
+	stack.Push(getScopeFromPool())
 }
 
 func (stack *Stack) PopScope() error {
-	_, err := stack.Pop()
+	s, err := stack.Pop()
+	recycleScope(s.(Scope))
 	return err
 }
 

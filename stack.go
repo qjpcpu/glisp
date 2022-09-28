@@ -19,16 +19,12 @@ type Stack struct {
 }
 
 func NewStack(size int) *Stack {
-	stack := new(Stack)
-	stack.tos = -1
-	stack.elements = make([]StackElem, size)
-	return stack
+	return getStackFromPool(size)
 }
 
 func (stack *Stack) Clone() *Stack {
-	ret := &Stack{}
+	ret := getStackFromPool(len(stack.elements))
 	ret.tos = stack.tos
-	ret.elements = make([]StackElem, len(stack.elements))
 	for i := range stack.elements {
 		if cb, ok := stack.elements[i].(Clonable); ok {
 			ret.elements[i] = cb.Clone()
