@@ -154,7 +154,7 @@ type request struct {
 }
 
 func newHttpReq() *request {
-	return &request{Header: make(http.Header)}
+	return &request{Header: make(http.Header), Timeout: 15 * time.Second}
 }
 
 type requestDecorator func(*glisp.Environment, *request, glisp.Sexp) (*request, error)
