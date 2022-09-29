@@ -70,4 +70,4 @@
 (assert (= [1 2 3] (map (fn [f] (f)) [fn1 fn2 fn3])))
 
 ;; no input output compose
-(assert (null? ((compose (fn [] '()) (fn [e] '())))))
+(assert (nil? ((compose (fn [] '()) (fn [e] '())))))

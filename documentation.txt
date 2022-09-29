@@ -21,8 +21,8 @@ Usage: (list? x)
 
 Returns true if x is a list.
 
-========== null? ==========
-Usage: (null? x)
+========== nil? ==========
+Usage: (nil? x)
 
 Returns true if x is nil.
 

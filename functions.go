@@ -20,7 +20,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"car":        GetFirstFunction,
 	"cdr":        GetRestFunction,
 	"list?":      GetTypeQueryFunction,
-	"null?":      GetTypeQueryFunction,
+	"nil?":       GetTypeQueryFunction,
 	"array?":     GetTypeQueryFunction,
 	"hash?":      GetTypeQueryFunction,
 	"number?":    GetTypeQueryFunction,
@@ -449,7 +449,7 @@ func GetTypeQueryFunction(name string) UserFunction {
 		switch name {
 		case "list?":
 			result = IsList(args[0])
-		case "null?":
+		case "nil?":
 			result = args[0] == SexpNull
 		case "array?":
 			result = IsArray(args[0])

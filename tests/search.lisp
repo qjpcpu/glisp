@@ -1,6 +1,6 @@
-(assert (null? (json/query '() "")))
+(assert (nil? (json/query '() "")))
 ;; bad selector
-(assert (null? (json/query {} "#((")))
+(assert (nil? (json/query {} "#((")))
 
 (def h {'a 1 "b" "hello" 1 100 "null" '() "arr" [1 2 3]})
 (assert (= 1 (json/query h "a")))

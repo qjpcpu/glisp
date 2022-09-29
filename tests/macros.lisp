@@ -8,7 +8,7 @@
       (begin
         ~@body) '()))
 
-(assert (null? (when false 'c)))
+(assert (nil? (when false 'c)))
 (assert (= 'a (when true 'c 'b 'a)))
 
 (assert (=

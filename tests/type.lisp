@@ -19,3 +19,5 @@
 (assert (bytes? 0B6869))
 (assert (bool? false))
 (assert (= "symbol" (type (symbol 'a))))
+(assert (= nil '()))
+(assert (nil? nil))

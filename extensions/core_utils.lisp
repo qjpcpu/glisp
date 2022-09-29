@@ -1,5 +1,5 @@
 ;; define global variables
-(def null '())
+(def nil '())
 
 ;; alias function
 (defmac alias [new old]

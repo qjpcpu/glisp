@@ -17,8 +17,8 @@
 (json/q hash path true) ; show full json data by path
 
 Query json object by path."
-  (cond (null? args)
-          (cond (null? js) (println (json/stringify js))
+  (cond (nil? args)
+          (cond (nil? js) (println (json/stringify js))
                 (array? js) (println (str/join (concat ["["]
                                            (append (map (fn [e]
                                               (cond (array? e) (sprintf "    [<len=%v>]" (len e))
@@ -34,5 +34,5 @@ Query json object by path."
                 (string? js) (println (json/__q_str js))
                 (println (json/stringify js)))
         (bool? (car args)) (println (json/stringify js (car args)))
-        (null? (cdr args)) (json/q (json/query js (car args)))
+        (nil? (cdr args)) (json/q (json/query js (car args)))
         (json/q (json/query js (car args)) (car (cdr args)))))
