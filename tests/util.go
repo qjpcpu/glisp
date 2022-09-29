@@ -109,7 +109,7 @@ func ExpectError(t *testing.T, err error, keywords ...string) {
 		t.Fatalf("should get error but success")
 	}
 	for _, key := range keywords {
-		if !strings.Contains(err.Error(), key) {
+		if !strings.Contains(err.Error(), key) || key == `` {
 			t.Log(getTestStack())
 			t.Fatalf("error message should contains (%s), err: %v", key, err.Error())
 		}

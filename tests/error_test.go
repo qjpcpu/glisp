@@ -584,4 +584,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(assert false (begin ((fn [a] (sprintf "--%s--" a)) "ERROR") ))`, `--ERROR--`)
 	ExpectScriptErr(t, `(time/format (time/now) "2006-01-02 15:04:05" "Asia/s")`, `unknown time zone Asia/s`)
 	ExpectScriptErr(t, `(json/parse nil)`, `the first argument of json/parse must be string/bytes but got nil`)
+	ExpectScriptErr(t, `(car [])`, `access an empty array`)
+	ExpectScriptSuccess(t, `(nil? (cdr []))`)
 }

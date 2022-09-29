@@ -92,6 +92,9 @@ func GetFirstFunction(name string) UserFunction {
 		case *SexpPair:
 			return expr.head, nil
 		case SexpArray:
+			if len(expr) == 0 {
+				return SexpNull, errors.New(`access an empty array`)
+			}
 			return expr[0], nil
 		}
 
