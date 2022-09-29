@@ -81,11 +81,13 @@ func GetTypeFunction(name string) UserFunction {
 }
 
 func Inspect(expr Sexp) string {
-	t, _ := GetTypeFunction(`type`)(nil, []Sexp{expr})
-	return fmt.Sprintf(`%s<%s>`, expr.SexpString(), string(t.(SexpStr)))
+	return fmt.Sprintf(`%s<%s>`, expr.SexpString(), InspectType(expr))
 }
 
 func InspectType(expr Sexp) string {
+	if expr == SexpNull {
+		return `nil`
+	}
 	t, _ := GetTypeFunction(`type`)(nil, []Sexp{expr})
 	return string(t.(SexpStr))
 }
