@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -100,7 +101,10 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			}
 
 			/* perform http request */
-			cli := &http.Client{Timeout: hreq.Timeout}
+			transCfg := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+			}
+			cli := &http.Client{Timeout: hreq.Timeout, Transport: transCfg}
 			resp, err := cli.Do(req)
 			if err != nil {
 				return glisp.SexpNull, err

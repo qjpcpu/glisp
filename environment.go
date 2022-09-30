@@ -248,8 +248,7 @@ func (env *Environment) ReturnFromFunction() error {
 func (env *Environment) CallUserFunction(function *SexpFunction, name string, nargs int) error {
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
-		return errors.New(
-			fmt.Sprintf("Error calling %s: %v", name, err))
+		return fmt.Errorf("Error calling %s: %v", name, err)
 	}
 
 	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
@@ -258,8 +257,7 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 
 	res, err := function.userfun(env, args)
 	if err != nil {
-		return errors.New(
-			fmt.Sprintf("Error calling %s: %v", name, err))
+		return fmt.Errorf("Error calling %s: %v", name, err)
 	}
 	env.datastack.PushExpr(res)
 
