@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -101,10 +102,10 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			}
 
 			/* perform http request */
-			transCfg := &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+			var cli HttpClient = &http.Client{Timeout: hreq.Timeout, Transport: httpTransport}
+			if hreq.Verbose {
+				cli = newDebugHttpClient(cli, os.Stderr)
 			}
-			cli := &http.Client{Timeout: hreq.Timeout, Transport: transCfg}
 			resp, err := cli.Do(req)
 			if err != nil {
 				return glisp.SexpNull, err
@@ -149,6 +150,7 @@ func _httpIsOption(expr glisp.Sexp) (httpOption, bool) {
 }
 
 type request struct {
+	Verbose               bool
 	URL                   string
 	Header                http.Header
 	Data                  io.Reader
@@ -221,6 +223,13 @@ var availableHttpOptions = map[string]httpOption{
 			return req, nil
 		},
 	},
+	"-v": {
+		needValue: false,
+		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
+			req.Verbose = true
+			return req, nil
+		},
+	},
 	"-d": {
 		needValue: true,
 		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
@@ -282,4 +291,62 @@ func _httpToFormValue(expr glisp.Sexp) string {
 		return string(expr.(glisp.SexpStr))
 	}
 	return expr.SexpString()
+}
+
+var httpTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+}
+
+type HttpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+func newDebugHttpClient(c HttpClient, w io.Writer) HttpClient {
+	return &httpDebugClient{writer: w, cli: c}
+}
+
+type httpDebugClient struct {
+	writer io.Writer
+	cli    HttpClient
+}
+
+func (c *httpDebugClient) Do(req *http.Request) (*http.Response, error) {
+	var payload []byte
+	if req.Body != nil {
+		data, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		req.Body.Close()
+		payload = data
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	}
+	now := time.Now()
+	fmt.Fprintf(c.writer, "%s %s\n", req.Method, req.URL.String())
+	for k := range req.Header {
+		fmt.Fprintf(c.writer, "%s: %s\n", k, req.Header.Get(k))
+	}
+	fmt.Fprintln(c.writer)
+	if len(payload) > 0 {
+		fmt.Fprintf(c.writer, "%s\n", string(payload))
+		fmt.Fprintln(c.writer)
+	}
+	res, err := c.cli.Do(req)
+	if err != nil {
+		fmt.Fprintln(c.writer, err.Error())
+		return res, err
+	}
+	fmt.Fprintf(c.writer, "%s cost:%v\n", res.Status, time.Since(now))
+	for k := range res.Header {
+		fmt.Fprintf(c.writer, "%s: %s\n", k, res.Header.Get(k))
+	}
+	respBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	res.Body.Close()
+	fmt.Fprintln(c.writer)
+	fmt.Fprintf(c.writer, "%s\n", string(respBytes))
+	res.Body = io.NopCloser(bytes.NewBuffer(respBytes))
+	return res, err
 }

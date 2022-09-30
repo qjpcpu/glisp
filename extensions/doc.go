@@ -32,7 +32,3 @@ func autoAddDoc(env *glisp.Environment) *AutoAddFunctionWithDoc {
 func (env *AutoAddFunctionWithDoc) AddNamedFunction(name string, function glisp.NamedUserFunction, opts ...glisp.FuntionOption) {
 	env.Environment.AddNamedFunction(name, function, getDoc(name))
 }
-
-func (env *AutoAddFunctionWithDoc) AddFunction(name string, function glisp.UserFunction, opts ...glisp.FuntionOption) {
-	env.Environment.AddFunction(name, function, getDoc(name))
-}

@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/qjpcpu/glisp"
@@ -406,10 +407,21 @@ func TestHTTPWith404(t *testing.T) {
 
 func TestHTTPMethods(t *testing.T) {
 	WithHttpServer(func(url string) {
+		f, _ := os.CreateTemp(os.TempDir(), "http")
+		oldstderr := os.Stderr
+		os.Stderr = f
+		defer func() {
+			os.Stderr = oldstderr
+			os.RemoveAll(f.Name())
+		}()
+
 		script := fmt.Sprintf(`(http/get "%s" '-d [1 2 3])`, url)
 		ExpectScriptSuccess(t, script, `"method":"GET"`)
 
 		script = fmt.Sprintf(`(http/get '-X "POST" "%s" '-d [1 2 3])`, url)
+		ExpectScriptSuccess(t, script, `"method":"GET"`)
+
+		script = fmt.Sprintf(`(http/get '-v '-X "POST" "%s" '-d [1 2 3])`, url)
 		ExpectScriptSuccess(t, script, `"method":"GET"`)
 
 		script = fmt.Sprintf(`(http/post "%s" '-d [1 2 3])`, url)
