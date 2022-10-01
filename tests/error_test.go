@@ -16,6 +16,29 @@ func TestCompareFloatWithString(t *testing.T) {
 	ExpectScriptErr(t, script, `cannot compare 1.0<float> to "a"<string>`)
 }
 
+func TestStack(t *testing.T) {
+	stack := glisp.NewStack(1)
+	_, err := stack.GetExpressions(3)
+	ExpectError(t, err, `not enough items on stack`)
+	_, err = stack.PopExpressions(3)
+	ExpectError(t, err, `not enough items on stack`)
+	_, err = stack.GetExpr(3)
+	ExpectError(t, err, `invalid stack access asked for 3 Top was -1`)
+	_, _, err = stack.PopAddr()
+	ExpectError(t, err, `invalid stack access asked for 0 Top was -1`)
+}
+
+func TestTypeInstrCoverage(t *testing.T) {
+	env := newFullEnv()
+	fn := glisp.GetTypeFunction(`type`)
+	expr, err := fn(env, []glisp.Sexp{glisp.SexpEnd})
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, `<end>`, expr)
+	expr, err = fn(env, []glisp.Sexp{glisp.SexpMarker})
+	ExpectSuccess(t, err)
+	ExpectEqStr(t, `<marker>`, expr)
+}
+
 func TestMapListFail(t *testing.T) {
 	script := `(map (fn [a] (+ a 1)) '("a"))`
 	ExpectScriptErr(t, script, `operands have invalid type`)
