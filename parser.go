@@ -3,6 +3,7 @@ package glisp
 import (
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 type Parser struct {
@@ -228,12 +229,26 @@ func ParseTokens(env *Environment, lexer *Lexer) ([]Sexp, error) {
 	return expressions, nil
 }
 
+var lambdaArgument = regexp.MustCompile(`^%(\d*|N)$`)
+
 /*
 (fn [& args]
  (let (foldl
          (fn [e acc] (append acc (symbol (concat "%" (string (/ (len acc) 2)))) e)) [(symbol "%N") (len args)] args) EXPR))
 */
 func makeLambda(env *Environment, expr Sexp) Sexp {
+	/* fix https://clojure.org/guides/learn/functions#_gotcha */
+	if !IsList(expr) {
+	} else if pair := expr.(*SexpPair); pair.Tail() == SexpNull {
+		if IsSymbol(pair.Head()) {
+			if name := pair.Head().(SexpSymbol).Name(); lambdaArgument.MatchString(name) {
+				expr = pair.Head()
+			}
+		} else {
+			expr = pair.Head()
+		}
+	}
+
 	foldfn := MakeList([]Sexp{
 		env.MakeSymbol("fn"),
 		SexpArray{env.MakeSymbol("e"), env.MakeSymbol("acc")},

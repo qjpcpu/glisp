@@ -122,3 +122,10 @@
 
 (assert (= 1 (->> 1)))
 (assert (= 1 (-> 1)))
+
+;; https://clojure.org/guides/learn/functions#_gotcha
+(assert (= [100] (#([%]) 100)))
+(assert (= 100 (#(%) 100)))
+(assert (= true (#(%) true)))
+(assert (= 100 (hget (#({"a" %1}) 100) "a")))
+(assert (= nil (#(%))))
