@@ -22,10 +22,9 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/trim-suffix", StringMap2(strings.TrimSuffix))
 	env.AddNamedFunction("str/trim-space", StringMap(strings.TrimSpace))
 	env.AddNamedFunction("str/count", StringSearch(strings.Count))
-	env.AddNamedFunction("str/index", StringSearch(strings.Index))
+	env.AddNamedFunction("str/index", StringSearch(stringIndex))
 	env.AddNamedFunction("str/split", StringSplit(strings.Split))
 	env.AddNamedFunction("str/join", StringJoin(strings.Join))
-	env.AddNamedFunction("str/len", StringInt(utf8.RuneCountInString))
 	env.AddNamedFunction("str/digit?", isDigit())
 	env.AddNamedFunction("str/alpha?", isAlpha())
 	env.AddNamedFunction("str/title?", isTitle())
@@ -117,20 +116,6 @@ func StringBool(fn func(string) bool) glisp.NamedUserFunction {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
 			}
 			return glisp.SexpBool((fn(toStr(args[0])))), nil
-		}
-	}
-}
-
-func StringInt(fn func(string) int) glisp.NamedUserFunction {
-	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 1 {
-				return glisp.WrongNumberArguments(name, len(args), 1)
-			}
-			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
-			}
-			return glisp.NewSexpInt((fn(toStr(args[0])))), nil
 		}
 	}
 }
@@ -306,4 +291,12 @@ func strMD5() glisp.NamedUserFunction {
 
 func toStr(e glisp.Sexp) string {
 	return string(e.(glisp.SexpStr))
+}
+
+func stringIndex(s, substr string) int {
+	idx := strings.Index(s, substr)
+	if idx != -1 {
+		return utf8.RuneCountInString(s[:idx])
+	}
+	return idx
 }

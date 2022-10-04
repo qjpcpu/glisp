@@ -68,8 +68,7 @@
 (assert (empty? ""))
 (assert (empty? (bytes "")))
 
-(assert (= 3 (str/len "中国人")))
-(assert (not= 3 (len "中国人")))
+(assert (= 3 (len "中国人")))
 
 (assert (bool "true"))
 (assert (not (bool "false")))
@@ -77,3 +76,17 @@
 (assert (not (bool false)))
 
 (assert (= #a (char "a")))
+
+(assert (= "abc" (string "abc")))
+
+;; unicode string
+
+(assert (= 7 (len "I'am中国人")))
+(assert (= 13 (len (bytes "I'am中国人"))))
+(assert (= "m中" (slice "I'am中国人" 3 5)))
+(assert (= "a美" (append "a" (char "美"))))
+(assert (= 4 (str/index "I'am中国人" "中")))
+(assert (= 5 (str/index "I'am中国人" "国")))
+(assert (= 0 (str/index "I'am中国人" "I")))
+(assert (= 0 (str/index "美I'am中国人" "美")))
+(assert (= -1 (str/index "I'am中国人" "x")))

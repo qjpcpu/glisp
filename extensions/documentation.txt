@@ -456,12 +456,6 @@ Usage: (str/join elems sep)
 Concatenates the elements of its first argument to create a single string. The separator
 string sep is placed between elements in the resulting string.
 
-========== str/len ==========
-Usage: (str/len s)
-
-Returns the number of runes in s. Erroneous and short
-encodings are treated as single runes of width 1 byte.
-
 ========== str/digit? ==========
 Usage: (str/digit? s)
 

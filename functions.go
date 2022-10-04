@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 type Function []Instruction
@@ -314,11 +315,12 @@ func GetSliceFunction(name string) UserFunction {
 			end = min(end, len(t))
 			return SexpArray(t[start:end]), nil
 		case SexpStr:
-			if start < 0 || start >= len(t) || end < start {
+			size := lenOfStr(string(t))
+			if start < 0 || start >= size || end < start {
 				return SexpNull, errors.New("index out of range")
 			}
-			end = min(end, len(t))
-			return SexpStr(t[start:end]), nil
+			end = min(end, size)
+			return SexpStr(sliceOfStr(string(t), start, end)), nil
 		case SexpBytes:
 			if start < 0 || start >= len(t.Bytes()) || end < start {
 				return SexpNull, errors.New("index out of range")
@@ -341,7 +343,7 @@ func GetLenFunction(name string) UserFunction {
 		case SexpArray:
 			return NewSexpInt(len(t)), nil
 		case SexpStr:
-			return NewSexpInt(len(t)), nil
+			return NewSexpInt(lenOfStr(string(t))), nil
 		case *SexpHash:
 			return NewSexpInt(HashCountKeys(t)), nil
 		case *SexpPair:
@@ -745,7 +747,7 @@ func BuiltinFunctions() map[string]UserFunction {
 	return ret
 }
 
-// GetStringifyFunction return s-expr's SexpString representation
+// GetStringifyFunction return s-expr's string representation
 func GetStringifyFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 && len(args) != 2 {
@@ -754,6 +756,8 @@ func GetStringifyFunction(name string) UserFunction {
 		switch val := args[0].(type) {
 		case SexpBytes:
 			return SexpStr(string(val.bytes)), nil
+		case SexpStr:
+			return val, nil
 		case SexpFloat:
 			if len(args) == 2 {
 				if !IsInt(args[1]) {
@@ -949,4 +953,13 @@ func GetComposeFunction(name string) UserFunction {
 			return _args[0], nil
 		}), nil
 	}
+}
+
+func lenOfStr(s string) int {
+	return utf8.RuneCountInString(s)
+}
+
+func sliceOfStr(s string, i, j int) string {
+	runes := []rune(s)
+	return string(runes[i:j])
 }
