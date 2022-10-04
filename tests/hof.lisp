@@ -38,12 +38,12 @@
 
 (assert (= ["101!" "201!" "301!" "401!"] (map
           (compose
-            ;; add 1 to every integer
-            (fn [a] (+ a 1))
-            ;; convert integer to string
-            string
             ;; append char ! to string
             (fn [a] (append a #!))
+            ;; convert integer to string
+            string
+            ;; add 1 to every integer
+            (fn [a] (+ a 1))
             )
           [100 200 300 400]))
         )
@@ -70,4 +70,55 @@
 (assert (= [1 2 3] (map (fn [f] (f)) [fn1 fn2 fn3])))
 
 ;; no input output compose
-(assert (nil? ((compose (fn [] '()) (fn [e] '())))))
+(assert (nil? ((compose (fn [e] '()) (fn [] '()) ))))
+
+(def compose_lambda (compose
+ #(filter #(not= 2 %1) %1)
+ #(map int %1)
+ #(flatmap #(str/split %1 " ") %1)))
+
+(assert (= [1 3 4 5 6] (compose_lambda ["1 2 3" "4 5 6"])))
+
+(assert (= [1 3 4 5 6]
+            (->> ["1 2 3" "4 5 6"]
+                 (flatmap #(str/split %1 " "))
+                 (map int)
+                 (filter #(not= 2 %1)))))
+
+(def compose_lambda (compose
+ #(filter #(not= 2 %) %)
+ #(map int %)
+ #(flatmap #(str/split % " ") %)))
+
+(assert (= [1 3 4 5 6] (compose_lambda ["1 2 3" "4 5 6"])))
+
+(assert (= [1 3 4 5 6]
+           (->> ["1 2 3" "4 5 6"]
+                (flatmap #(str/split % " "))
+                (map int)
+                (filter #(not= 2 %)))))
+
+;; thread last
+(assert (= "321INIT"
+        (->> "INIT" (concat "1") (concat "2") (concat "3"))))
+
+(assert (= "321INIT"
+        (->> ((fn [] "INIT")) (concat "1") (concat "2") (concat "3"))))
+
+(assert (= 20
+           (->> [1 2 3 4 5]
+                (#(map #(+ 1 %) %)) ; double parentheses
+                (apply +))))
+
+(assert (= 20
+           (->> [1 2 3 4 5]
+                ((fn [e] (map #(+ 1 %) e)))
+                (apply +))))
+
+
+;; thread first
+(assert (= "INIT123"
+        (-> "INIT" (concat "1") (concat "2") (concat "3"))))
+
+(assert (= 1 (->> 1)))
+(assert (= 1 (-> 1)))

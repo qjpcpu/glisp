@@ -3,6 +3,7 @@ package glisp
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -21,6 +22,7 @@ const (
 	TokenDot
 	TokenQuote
 	TokenBacktick
+	TokenLambda
 	TokenTilde
 	TokenTildeAt
 	TokenSymbol
@@ -76,6 +78,8 @@ func (t Token) String() string {
 	case TokenChar:
 		quoted := strconv.Quote(t.str)
 		return "#" + quoted[1:len(quoted)-1]
+	case TokenLambda:
+		return "#"
 	}
 	return t.str
 }
@@ -221,7 +225,7 @@ func DecodeAtom(atom string) (Token, error) {
 		return Token{TokenChar, char}, nil
 	}
 
-	return Token{}, errors.New("Unrecognized atom")
+	return Token{}, fmt.Errorf("Unrecognized atom `%s`", atom)
 }
 
 func (lexer *Lexer) dumpBuffer() error {
@@ -325,6 +329,11 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 			lexer.state = LexerNormal
 			_, err := lexer.buffer.WriteRune(r)
 			return err
+		} else if r == '(' && lexer.buffer.Len() == 1 {
+			/* lambda */
+			lexer.state = LexerNormal
+			lexer.buffer.Reset()
+			lexer.tokens = append(lexer.tokens, Token{TokenLambda, ""})
 		}
 	}
 

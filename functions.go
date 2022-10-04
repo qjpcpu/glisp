@@ -937,8 +937,8 @@ func GetComposeFunction(name string) UserFunction {
 			}
 		}
 		return MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *Environment, _args []Sexp) (Sexp, error) {
-			for _, f := range args {
-				fn := f.(*SexpFunction)
+			for i := len(args) - 1; i >= 0; i-- {
+				fn := args[i].(*SexpFunction)
 				ret, err := _env.Apply(fn, _args)
 				if err != nil {
 					return SexpNull, err

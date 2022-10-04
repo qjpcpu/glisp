@@ -83,14 +83,14 @@ func TestPrintf(t *testing.T) {
 
 func TestMakeScriptFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	fn, err := vm.MakeScriptFunction(`(+ @arg0 @arg1)`, ``)
+	fn, err := vm.MakeScriptFunction(`(+ %1 %2)`)
 	ExpectSuccess(t, err)
 
 	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, ret)
 
-	fn, err = vm.MakeScriptFunction(`(str/start-with? @arg0 @arg1)`, ``)
+	fn, err = vm.MakeScriptFunction(`(str/start-with? %1 %2)`)
 	ExpectSuccess(t, err)
 
 	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.SexpStr("abc"), glisp.SexpStr("a")})
@@ -100,7 +100,7 @@ func TestMakeScriptFunction(t *testing.T) {
 
 func TestMakeScriptFunctionNoArgument(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	fn, err := vm.MakeScriptFunction(`(+ 1 2)`, ``)
+	fn, err := vm.MakeScriptFunction(`(+ 1 2)`)
 	ExpectSuccess(t, err)
 
 	ret, err := vm.Apply(fn, nil)
@@ -108,15 +108,33 @@ func TestMakeScriptFunctionNoArgument(t *testing.T) {
 	ExpectEqInteger(t, 3, ret)
 }
 
+func TestMakeScriptFunctionArgumentNumber(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	fn, err := vm.MakeScriptFunction(`%N`)
+	ExpectSuccess(t, err)
+
+	ret, err := vm.Apply(fn, nil)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 0, ret)
+
+	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.NewSexpBytes(nil)})
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 1, ret)
+
+	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.NewSexpBytes(nil), glisp.NewSexpInt(1)})
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 2, ret)
+}
+
 func TestMakeComplexScriptFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	script := `
 (defn afn [a b] (+ a b))
 (defmac amac [a b] ESCAPE(* ~a ~b))
-;; (@arg0 + @arg1) * (@arg3 - @arg2)
-(amac (afn @arg0 @arg1) ((fn [a] (- a @arg2)) @arg3))
+;; (%1 + %2) * (%4 - %3)
+(amac (afn %1 %2) ((fn [a] (- a %3)) %4))
 `
-	fn, err := vm.MakeScriptFunction(strings.ReplaceAll(script, "ESCAPE", "`"), "")
+	fn, err := vm.MakeScriptFunction(strings.ReplaceAll(script, "ESCAPE", "`"))
 	ExpectSuccess(t, err)
 
 	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(2), glisp.NewSexpInt(3), glisp.NewSexpInt(5), glisp.NewSexpInt(7)})

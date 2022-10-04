@@ -553,18 +553,14 @@ func (env *Environment) GlobalFunctions() []string {
 	return ret
 }
 
-func (env *Environment) MakeScriptFunction(script, argPrefix string) (*SexpFunction, error) {
-	name := env.GenSymbol("__script")
-	if argPrefix == `` {
-		argPrefix = `@arg`
-	}
-	templ := `(defn %s [& args] (let (foldl (fn [e acc] (append acc (symbol (concat "%s" (string (/ (len acc) 2)))) e)) [] args) %s))`
-	fnstr := fmt.Sprintf(templ, name.Name(), argPrefix, script)
-	if err := env.SourceStream(bytes.NewBufferString(fnstr)); err != nil {
+func (env *Environment) MakeScriptFunction(script string) (*SexpFunction, error) {
+	templ := `#(begin %s)`
+	fnstr := fmt.Sprintf(templ, script)
+	expr, err := env.EvalString(fnstr)
+	if err != nil {
 		return nil, err
 	}
-	fn, _ := env.FindObject(name.Name())
-	return fn.(*SexpFunction), nil
+	return expr.(*SexpFunction), nil
 }
 
 type nextSymbol struct{ counter int64 }

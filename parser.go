@@ -167,6 +167,12 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil
+	case TokenLambda:
+		expr, err := ParseExpression(parser)
+		if err != nil {
+			return SexpNull, err
+		}
+		return makeLambda(env, expr), nil
 	case TokenTilde:
 		expr, err := ParseExpression(parser)
 		if err != nil {
@@ -220,4 +226,66 @@ func ParseTokens(env *Environment, lexer *Lexer) ([]Sexp, error) {
 		expressions = append(expressions, expr)
 	}
 	return expressions, nil
+}
+
+/*
+(fn [& args]
+ (let (foldl
+         (fn [e acc] (append acc (symbol (concat "%" (string (/ (len acc) 2)))) e)) [(symbol "%N") (len args)] args) EXPR))
+*/
+func makeLambda(env *Environment, expr Sexp) Sexp {
+	foldfn := MakeList([]Sexp{
+		env.MakeSymbol("fn"),
+		SexpArray{env.MakeSymbol("e"), env.MakeSymbol("acc")},
+		MakeList([]Sexp{
+			env.MakeSymbol("append"),
+			env.MakeSymbol("acc"),
+			MakeList([]Sexp{
+				env.MakeSymbol("symbol"),
+				MakeList([]Sexp{
+					env.MakeSymbol("concat"),
+					SexpStr("%"),
+					MakeList([]Sexp{
+						env.MakeSymbol("string"),
+						MakeList([]Sexp{
+							env.MakeSymbol("/"),
+							MakeList([]Sexp{env.MakeSymbol("len"), env.MakeSymbol("acc")}),
+							NewSexpInt(2),
+						}),
+					}),
+				}),
+			}),
+			env.MakeSymbol("e"),
+		}),
+	})
+	letArgs := MakeList([]Sexp{
+		env.MakeSymbol("foldl"),
+		foldfn,
+		SexpArray{MakeList([]Sexp{env.MakeSymbol("symbol"), SexpStr("%N")}), MakeList([]Sexp{env.MakeSymbol("len"), env.MakeSymbol("args")})},
+		env.MakeSymbol("args"),
+	})
+	/* set symbol % when only one argument */
+	/* (append letArgs (symbol "%") (cond (empty? args) nil (car args))) */
+	letArgs = MakeList([]Sexp{
+		env.MakeSymbol("append"),
+		letArgs,
+		MakeList([]Sexp{env.MakeSymbol("symbol"), SexpStr("%")}),
+		MakeList([]Sexp{
+			env.MakeSymbol("cond"),
+			MakeList([]Sexp{env.MakeSymbol("empty?"), env.MakeSymbol("args")}),
+			SexpNull,
+			MakeList([]Sexp{env.MakeSymbol("car"), env.MakeSymbol("args")}),
+		}),
+	})
+	letExpr := MakeList([]Sexp{
+		env.MakeSymbol("let"),
+		letArgs,
+		expr,
+	})
+	lambda := MakeList([]Sexp{
+		env.MakeSymbol("fn"),
+		SexpArray{env.MakeSymbol("&"), env.MakeSymbol("args")},
+		letExpr,
+	})
+	return lambda
 }

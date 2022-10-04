@@ -264,7 +264,7 @@ func TestRecover(t *testing.T) {
 
 func TestScriptFunctionFail(t *testing.T) {
 	env := newFullEnv()
-	fn, err := env.MakeScriptFunction(`(1 2 3)`, ``)
+	fn, err := env.MakeScriptFunction(`(1 2 3)`)
 	ExpectSuccess(t, err)
 	_, err = env.Apply(fn, []glisp.Sexp{})
 	ExpectError(t, err, "not a function")

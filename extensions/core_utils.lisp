@@ -56,3 +56,22 @@ example:
 
 Display document of function."
   `(println (__doc__ (quote ~name))))
+
+
+(defmac ->> [init-value & functions]
+  "Usage: (->> x & forms)
+
+Threads the expr through the forms. Inserts x as the
+last item in the first form. If there are more forms, inserts the first form as the
+last item in second form, etc.
+"
+  (foldl (fn [expr acc] (concat expr (list acc))) init-value functions))
+
+(defmac -> [init-value & functions]
+  "Usage: (-> x & forms)
+
+Threads the expr through the forms. Inserts x as the
+second item in the first form. If there are more forms, inserts the first form as the
+second item in second form, etc.
+"
+  (foldl (fn [expr acc] (concat (list (car expr)) (list acc) (cdr expr))) init-value functions))
