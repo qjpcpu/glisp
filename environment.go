@@ -55,6 +55,7 @@ func New() *Environment {
 	env.curfunc = env.mainfunc
 	env.pc = 0
 
+	env.SourceStream(bytes.NewBufferString(buitin_scripts))
 	return env
 }
 

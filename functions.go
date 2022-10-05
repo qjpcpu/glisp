@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"math"
@@ -9,6 +10,11 @@ import (
 	"os"
 	"strings"
 	"unicode/utf8"
+)
+
+var (
+	//go:embed builtin.lisp
+	buitin_scripts string
 )
 
 type Function []Instruction

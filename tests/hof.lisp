@@ -129,3 +129,10 @@
 (assert (= true (#(%) true)))
 (assert (= 100 (hget (#({"a" %1}) 100) "a")))
 (assert (= nil (#(%))))
+
+(assert (= [100 200 300] (flatten  [[100] [200 300]])))
+(let [l (flatten (list (list 1) (list 2)))]
+                 (assert (= 2 (len l)))
+                 (assert (= 1 (car l)))
+                 (assert (= 2 (car (cdr l))))
+                 )
