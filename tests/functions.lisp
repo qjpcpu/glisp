@@ -48,3 +48,5 @@
 ;; dynamic function name
 (defn (symbol (concat "ab" "c")) [] "abc")
 (assert (= "abc" (abc)))
+
+(assert (= [1 2] (reject #(> % 2) [1 2 3 4])))

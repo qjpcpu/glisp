@@ -127,7 +127,7 @@ When coll is hash, function `f` should take 3 arguments, first and second is has
 
 example:
 (foldl + 0 [1 2 3])
-(foldl (fn [k v acc] (+ acc v)) {"a" 1 "b" 2})
+(foldl (fn [kv acc] (+ acc (cdr kv))) {"a" 1 "b" 2})
 
 ========== filter ==========
 Usage: (filter pred coll)

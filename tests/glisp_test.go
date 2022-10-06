@@ -623,3 +623,17 @@ func TestDoc(t *testing.T) {
 	testDoc(`(defn xyz [] "doc-xyz" 1) (doc xyz)`, `doc-xyz`)
 	testDoc(`(defn xyz [] 1) (doc xyz)`, `No document found.`)
 }
+
+func TestListBuilder(t *testing.T) {
+	if glisp.NewListBuilder().Get() != glisp.SexpNull {
+		t.Fatal("should get null expr")
+	}
+	b := glisp.NewListBuilder()
+	expr := b.Add(glisp.NewSexpInt(1)).
+		Add(glisp.NewSexpInt(2)).
+		Get().
+		SexpString()
+	if expr != `(1 2)` {
+		t.Fatal("should get list")
+	}
+}

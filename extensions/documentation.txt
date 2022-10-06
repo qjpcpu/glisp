@@ -500,3 +500,118 @@ If length is -1, mask all substring from start-idx to the end.
 example:
 (str/mask "hello world" 5 2 "*") ; return "hello**orld"
 (str/mask "hello world" 5 -1 "*") ; return "hello******"
+
+========== map ==========
+Usage: (map f coll)
+
+Returns a sequence consisting of the result of applying f to
+the set of first items of each coll, followed by applying f to the
+set of second items in each coll, until any one of the colls is
+exhausted. coll can be array or list.
+
+========== flatmap ==========
+Usage: (flatmap f coll)
+
+Applies f to every value in the reduction of coll, concatenating the result
+colls of (f val). Foldable.
+
+========== foldl ==========
+Usage: (foldl f accumulate coll)
+
+Reduce a list/array/hash by function f.
+
+When coll is array or list, function `f` should take 2 arguments, first is element of coll, second argument is accumulate value.
+When coll is hash, function `f` should take 3 arguments, first and second is hash key-value pair, and the third argument is accumulate value.
+
+example:
+(foldl + 0 [1 2 3])
+(foldl (fn [kv acc] (+ acc (cdr kv))) {"a" 1 "b" 2})
+
+========== filter ==========
+Usage: (filter pred coll)
+
+Returns a sequence of the items in coll for which
+(pred item) returns logical true. pred must be free of side-effects.
+
+When coll is hash, pred function should take 2 arguments, which are hash key-value pair.
+
+========== flatten ==========
+Usage: (flatten coll)
+
+Takes any nested combination of sequential things (lists, arrays, stream
+etc.) and returns their contents as a single, flat foldable
+collection.
+
+========== realize ==========
+Usage: (realize stream)
+
+Return real list of the stream.
+
+========== take ==========
+Usage: (take n stream)
+
+Take first n elements of the stream.
+
+(take f stream)
+
+Take first x elements of the stream until f(elem) return false.
+
+========== drop ==========
+Usage: (drop n stream)
+
+Drop first n elements of the stream.
+
+(drop f stream)
+
+Drop first x elements of the stream until f(elem) return false.
+
+========== range ==========
+Usage: (range)
+(range end)
+(range start end)
+(range start end step)
+
+Returns a lazy seq of nums from start (inclusive) to end
+(exclusive), by step, where start defaults to 0, step to 1, and end to
+infinity. When step is equal to 0, returns an infinite sequence of
+start. When start is equal to end, returns empty list.
+
+========== streamable? ==========
+Usage: (streamable? x)
+
+Return true if x implement Iterable interface.
+
+type Iterable interface {
+        glisp.Sexp
+        Next() (glisp.Sexp, bool)
+}
+
+Besides, builtin types string/array/bytes/list/hash are streamable.
+
+========== stream? ==========
+Usage: (stream? x)
+
+Return true if x implement iStream interface.
+
+type iStream interface {
+        glisp.Sexp
+        Next(*glisp.Environment) (glisp.Sexp, bool, error)
+}
+
+========== stream ==========
+Usage: (stream x)
+
+Transform x to a stream. This function can convert builtin types string/array/bytes/list/hash or any Iterable object to a stream.
+
+========== partition ==========
+Usage: (partition n stream)
+
+Partition stream into groups stream, every group size is n.
+
+(partition f stream)
+
+Partition stream into groups stream by function f, exclude separator.
+
+(partition f separator_on_head stream)
+
+Partition stream into groups stream by function f, include separator on head or tail.

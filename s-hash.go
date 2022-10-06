@@ -225,7 +225,7 @@ func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash,
 	}
 
 	hash.Foreach(func(key Sexp, val Sexp) bool {
-		ret, err0 := env.Apply(fun, []Sexp{key, val})
+		ret, err0 := env.Apply(fun, []Sexp{Cons(key, val)})
 		if err0 != nil {
 			err = err0
 			return false
@@ -255,7 +255,7 @@ func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (S
 
 	var err error
 	hash.Foreach(func(k Sexp, v Sexp) bool {
-		if acc, err = env.Apply(fun, []Sexp{k, v, acc}); err != nil {
+		if acc, err = env.Apply(fun, []Sexp{Cons(k, v), acc}); err != nil {
 			return false
 		}
 		return true
@@ -266,4 +266,50 @@ func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (S
 	}
 
 	return acc, nil
+}
+
+func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
+	result := NewListBuilder()
+	for _, key := range arr.KeyOrder {
+		val, err := arr.HashGet(key)
+		if err != nil {
+			return SexpNull, err
+		}
+		elem, err := env.Apply(fun, []Sexp{Cons(key, val)})
+		if err != nil {
+			return SexpNull, err
+		}
+		result.Add(elem)
+	}
+
+	return result.Get(), nil
+}
+
+func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
+	result := NewListBuilder()
+
+	for _, key := range arr.KeyOrder {
+		val, err := arr.HashGet(key)
+		if err != nil {
+			return SexpNull, err
+		}
+		res, err := env.Apply(fun, []Sexp{Cons(key, val)})
+		if err != nil {
+			return SexpNull, err
+		}
+		if res == SexpNull {
+			continue
+		}
+		if IsArray(res) {
+			arr := res.(SexpArray)
+			result.Add(arr...)
+		} else if IsList(res) {
+			arr, _ := ListToArray(res)
+			result.Add(arr...)
+		} else {
+			return SexpNull, errors.New("flatmap function must return array/list")
+		}
+	}
+
+	return result.Get(), nil
 }

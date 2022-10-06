@@ -39,6 +39,17 @@ func TestTypeInstrCoverage(t *testing.T) {
 	ExpectEqStr(t, `<marker>`, expr)
 }
 
+func TestOverrideFunction(t *testing.T) {
+	env := newFullEnv()
+	newf := func(*glisp.SexpFunction) glisp.UserFunction {
+		return func(*glisp.Environment, []glisp.Sexp) (glisp.Sexp, error) { return glisp.SexpNull, nil }
+	}
+	err := env.OverrideFunction("xxxxx", newf)
+	ExpectError(t, err, "function `xxxxx` not found")
+	err = env.OverrideFunction("nil", newf)
+	ExpectError(t, err, "`nil` is not a function")
+}
+
 func TestMapListFail(t *testing.T) {
 	script := `(map (fn [a] (+ a 1)) '("a"))`
 	ExpectScriptErr(t, script, `operands have invalid type`)
@@ -89,14 +100,14 @@ func TestFlatMapArrayFail(t *testing.T) {
 }
 
 func TestFilterHash(t *testing.T) {
-	script := `(filter (fn [a b] (+ "a" 1)) {'a 1})`
+	script := `(filter (fn [ab] (+ "a" 1)) {'a 1})`
 	ExpectScriptErr(t, script, `operands have invalid type`)
-	script = `(filter (fn [k v] (+ 1 1)) {'a 1})`
+	script = `(filter (fn [kv] (+ 1 1)) {'a 1})`
 	ExpectScriptErr(t, script, `filter function must return boolean`)
 }
 
 func TestFoldlHash(t *testing.T) {
-	script := `(foldl (fn [a b c] (+ "a" 1)) 0 {'a 1})`
+	script := `(foldl (fn [ab c] (+ "a" 1)) 0 {'a 1})`
 	ExpectScriptErr(t, script, `operands have invalid type`)
 }
 
@@ -560,7 +571,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(defn (list 1) [] 1)`, `bad function name`)
 	ExpectScriptErr(t, `(def x 1) (x)`, `is not a function`)
 	ExpectScriptErr(t, `(assert (= 1 2))`, `Assertion failed: (= 1 2)`)
-	ExpectScriptErr(t, `(source-file)`, "expect 1,... argument but got 0")
+	ExpectScriptErr(t, `(source-file)`, "expect 1,... argument(s) but got 0")
 	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given 1<int>")
 	ExpectScriptErr(t, `(source-file "not-exist-source-file")`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file ["not-exist-source-file"])`, "no such file or directory")
@@ -576,11 +587,11 @@ func TestWrongArgumentNumber(t *testing.T) {
 	_, err = glisp.GetHashAccessFunction("")(glisp.New(), []glisp.Sexp{h, glisp.NewSexpInt(0)})
 	ExpectSuccess(t, err)
 
-	ExpectScriptErr(t, `(http/get)`, `expect 1,... argument but got 0`)
-	ExpectScriptErr(t, `(http/post)`, `expect 1,... argument but got 0`)
-	ExpectScriptErr(t, `(http/put)`, `expect 1,... argument but got 0`)
-	ExpectScriptErr(t, `(http/patch)`, `expect 1,... argument but got 0`)
-	ExpectScriptErr(t, `(http/delete)`, `expect 1,... argument but got 0`)
+	ExpectScriptErr(t, `(http/get)`, `expect 1,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(http/post)`, `expect 1,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(http/put)`, `expect 1,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(http/patch)`, `expect 1,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(http/delete)`, `expect 1,... argument(s) but got 0`)
 	ExpectScriptErr(t, `(http/get "-H" 111)`, `-H option value must be a string but got "int"`)
 	ExpectScriptErr(t, `(http/get '-H)`, `-H need an argument but got nothing`)
 	ExpectScriptErr(t, `(http/get '-H "aaa")`, `bad format aaa, -H option value must like header:value`)
@@ -592,12 +603,12 @@ func TestWrongArgumentNumber(t *testing.T) {
 	multiLine := "(len #`" + "\na)`)\n)"
 	ExpectScriptErr(t, multiLine, `Error on line 3,1`)
 	ExpectScriptErr(t, `(os/env)`, `no arguments`)
-	ExpectScriptErr(t, `(os/setenv)`, `expect 2 argument but got 0`)
+	ExpectScriptErr(t, `(os/setenv)`, `expect 2 argument(s) but got 0`)
 	ExpectScriptErr(t, `(os/env 1)`, `env variable should be string but got 1<int>`)
 	ExpectScriptErr(t, `(os/setenv 1 1)`, `env variable should be string but got 1<int>`)
 	ExpectScriptErr(t, `(os/setenv "d" 1)`, `env variable should be string but got 1<int>`)
 	ExpectScriptErr(t, `(os/setenv "" "")`, `env variable name can't be empty`)
-	ExpectScriptErr(t, `(len)`, `expect 1 argument but got 0`)
+	ExpectScriptErr(t, `(len)`, `expect 1 argument(s) but got 0`)
 	ExpectScriptErr(t, `(len 1)`, `argument must be string/array/list/hash/bytes but got 1`)
 	ExpectScriptErr(t, `(bool 1)`, `bool argument should be string/bool`)
 	ExpectScriptErr(t, `(doc)`, `doc expected 1 arguments, got 0`)
@@ -609,4 +620,53 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(json/parse nil)`, `the first argument of json/parse must be string/bytes but got nil`)
 	ExpectScriptErr(t, `(car [])`, `access an empty array`)
 	ExpectScriptSuccess(t, `(nil? (cdr []))`)
+	ExpectScriptSuccess(t, `(sexp-str (stream {}))`)
+	ExpectScriptErr(t, `(stream 1)`, `type int is not streamable`)
+	ExpectScriptErr(t, `(stream)`, `stream expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(stream?)`, `stream? expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(streamable?)`, `streamable? expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(map 1 (stream (my-counter 1)))`, `first argument of map must be function, but got int`)
+	ExpectScriptErr(t, `(flatmap 1 (stream (my-counter 1)))`, `first argument of flatmap must be function, but got int`)
+	ExpectScriptErr(t, `(realize (flatmap (fn [e] (int "x")) (stream (my-counter 1))))`, `x not number`)
+	ExpectScriptErr(t, `(realize (filter (fn [e] (int "x")) (stream (my-counter 1))))`, `x not number`)
+	ExpectScriptErr(t, `(realize (take (fn [e] (int "x")) (stream (my-counter 1))))`, `x not number`)
+	ExpectScriptErr(t, `(realize (drop (fn [e] (int "x")) (stream (my-counter 1))))`, `x not number`)
+	ExpectScriptErr(t, `(filter 1 (stream (my-counter 1)))`, `first argument of filter must be function, but got int`)
+	ExpectScriptErr(t, `(take)`, `take expect 2 argument(s) but got 0`)
+	ExpectScriptErr(t, `(take 1  (my-counter 1))`, `second argument of take must be stream, but got *tests.Counter`)
+	ExpectScriptErr(t, `(take ""  (stream (my-counter 1)))`, `first argument of take must be int/function, but got string`)
+	ExpectScriptErr(t, `(drop)`, `drop expect 2 argument(s) but got 0`)
+	ExpectScriptErr(t, `(realize (drop (fn [e] 1) (stream [1 2 3])))`, `drop function should return bool but got int`)
+	ExpectScriptErr(t, `(realize (take (fn [e] 1) (stream [1 2 3])))`, `take function should return bool but got int`)
+	ExpectScriptErr(t, `(drop 1  (my-counter 1))`, `second argument of drop must be stream, but got *tests.Counter`)
+	ExpectScriptErr(t, `(drop ""  (stream (my-counter 1)))`, `first argument of drop must be int/function, but got string`)
+	ExpectScriptErr(t, `(flatten)`, `expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(flatten 1)`, `second argument of map must be array/list`)
+	ExpectScriptErr(t, `(realize)`, `realize expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(realize 1)`, `type int is not stream`)
+	ExpectScriptErr(t, `(flatten)`, `expect 1 argument(s) but got 0`)
+	ExpectScriptErr(t, `(flatten 1)`, `second argument of map must be array/list`)
+	ExpectScriptErr(t, `(->> (stream (my-counter 100)) (foldl #(+ %1 %2) ""))`, `operands have invalid type`)
+	ExpectScriptSuccess(t, `(sexp-str (stream (my-counter 100)))`)
+	ExpectScriptErr(t, `(realize (flatten (stream [1])))`, `flatten element(int) is not streamable`)
+	ExpectScriptErr(t, `(realize (flatmap (fn [e] e) (stream [1])))`, `flatmap element(int) is not streamable`)
+	ExpectScriptErr(t, `(realize (filter (fn [e] 1) (stream [1])) )`, `filter function should return bool but got int`)
+	ExpectScriptErr(t, `(->> (err-stream "error-stream") (take 1) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (err-stream "error-stream") (take (fn [e] true)) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (err-stream "error-stream") (drop 1) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (err-stream "error-stream") (drop (fn [e] true)) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (stream [(err-stream "error-stream")]) (flatmap (fn [e] e)) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (stream [(err-stream "error-stream")]) (flatten) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(->> (err-stream "error-stream") (foldl (fn [e c] 1) 0) (realize))`, `error-stream`)
+	ExpectScriptErr(t, `(range 1 1 1 1)`, `range expect 0,1,2,3 argument(s) but got 4`)
+	ExpectScriptErr(t, `(range "x" 1 1 1)`, `all arguments of range must be int but got string`)
+	ExpectScriptErr(t, `(partition)`, `partition expect 2,3 argument(s) but got 0`)
+	ExpectScriptErr(t, `(partition 1 1)`, `last argument of partition must be stream, but got int`)
+	ExpectScriptErr(t, `(partition "s" (range))`, `first argument of partition must be int/function, but got string`)
+	ExpectScriptErr(t, `(partition "s" 1 (range))`, `first argument of partition must be function, but got string`)
+	ExpectScriptErr(t, `(partition (fn [] 1) 1 (range))`, `second argument of partition must be bool, but got int`)
+	ExpectScriptErr(t, `(realize (partition 1 (err-stream "x")))`, `Error calling realize: x`)
+	ExpectScriptErr(t, `(realize (partition (fn [e] 1) (err-stream "x")))`, `Error calling realize: x`)
+	ExpectScriptErr(t, `(realize (partition (fn [e] (int "x")) (range 3)))`, `x not number`)
+	ExpectScriptErr(t, `(realize (partition (fn [e] (int "1")) (range 3)))`, `partition function must return bool but get int`)
 }

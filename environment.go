@@ -564,6 +564,21 @@ func (env *Environment) MakeScriptFunction(script string) (*SexpFunction, error)
 	return expr.(*SexpFunction), nil
 }
 
+func (env *Environment) OverrideFunction(name string, f OverrideFunction, opts ...FuntionOption) error {
+	obj, ok := env.FindObject(name)
+	if !ok {
+		return fmt.Errorf("function `%s` not found", name)
+	}
+	if !IsFunction(obj) {
+		return fmt.Errorf("`%s` is not a function", name)
+	}
+	fn := obj.(*SexpFunction).Clone()
+	fn.name = name
+	nopts := []FuntionOption{WithDoc(fn.Doc())}
+	env.AddFunction(name, f(fn), append(nopts, opts...)...)
+	return nil
+}
+
 type nextSymbol struct{ counter int64 }
 
 func (g *nextSymbol) Incr() int64 {

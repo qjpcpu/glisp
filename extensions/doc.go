@@ -32,3 +32,7 @@ func autoAddDoc(env *glisp.Environment) *AutoAddFunctionWithDoc {
 func (env *AutoAddFunctionWithDoc) AddNamedFunction(name string, function glisp.NamedUserFunction, opts ...glisp.FuntionOption) {
 	env.Environment.AddNamedFunction(name, function, getDoc(name))
 }
+
+func (env *AutoAddFunctionWithDoc) OverrideFunction(name string, f glisp.OverrideFunction) error {
+	return env.Environment.OverrideFunction(name, f, getDoc(name))
+}

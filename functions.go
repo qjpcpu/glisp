@@ -20,6 +20,7 @@ var (
 type Function []Instruction
 type UserFunction func(*Environment, []Sexp) (Sexp, error)
 type NamedUserFunction func(string) UserFunction
+type OverrideFunction func(*SexpFunction) UserFunction
 
 var builtinFunctions = map[string]NamedUserFunction{
 	"read":       GetReadFunction,
@@ -565,6 +566,8 @@ func GetMapFunction(name string) UserFunction {
 			return MapArray(env, fun, e)
 		case *SexpPair:
 			return MapList(env, fun, e)
+		case *SexpHash:
+			return MapHash(env, fun, e)
 		case SexpSentinel:
 			if e == SexpNull {
 				return SexpNull, nil
@@ -591,6 +594,8 @@ func GetFlatMapFunction(name string) UserFunction {
 		switch e := args[1].(type) {
 		case SexpArray:
 			return FlatMapArray(env, fun, e)
+		case *SexpHash:
+			return FlatMapHash(env, fun, e)
 		case *SexpPair:
 			return FlatMapList(env, fun, e)
 		case SexpSentinel:
@@ -718,7 +723,13 @@ var MissingFunction = &SexpFunction{"__missing", true, 0, false, nil, nil, nil, 
 
 type FuntionOption func(*SexpFunction)
 
-func WithDoc(doc string) FuntionOption { return func(f *SexpFunction) { f.doc = doc } }
+func WithDoc(doc string) FuntionOption {
+	return func(f *SexpFunction) {
+		if doc != `` {
+			f.doc = doc
+		}
+	}
+}
 
 func MakeFunction(name string, nargs int, varargs bool, fun Function, opts ...FuntionOption) *SexpFunction {
 	var sfun = &SexpFunction{}
@@ -792,7 +803,7 @@ func GetSexpString(name string) UserFunction {
 func GetAnyToInteger(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+			return WrongNumberArguments(name, len(args), 1)
 		}
 		switch val := args[0].(type) {
 		case SexpChar:
@@ -932,7 +943,7 @@ func GetFilterFunction(name string) UserFunction {
 				return e, nil
 			}
 		}
-		return SexpNull, fmt.Errorf("second argument of %s must be array/list", name)
+		return SexpNull, fmt.Errorf("second argument of %s must be array/list but got %s", name, InspectType(args[1]))
 	}
 }
 

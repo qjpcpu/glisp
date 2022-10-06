@@ -20,4 +20,5 @@ func (sf *SexpFunction) Clone() *SexpFunction {
 	return &cp
 }
 
-func (sf *SexpFunction) Doc() string { return sf.doc }
+func (sf *SexpFunction) Doc() string  { return sf.doc }
+func (sf *SexpFunction) Name() string { return sf.name }

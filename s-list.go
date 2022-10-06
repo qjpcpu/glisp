@@ -235,3 +235,41 @@ func FilterList(env *Environment, fun *SexpFunction, list *SexpPair) (Sexp, erro
 	}
 	return head, nil
 }
+
+type ListBuilder struct {
+	ret   Sexp
+	prev  *SexpPair
+	total int
+}
+
+func NewListBuilder() *ListBuilder {
+	return &ListBuilder{}
+}
+
+func (b *ListBuilder) Add(exprs ...Sexp) *ListBuilder {
+	for i := range exprs {
+		expr := exprs[i]
+		if b.ret == nil {
+			head := Cons(expr, SexpNull)
+			b.ret = head
+			b.prev = head
+		} else {
+			n := Cons(expr, SexpNull)
+			b.prev.tail = n
+			b.prev = n
+		}
+	}
+	b.total += len(exprs)
+	return b
+}
+
+func (b *ListBuilder) Get() Sexp {
+	if b.ret == nil {
+		return SexpNull
+	}
+	return b.ret
+}
+
+func (b *ListBuilder) Size() int {
+	return b.total
+}

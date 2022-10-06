@@ -59,9 +59,9 @@
 (assert (= '(200 201 300 301) (flatmap (fn [a] (cond (= a 100) '() (list a (+ 1 a)))) '(100 200 300))))
 (assert (= '() (flatmap (fn [a] '()) '(100 200 300))))
 
-(assert (= 606 (foldl (fn [k v acc] (+ k v acc)) 0 {1 100 2 200 3 300})))
-(assert (= 0 (foldl (fn [k v acc] (+ k v acc)) 0 {})))
-(assert (= [1 100 2 200 3 300] (foldl (fn [k v acc] (append acc k v)) [] {1 100 2 200 3 300})))
+(assert (= 606 (foldl (fn [kv acc] (+ (car kv) (cdr kv) acc)) 0 {1 100 2 200 3 300})))
+(assert (= 0 (foldl (fn [kv acc] (+ (car kv) (cdr kv) acc)) 0 {})))
+(assert (= [1 100 2 200 3 300] (foldl (fn [kv acc] (append acc (car kv) (cdr kv))) [] {1 100 2 200 3 300})))
 
 (defn fn1 [] 1)
 (defn fn2 [] 2)
@@ -136,3 +136,14 @@
                  (assert (= 1 (car l)))
                  (assert (= 2 (car (cdr l))))
                  )
+
+;; filter hash
+(assert (= 2 (->> {"a" 1 "b" 2}
+                  (filter (fn [kv] (= 2 (cdr kv))))
+                  (foldl #(cdr %1) 0))))
+
+(assert (= [1 2] (list-to-array (->> {"a" 1 "b" 2}
+                  (flatmap #([(cdr %1)]))))))
+
+(assert (= [1 2] (list-to-array (->> {"a" 1 "b" 2}
+                  (flatmap #(list (cdr %1)))))))

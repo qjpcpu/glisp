@@ -1,10 +1,10 @@
 (defn json/__q_hash [js indent]
   (str/join (concat [(concat indent "{")]
-                 (foldl (fn [k v acc]
-                                   (cond (array? v) (append acc (concat indent "    " (json/stringify k) ": " (sprintf "[<len=%v>]" (len v))))
-                                         (hash? v) (append acc (concat indent "    " (json/stringify k) ": {" (str/join  (foldl (fn [k1 v1 acc1] (append acc1 (json/stringify k1))) [] v) ",") "}"))
-                                         (string? v) (append acc (concat indent "    " (json/stringify k) ": " (json/__q_str v)))
-                                         (append acc (concat indent "    " (json/stringify k) ": " (json/stringify v))))) [] js)
+                 (foldl (fn [kv acc]
+                                   (cond (array? (cdr kv)) (append acc (concat indent "    " (json/stringify (car kv)) ": " (sprintf "[<len=%v>]" (len (cdr kv)))))
+                                         (hash? (cdr kv)) (append acc (concat indent "    " (json/stringify (car kv)) ": {" (str/join  (foldl (fn [kv1 acc1] (append acc1 (json/stringify (car kv1)))) [] (cdr kv)) ",") "}"))
+                                         (string? (cdr kv)) (append acc (concat indent "    " (json/stringify (car kv)) ": " (json/__q_str (cdr kv))))
+                                         (append acc (concat indent "    " (json/stringify (car kv)) ": " (json/stringify (cdr kv)))))) [] js)
                  [(concat indent "}")]) "\n"))
 
 (defn json/__q_str [js]

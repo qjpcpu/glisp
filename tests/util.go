@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"runtime/debug"
@@ -33,12 +35,20 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 		extensions.ImportString,
 		extensions.ImportOS,
 		extensions.ImportHTTP,
+		extensions.ImportStream,
 	}
 	for _, fn := range imports {
 		if err := fn(vm); err != nil {
 			panic(err)
 		}
 	}
+	vm.AddFunction("my-counter", MakeCounter)
+	vm.AddFunction("err-stream", MakeErrStream)
+	vm.AddFunction("get-my-counter", GetCounterNumber)
+	vm.AddFunction("list-to-array", func(e *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		arr, _ := glisp.ListToArray(args[0])
+		return glisp.SexpArray(arr), nil
+	})
 	return vm
 }
 
@@ -182,4 +192,48 @@ func WithHttpServer(fn func(string)) {
 	defer server.ServeBackground()()
 	url := server.URLPrefix + `/echo`
 	fn(url)
+}
+
+type Counter struct {
+	Len    int
+	cursor int
+}
+
+func (c *Counter) SexpString() string {
+	return fmt.Sprintf(`(my-counter %v)`, c.Len)
+}
+
+func MakeCounter(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	return &Counter{Len: args[0].(glisp.SexpInt).ToInt()}, nil
+}
+
+func GetCounterNumber(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	num := args[0].(*Counter).cursor
+	return glisp.NewSexpInt(num), nil
+}
+
+func (c *Counter) Next() (glisp.Sexp, bool) {
+	if c.cursor < c.Len {
+		c.cursor++
+		return glisp.NewSexpInt(c.cursor), true
+	}
+	return glisp.SexpNull, false
+}
+
+func MakeErrStream(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	msg := "error occur"
+	if len(args) > 0 {
+		msg = string(args[0].(glisp.SexpStr))
+	}
+	return &errStream{msg: msg}, nil
+}
+
+type errStream struct {
+	msg string
+}
+
+func (e *errStream) SexpString() string { return fmt.Sprintf(`(err-stream "%s")`, e.msg) }
+
+func (e *errStream) Next(*glisp.Environment) (glisp.Sexp, bool, error) {
+	return glisp.SexpNull, false, errors.New(e.msg)
 }
