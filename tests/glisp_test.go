@@ -49,6 +49,16 @@ func TestLoadAllFunction(t *testing.T) {
 	}
 }
 
+func TestOverrideBuiltin(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.AddFunction("len", func(v *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		return glisp.NewSexpInt(100), nil
+	})
+	ret, err := vm.EvalString(`(len [])`)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 100, ret)
+}
+
 func TestPrint(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	var buf bytes.Buffer

@@ -17,3 +17,6 @@
 (assert (= 1 (- 3 2)))
 (assert (= [1] (- [1 2 3] [2 3])))
 (assert (= '(1) (- '(1 2 3) '(2 3))))
+
+(override len (fn [x] 100))
+(assert (= 100 (len [1])))

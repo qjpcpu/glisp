@@ -203,13 +203,12 @@ func (c CallInstr) InstrString() string {
 }
 
 func (c CallInstr) Execute(env *Environment) error {
-	f, ok := env.builtins[c.sym.number]
-	if ok {
-		return env.CallUserFunction(f, c.sym.name, c.nargs)
-	}
-
 	funcobj, err := env.scopestack.LookupSymbol(c.sym)
 	if err != nil {
+		f, ok := env.builtins[c.sym.number]
+		if ok {
+			return env.CallUserFunction(f, c.sym.name, c.nargs)
+		}
 		return err
 	}
 	switch f := funcobj.(type) {
@@ -240,13 +239,12 @@ func (c PrepareCallInstr) Execute(env *Environment) error {
 }
 
 func (c PrepareCallInstr) execute(env *Environment) error {
-	_, ok := env.builtins[c.sym.number]
-	if ok {
-		return nil
-	}
-
 	funcobj, err := env.scopestack.LookupSymbol(c.sym)
 	if err != nil {
+		_, ok := env.builtins[c.sym.number]
+		if ok {
+			return nil
+		}
 		return err
 	}
 	switch f := funcobj.(type) {
