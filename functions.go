@@ -316,20 +316,20 @@ func GetSliceFunction(name string) UserFunction {
 		}
 		switch t := args[0].(type) {
 		case SexpArray:
-			if start < 0 || start >= len(t) || end < start {
+			if start < 0 || start > len(t) || end < start {
 				return SexpNull, errors.New("index out of range")
 			}
 			end = min(end, len(t))
 			return SexpArray(t[start:end]), nil
 		case SexpStr:
 			size := lenOfStr(string(t))
-			if start < 0 || start >= size || end < start {
+			if start < 0 || start > size || end < start {
 				return SexpNull, errors.New("index out of range")
 			}
 			end = min(end, size)
 			return SexpStr(sliceOfStr(string(t), start, end)), nil
 		case SexpBytes:
-			if start < 0 || start >= len(t.Bytes()) || end < start {
+			if start < 0 || start > len(t.Bytes()) || end < start {
 				return SexpNull, errors.New("index out of range")
 			}
 			end = min(end, len(t.Bytes()))

@@ -72,3 +72,12 @@ second item in the first form. If there are more forms, inserts the first form a
 second item in second form, etc.
 "
   (foldl (fn [expr acc] (concat (list (car expr)) (list acc) (cdr expr))) init-value functions))
+
+(defn array-to-list [arr]
+  "Usage: (array-to-list arr)"
+  (cond (empty? arr) nil
+        (cons (aget arr 0) (array-to-list (slice arr 1)))))
+
+(defn list-to-array [x]
+  "Usage: (list-to-array x)"
+  (foldl #(append %2 %1) [] x))

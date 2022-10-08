@@ -33,3 +33,6 @@
 (assert (= "a" (slice "ba" 1)))
 
 (assert (= [1 2 1] (aset! [1 2 3] 2 1)))
+
+(assert (= "" (slice "a" 1)))
+(assert (= [] (slice [1] 1)))

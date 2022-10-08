@@ -45,10 +45,6 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 	vm.AddFunction("my-counter", MakeCounter)
 	vm.AddFunction("err-stream", MakeErrStream)
 	vm.AddFunction("get-my-counter", GetCounterNumber)
-	vm.AddFunction("list-to-array", func(e *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		arr, _ := glisp.ListToArray(args[0])
-		return glisp.SexpArray(arr), nil
-	})
 	return vm
 }
 
