@@ -13,6 +13,7 @@ var (
 	container_scripts string
 )
 
-func ImportContainerUtils(env *glisp.Environment) error {
+func ImportContainerUtils(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	return env.SourceStream(bytes.NewBufferString(container_scripts))
 }

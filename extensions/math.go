@@ -7,7 +7,8 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
-func ImportMathUtils(env *glisp.Environment) error {
+func ImportMathUtils(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("sla", GetBinaryIntFunction)
 	env.AddNamedFunction("sra", GetBinaryIntFunction)
 	env.AddNamedFunction("bit-and", GetBitwiseFunction)
@@ -25,6 +26,9 @@ func ImportMathUtils(env *glisp.Environment) error {
 	env.AddNamedFunction("round", GetRoundFloat)
 	env.AddNamedFunction("ceil", GetCeilFloat)
 	env.AddNamedFunction("floor", GetFloorFloat)
+	env.AddNamedFunction("0b", FormatInt(2))
+	env.AddNamedFunction("0o", FormatInt(8))
+	env.AddNamedFunction("0x", FormatInt(16))
 	return nil
 }
 
@@ -276,5 +280,28 @@ func GetFloorFloat(name string) glisp.UserFunction {
 			return val, nil
 		}
 		return glisp.SexpNull, fmt.Errorf(`%s argument should be float`, name)
+	}
+}
+
+func FormatInt(bit int) glisp.NamedUserFunction {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			if len(args) != 1 {
+				return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+			}
+			if !glisp.IsInt(args[0]) {
+				return glisp.SexpNull, fmt.Errorf("first argument of %s must be int but got %s", name, glisp.InspectType(args[0]))
+			}
+			num := args[0].(glisp.SexpInt)
+			switch bit {
+			case 2:
+				return glisp.SexpStr("0b" + num.Format("%b")), nil
+			case 8:
+				return glisp.SexpStr("0o" + num.Format("%o")), nil
+			case 16:
+				return glisp.SexpStr("0x" + num.Format("%x")), nil
+			}
+			return glisp.SexpStr(num.SexpString()), nil
+		}
 	}
 }

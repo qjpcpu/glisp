@@ -16,7 +16,8 @@ var (
 	core_scripts string
 )
 
-func ImportCoreUtils(env *glisp.Environment) error {
+func ImportCoreUtils(vm *glisp.Environment) error {
+	env := autoAddDoc(vm)
 	env.AddNamedFunction("println", GetPrintFunction(os.Stdout))
 	env.AddNamedFunction("printf", GetPrintFunction(os.Stdout))
 	env.AddNamedFunction("print", GetPrintFunction(os.Stdout))

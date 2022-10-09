@@ -147,3 +147,15 @@
 
 (assert (= [1 2] (list-to-array (->> {"a" 1 "b" 2}
                   (flatmap #(list (cdr %1)))))))
+
+
+;; composite thread first/last macro
+(assert (= "CBAabcd"
+           (-> "a"
+               (concat "b")
+               (concat "c")
+               (->>
+                (concat "A")
+                (concat "B")
+                (concat "C"))
+               (concat "d"))))

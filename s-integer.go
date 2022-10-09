@@ -48,6 +48,10 @@ func (i SexpInt) SexpString() string {
 	return i.v.String()
 }
 
+func (i SexpInt) Format(s string) string {
+	return fmt.Sprintf(s, i.v)
+}
+
 func (i SexpInt) BitNot() SexpInt {
 	return SexpInt{v: new(big.Int).Not(i.v)}
 }

@@ -610,3 +610,50 @@ Partition stream into groups stream by function f, exclude separator.
 (partition f separator_on_head stream)
 
 Partition stream into groups stream by function f, include separator on head or tail.
+
+
+========== 0b ==========
+Usage: (0b x)
+
+Convert integer x to binary string.
+
+========== 0o ==========
+Usage: (0o x)
+
+Convert integer x to octal string.
+
+========== 0x ==========
+Usage: (0x x)
+
+Convert integer x to hex string.
+
+
+========== sla ==========
+Usage: (sla x n)
+
+Shift left arithmetic x.
+
+========== sra ==========
+Usage: (sra x n)
+
+Shift right arithmetic x.
+
+========== bit-and ==========
+Usage: (bit-and n1 n2 n3 ...)
+
+Bitwise and.
+
+========== bit-or ==========
+Usage: (bit-or n1 n2 n3 ...)
+
+Bitwise or.
+
+========== bit-xor ==========
+Usage: (bit-xor n1 n2 n3 ...)
+
+Bitwise xor.
+
+========== bit-not ==========
+Usage: (bit-not x)
+
+Bitwise not.
