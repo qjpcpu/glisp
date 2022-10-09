@@ -37,6 +37,9 @@ func StreamFunction(name string) glisp.UserFunction {
 }
 
 func expr2Stream(v glisp.Sexp) iStream {
+	if IsStream(v) {
+		return v.(iStream)
+	}
 	switch expr := v.(type) {
 	case *glisp.SexpPair:
 		return &ListIterator{expr: expr}
@@ -84,6 +87,9 @@ func IsStreamable(expr glisp.Sexp) bool {
 		return true
 	}
 	if _, ok := expr.(Iterable); ok {
+		return true
+	}
+	if IsStream(expr) {
 		return true
 	}
 	switch expr.(type) {

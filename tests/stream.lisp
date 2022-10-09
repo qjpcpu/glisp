@@ -12,7 +12,9 @@
 (assert (stream? (stream (bytes ""))))
 (assert (stream? (stream (list 1))))
 
+(assert (not (nil? (stream (range)))))
 (assert (streamable? nil))
+(assert (streamable? (range)))
 (assert (streamable? []))
 (assert (streamable? {}))
 (assert (streamable? ""))

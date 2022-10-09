@@ -591,12 +591,7 @@ Besides, builtin types string/array/bytes/list/hash are streamable.
 ========== stream? ==========
 Usage: (stream? x)
 
-Return true if x implement iStream interface.
-
-type iStream interface {
-        glisp.Sexp
-        Next(*glisp.Environment) (glisp.Sexp, bool, error)
-}
+Return true if x is a stream.
 
 ========== stream ==========
 Usage: (stream x)
