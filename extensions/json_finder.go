@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -47,7 +48,11 @@ func SetJSONSexp(name string) glisp.UserFunction {
 		if !glisp.IsString(args[1]) {
 			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		tokens := strings.Split(string(args[1].(glisp.SexpStr)), ".")
+		tokens, ok := makeStPath(string(args[1].(glisp.SexpStr)))
+		if !ok || len(tokens) == 0 {
+			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args[1].(glisp.SexpStr)))
+		}
+
 		return setSexp(args[0], tokens, args[2])
 	}
 }
@@ -63,7 +68,11 @@ func DelJSONSexp(name string) glisp.UserFunction {
 		if !glisp.IsString(args[1]) {
 			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		tokens := strings.Split(string(args[1].(glisp.SexpStr)), ".")
+		tokens, ok := makeStPath(string(args[1].(glisp.SexpStr)))
+		if !ok || len(tokens) == 0 {
+			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args[1].(glisp.SexpStr)))
+		}
+
 		return delSexp(args[0], tokens)
 	}
 }
@@ -129,6 +138,12 @@ func findSexp(node glisp.Sexp, paths []stPath) glisp.Sexp {
 				if out := findSexp(n, paths[1:]); out != nil && out != glisp.SexpNull {
 					list = append(list, out)
 				}
+			}
+			switch len(list) {
+			case 0:
+				return glisp.SexpNull
+			case 1:
+				return list[0]
 			}
 			return list
 		} else if p.isInteger() && p.asInteger() < len(expr) {
@@ -365,15 +380,11 @@ func sexprToStr(expr glisp.Sexp) string {
 	}
 }
 
-func setSexp(root glisp.Sexp, tokens []string, val glisp.Sexp) (glisp.Sexp, error) {
-	/* tokens always greather than 0, so dont worry about out of boundary */
-	if strings.TrimSpace(tokens[0]) == "" {
-		return glisp.SexpNull, fmt.Errorf("bad path %s", tokens[0])
-	}
+func setSexp(root glisp.Sexp, tokens []stPath, val glisp.Sexp) (glisp.Sexp, error) {
 	if root == glisp.SexpNull {
 		root, _ = glisp.MakeHash(nil)
 	}
-	key := glisp.SexpStr(tokens[0])
+	key := glisp.SexpStr(tokens[0].Name)
 	switch expr := root.(type) {
 	case *glisp.SexpHash:
 		if len(tokens) == 1 {
@@ -386,40 +397,83 @@ func setSexp(root glisp.Sexp, tokens []string, val glisp.Sexp) (glisp.Sexp, erro
 		}
 		return expr, expr.HashSet(key, ret)
 	case glisp.SexpArray:
-		idx, err := strconv.Atoi(tokens[0])
+		idics, err := findArrayIndics(expr, tokens[0])
 		if err != nil {
 			return glisp.SexpNull, err
 		}
-		if len(tokens) == 1 {
-			if idx >= 0 && idx < len(expr) {
-				expr[idx] = val
-				return expr, nil
-			}
-			return append(expr, val), nil
-		}
-		if idx >= 0 && idx < len(expr) {
-			ret, err := setSexp(expr[idx], tokens[1:], val)
-			if err != nil {
-				return glisp.SexpNull, err
-			}
-			expr[idx] = ret
+		/* just stop when nothing matched */
+		if len(idics) == 0 {
 			return expr, nil
 		}
-		ret, err := setSexp(glisp.SexpNull, tokens[1:], val)
-		if err != nil {
-			return glisp.SexpNull, err
+		if len(tokens) == 1 {
+			for _, idx := range idics {
+				if idx >= 0 && idx < len(expr) {
+					/* modify matched array element if current node is leaf */
+					expr[idx] = val
+				} else {
+					/* the idics array would only one element when idx is out of boundary */
+					/* so, just append an new element and return */
+					expr = append(expr, val)
+					return expr, nil
+				}
+			}
+			return expr, nil
 		}
-		return append(expr, ret), nil
+		for _, idx := range idics {
+			if idx >= 0 && idx < len(expr) {
+				/* modify matched array element if current node is leaf */
+				ret, err := setSexp(expr[idx], tokens[1:], val)
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				expr[idx] = ret
+			} else {
+				/* the idics array would only one element when idx is out of boundary */
+				/* so, just append an new element and return */
+				ret, err := setSexp(glisp.SexpNull, tokens[1:], val)
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				return append(expr, ret), nil
+			}
+		}
+		return expr, nil
 	default:
 		return glisp.SexpNull, fmt.Errorf("must set on hash/array but got %v", glisp.Inspect(root))
 	}
 }
 
-func delSexp(root glisp.Sexp, tokens []string) (glisp.Sexp, error) {
+func findArrayIndics(expr glisp.SexpArray, path stPath) ([]int, error) {
+	if path.isArrayElemSelector() {
+		paths, ok := makeStPath(path.Selector)
+		if !ok {
+			return nil, fmt.Errorf("bad json selector %s", path.Selector)
+		}
+		val := strings.TrimSuffix(strings.TrimPrefix(path.Val, `"`), `"`)
+		var idx []int
+		for i, n := range expr {
+			if out := findSexp(n, paths); out != nil {
+				if isElemMatched(out, path.Op, val) {
+					idx = append(idx, i)
+				}
+			}
+		}
+		sort.SliceStable(idx, func(i, j int) bool { return idx[i] > idx[j] })
+		return idx, nil
+	} else {
+		idx, err := strconv.Atoi(path.Name)
+		if err != nil {
+			return nil, err
+		}
+		return []int{idx}, nil
+	}
+}
+
+func delSexp(root glisp.Sexp, tokens []stPath) (glisp.Sexp, error) {
 	if root == glisp.SexpNull {
 		return root, nil
 	}
-	key := glisp.SexpStr(tokens[0])
+	key := glisp.SexpStr(tokens[0].Name)
 	switch expr := root.(type) {
 	case *glisp.SexpHash:
 		if len(tokens) == 1 {
@@ -435,26 +489,35 @@ func delSexp(root glisp.Sexp, tokens []string) (glisp.Sexp, error) {
 		}
 		return expr, expr.HashSet(key, ret)
 	case glisp.SexpArray:
-		idx, err := strconv.Atoi(tokens[0])
+		idics, err := findArrayIndics(expr, tokens[0])
 		if err != nil {
 			return glisp.SexpNull, err
 		}
+		/* just stop when nothing matched */
+		if len(idics) == 0 {
+			return expr, nil
+		}
 		if len(tokens) == 1 {
-			if idx >= 0 && idx < len(expr) {
-				for i := idx; i < len(expr)-1; i++ {
-					expr[i] = expr[i+1]
+			/* remove matched array element if current node is leaf */
+			for _, idx := range idics {
+				if idx >= 0 && idx < len(expr) {
+					for i := idx; i < len(expr)-1; i++ {
+						expr[i] = expr[i+1]
+					}
+					expr = expr[:len(expr)-1]
 				}
-				return expr[:len(expr)-1], nil
 			}
 			return expr, nil
 		}
-		if idx >= 0 && idx < len(expr) {
-			ret, err := delSexp(expr[idx], tokens[1:])
-			if err != nil {
-				return glisp.SexpNull, err
+		/* merely remove the property of matched element if current node is not leaf */
+		for _, idx := range idics {
+			if idx >= 0 && idx < len(expr) {
+				ret, err := delSexp(expr[idx], tokens[1:])
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				expr[idx] = ret
 			}
-			expr[idx] = ret
-			return expr, nil
 		}
 		return expr, nil
 	default:

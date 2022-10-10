@@ -10,36 +10,37 @@
 (assert (= '() (json/query h "null.e")))
 (assert (= 2 (json/query h "arr.1")))
 (assert (= '() (json/query h "arr.100")))
-(assert (= [3] (json/query h "arr.#(>2)")))
+(assert (= 3 (json/query h "arr.#(>2)")))
 (assert (= '() (json/query h "b.t.v")))
 
 (def h1 {"a1" [{"name" "jack" "age" 20 "height" 174.3} {"name" "tom" "age" 30 "height" 160.3}]})
-(assert (= ["tom"] (json/query h1 "a1.#(age>20).name")))
+(assert (= "tom" (json/query h1 "a1.#(age>20).name")))
+(assert (= nil (json/query h1 "a1.#(age>200).name")))
 (assert (= ["jack" "tom"] (json/query h1 "a1.#(age>=20).name")))
-(assert (= ["jack"] (json/query h1 "a1.#(age<30).name")))
+(assert (= "jack" (json/query h1 "a1.#(age<30).name")))
 (assert (= ["jack" "tom"] (json/query h1 "a1.#(age<=30).name")))
 
-(assert (= ["jack"] (json/query h1 "a1.#(height>170).name")))
+(assert (= "jack" (json/query h1 "a1.#(height>170).name")))
 (assert (= ["jack" "tom"] (json/query h1 "a1.#(height>=160.3).name")))
-(assert (= ["tom"] (json/query h1 "a1.#(height<174).name")))
-(assert (= ["tom"] (json/query h1 "a1.#(height<=160.3).name")))
+(assert (= "tom" (json/query h1 "a1.#(height<174).name")))
+(assert (= "tom" (json/query h1 "a1.#(height<=160.3).name")))
 
-(assert (= ["jack"] (json/query h1 "a1.#(age==20).name")))
-(assert (= ["jack"] (json/query h1 "a1.#(age=2).name")))
-(assert (= ["tom"] (json/query h1 "a1.#(age!=20).name")))
-(assert (= ["tom"] (json/query h1 "a1.#(age!==20).name")))
+(assert (= "jack" (json/query h1 "a1.#(age==20).name")))
+(assert (= "jack" (json/query h1 "a1.#(age=2).name")))
+(assert (= "tom" (json/query h1 "a1.#(age!=20).name")))
+(assert (= "tom" (json/query h1 "a1.#(age!==20).name")))
 
 (def arr [{"age" 20 "name" "jack"} {"age" 30 "name" "tom"}])
-(assert (= ["tom"] (json/query arr "#(age>20).name")))
+(assert (= "tom" (json/query arr "#(age>20).name")))
 
 ;; escape
 (def h2 {"fav.movie" "Deer Hunter"})
 (assert (= "Deer Hunter" (json/query h2 "fav\\.movie")))
 
 (def h3 {"a1" [{"name" "jack" "age" "20" "height" 174.3} {"name" "tom" "age" "30" "height" 160.3}]})
-(assert (= ["tom"] (json/query h3 "a1.#(age>20).name")))
+(assert (= "tom" (json/query h3 "a1.#(age>20).name")))
 (assert (= ["jack" "tom"] (json/query h3 "a1.#(age>=20).name")))
-(assert (= ["jack"] (json/query h3 "a1.#(age<30).name")))
+(assert (= "jack" (json/query h3 "a1.#(age<30).name")))
 (assert (= ["jack" "tom"] (json/query h3 "a1.#(age<=30).name")))
 
 (def s1 {'a 1 "b" "hello" 1 100 "null" '() "arr" [1 2 3]})
@@ -114,3 +115,31 @@
 (def s1 {"a" {"b" '()}})
 (let [v (json/del s1 "a")]
      (assert (= (json/stringify {}) (json/stringify v))))
+
+;; set single
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/set hx "a1.#(age>20).name" "single")]
+     (assert (= #`{"a1":[{"name":"jack","age":20},{"name":"single","age":30}]}` (json/stringify v))))
+;; set multiple
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/set hx "a1.#(age>10).name" "same")]
+     (assert (= #`{"a1":[{"name":"same","age":20},{"name":"same","age":30}]}` (json/stringify v))))
+;; set nothing
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/set hx "a1.#(age>100).name" "same")]
+     (assert (= #`{"a1":[{"name":"jack","age":20},{"name":"tom","age":30}]}` (json/stringify v))))
+
+;; del single
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/del hx "a1.#(age>20).name")]
+     (assert (= #`{"a1":[{"name":"jack","age":20},{"age":30}]}` (json/stringify v))))
+
+;; del multiple
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/del hx "a1.#(age>10).name")]
+     (assert (= #`{"a1":[{"age":20},{"age":30}]}` (json/stringify v))))
+
+;; del nothing
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(let [v (json/del hx "a1.#(age>100).name")]
+     (assert (= #`{"a1":[{"name":"jack","age":20},{"name":"tom","age":30}]}` (json/stringify v))))
