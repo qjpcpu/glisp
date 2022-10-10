@@ -81,3 +81,22 @@ second item in second form, etc.
 (defn list-to-array [x]
   "Usage: (list-to-array x)"
   (foldl #(append %2 %1) [] x))
+
+(defmac case [e & clauses]
+  "Usage: (case e & clauses)
+Takes an expression, and a set of clauses.
+ Each clause can take the form of either:
+ test-constant result-expr
+ (test-constant1 ... test-constantN)  result-expr
+ The test-constants are not evaluated. They must be compile-time
+literals, and need not be quoted.  If the expression is equal to a
+test-constant, the corresponding result-expr is returned. A single
+default expression can follow the clauses, and its value will be
+returned if no clause matches.
+"
+  (let [expr (->> (cond (= 0 (mod (len clauses) 2)) (concat clauses (list 'ev)) clauses)
+      (stream)
+      (partition 2)
+      (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= 'ev (car pair)) (car (cdr pair))) pair)))
+      (realize))]
+      `(let [ev ~e] (cond ~@expr))))
