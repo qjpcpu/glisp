@@ -100,3 +100,9 @@ returned if no clause matches.
       (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= 'ev (car pair)) (car (cdr pair))) pair)))
       (realize))]
       `(let [ev ~e] (cond ~@expr))))
+
+(defmac foreach [f coll]
+  "Usage: (foreach f coll)
+
+Apply f to each item of coll, returns nil."
+  `(begin (map ~f ~coll) '()))
