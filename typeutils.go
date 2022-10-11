@@ -1,7 +1,5 @@
 package glisp
 
-import "math/big"
-
 func IsArray(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpArray:
@@ -145,16 +143,8 @@ func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpBool:
 		return bool(e)
-	case SexpInt:
-		return e.v.Cmp(big.NewInt(0)) != 0
-	case SexpChar:
-		return e != 0
 	case SexpSentinel:
 		return e != SexpNull
-	case SexpStr:
-		return len(e) > 0
-	case SexpBytes:
-		return len(e.bytes) > 0
 	}
 	return true
 }

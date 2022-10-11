@@ -131,7 +131,7 @@ func TestCompareIntWithString(t *testing.T) {
 
 func TestIsZero(t *testing.T) {
 	ExpectTrue(t, glisp.SexpBool(glisp.IsZero(glisp.SexpChar(0))))
-	ExpectFalse(t, glisp.SexpBool(glisp.IsTruthy(glisp.SexpChar(0))))
+	ExpectTrue(t, glisp.SexpBool(glisp.IsTruthy(glisp.SexpChar(0))))
 	ExpectTrue(t, glisp.SexpBool(glisp.IsNumber(glisp.SexpChar(0))))
 }
 
