@@ -178,12 +178,18 @@ func isElemMatched(n glisp.Sexp, op string, val string) bool {
 		v := sexprToStr(n)
 		switch op {
 		case arrayElemContains:
+			if glisp.IsNumber(n) {
+				return v == val
+			}
 			return strings.Contains(v, val)
 		case arrayElemEq:
 			return v == val
 		case arrayElemNotEq:
 			return v != val
 		case arrayElemNotContains:
+			if glisp.IsNumber(n) {
+				return v != val
+			}
 			return !strings.Contains(v, val)
 		case arrayElemGreaterThan:
 			if glisp.IsNumber(n) {

@@ -26,7 +26,7 @@
 (assert (= "tom" (json/query h1 "a1.#(height<=160.3).name")))
 
 (assert (= "jack" (json/query h1 "a1.#(age==20).name")))
-(assert (= "jack" (json/query h1 "a1.#(age=2).name")))
+(assert (= nil (json/query h1 "a1.#(age=2).name")))
 (assert (= "tom" (json/query h1 "a1.#(age!=20).name")))
 (assert (= "tom" (json/query h1 "a1.#(age!==20).name")))
 
@@ -143,3 +143,8 @@
 (def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
 (let [v (json/del hx "a1.#(age>100).name")]
      (assert (= #`{"a1":[{"name":"jack","age":20},{"name":"tom","age":30}]}` (json/stringify v))))
+
+;; search number
+(def hx {"a1" [{"name" "jack" "age" 20} {"name" "tom" "age" 30}]})
+(assert (= nil (json/query hx "a1.#(age=0).name")))
+(assert (= nil (json/query hx "a1.#(age==0).name")))
