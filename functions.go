@@ -41,6 +41,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"bool?":      GetTypeQueryFunction,
 	"empty?":     GetTypeQueryFunction,
 	"bytes?":     GetTypeQueryFunction,
+	"function?":  GetTypeQueryFunction,
 	"not":        GetNotFunction,
 	"apply":      GetApplyFunction,
 	"map":        GetMapFunction,
@@ -487,6 +488,8 @@ func GetTypeQueryFunction(name string) UserFunction {
 			result = IsBytes(args[0])
 		case "bool?":
 			result = IsBool(args[0])
+		case "function?":
+			result = IsFunction(args[0])
 		}
 
 		return SexpBool(result), nil

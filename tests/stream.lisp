@@ -269,3 +269,22 @@
                  (partition (fn [e] (or (= e 0) (= e 4))) true)
                  (map concat-num)
                  (realize)))))
+
+
+;; find array index by zip
+(assert (= 2 (->> (zip (range) (stream ["c" "golang" "lisp" "ruby" "python"]))
+                  (filter #(= "lisp" (car (cdr %))))
+                  (map #(car %))
+                  (realize)
+                  (car))))
+(assert (= nil (->> (zip (range) (stream ["c" "golang" "lisp" "ruby" "python"]))
+                  (filter #(= "c++" (car (cdr %))))
+                  (map #(car %))
+                  (realize)
+                  (car))))
+
+(assert (= 2 (index-of #(= % "lisp") ["c" "golang" "lisp" "ruby" "python"])))
+(assert (= -1 (index-of #(= % "c++") ["c" "golang" "lisp" "ruby" "python"])))
+
+(assert (= 2 (index-of "lisp" ["c" "golang" "lisp" "ruby" "python"])))
+(assert (= -1 (index-of "c++" ["c" "golang" "lisp" "ruby" "python"])))

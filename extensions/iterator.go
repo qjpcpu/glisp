@@ -18,6 +18,7 @@ type iStream interface {
 
 var (
 	_ iStream = &ListIterator{}
+	_ iStream = &ZipListIterator{}
 	_ iStream = &ArrayIterator{}
 	_ iStream = &BytesIterator{}
 	_ iStream = &StringIterator{}
@@ -418,4 +419,26 @@ func (iter *partitionIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, e
 		}
 	}
 	return group.Get(), group.Size() > 0, nil
+}
+
+type ZipListIterator struct {
+	expr []iStream
+	size int
+}
+
+func (iter *ZipListIterator) SexpString() string {
+	return `zip-stream`
+}
+
+func (iter *ZipListIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error) {
+	elem := glisp.NewListBuilder()
+	for i := 0; i < iter.size; i++ {
+		v, ok, err := iter.expr[i].Next(env)
+		if err != nil || !ok {
+			return glisp.SexpNull, false, err
+		}
+		elem.Add(v)
+	}
+
+	return elem.Get(), true, nil
 }

@@ -1,9 +1,17 @@
 package extensions
 
 import (
+	"bytes"
 	"fmt"
 
+	_ "embed"
+
 	"github.com/qjpcpu/glisp"
+)
+
+var (
+	//go:embed stream_utils.lisp
+	stream_scripts string
 )
 
 func ImportStream(vm *glisp.Environment) error {
@@ -21,7 +29,8 @@ func ImportStream(vm *glisp.Environment) error {
 	env.AddNamedFunction("realize", StreamRealizeFunction)
 	env.AddNamedFunction("range", StreamRangeFunction)
 	env.AddNamedFunction("partition", StreamPartitionFunction)
-	return nil
+	env.AddNamedFunction("zip", StreamZipFunction)
+	return env.SourceStream(bytes.NewBufferString(stream_scripts))
 }
 
 func StreamFunction(name string) glisp.UserFunction {
@@ -319,5 +328,21 @@ func StreamPartitionFunction(name string) glisp.UserFunction {
 			return &partitionIterator{iStream: stream, f: args[0].(*glisp.SexpFunction), separatorPolicy: includeSepLeft}, nil
 		}
 		return &partitionIterator{iStream: stream, f: args[0].(*glisp.SexpFunction), separatorPolicy: includeSepRight}, nil
+	}
+}
+
+func StreamZipFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+		}
+		expr := make([]iStream, len(args))
+		for i, stream := range args {
+			if !IsStream(stream) {
+				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.InspectType(stream))
+			}
+			expr[i] = args[i].(iStream)
+		}
+		return &ZipListIterator{expr: expr, size: len(args)}, nil
 	}
 }

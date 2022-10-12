@@ -669,4 +669,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(realize (partition (fn [e] 1) (err-stream "x")))`, `Error calling realize: x`)
 	ExpectScriptErr(t, `(realize (partition (fn [e] (int "x")) (range 3)))`, `x not number`)
 	ExpectScriptErr(t, `(realize (partition (fn [e] (int "1")) (range 3)))`, `partition function must return bool but get int`)
+	ExpectScriptErr(t, `(zip)`, `zip expect 2,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(zip 1 1)`, `every argument of zip must be stream but 1-th is int`)
+	ExpectScriptSuccess(t, `(sexp-str (zip (range 1) (range 2)))`)
 }

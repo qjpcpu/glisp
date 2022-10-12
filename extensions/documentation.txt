@@ -657,3 +657,8 @@ Bitwise xor.
 Usage: (bit-not x)
 
 Bitwise not.
+
+========== zip ==========
+Usage: (zip stream1 stream2 ...)
+
+Compose multiple stream to one, and every element of new stream is a list composite by stream-x's element.
