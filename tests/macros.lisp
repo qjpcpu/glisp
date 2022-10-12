@@ -3,13 +3,8 @@
 
 (assert (= `(0 ~@l ~b) '(0 1 2 3 4)))
 
-(defmac when [predicate & body]
-  `(cond ~predicate
-      (begin
-        ~@body) '()))
-
 (assert (nil? (when false 'c)))
-(assert (= 'a (when true 'c 'b 'a)))
+(assert (= 'a (when true 'a)))
 
 (assert (=
          '(cond false (begin (quote c)) (quote ()))
@@ -18,17 +13,10 @@
          '(cond true (begin (quote c) (quote b) (quote a)) (quote ()))
          (macexpand (when true 'c 'b 'a))))
 
-(defmac if [& body]
-  `(cond ~@body))
 
-(assert (= 'a (if true 'a 'b)))
+(assert (= 'b (if true 'a 'b)) )
 
-(assert (= 'b (if (> 1 2) 'a 'b)))
-
-(defmac unless [predicate & body]
- `(cond (not ~predicate)
-     (begin
-       ~@body) '()))
+(assert (= nil (if (> 1 2) 'a 'b)))
 
 (assert (= 'a (unless false 'a)))
 (assert (= 'a (unless (< 2 1) 'a)))
@@ -41,3 +29,12 @@
         '()))
 
 (assert (= 6 (test-begin-in-condition)))
+
+(assert (= 1 (if true 1)))
+(assert (= nil (if false 1)))
+
+(assert (= 1 (when true 1)))
+(assert (= nil (when false 1)))
+
+(assert (= 1 (unless false 1)))
+(assert (= nil (unless true 1)))

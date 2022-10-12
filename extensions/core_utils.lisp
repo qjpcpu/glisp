@@ -106,3 +106,25 @@ returned if no clause matches.
 
 Apply f to each item of coll, returns nil."
   `(begin (map ~f ~coll) '()))
+
+(defmac when [predicate & body]
+  "Usage: (when test & body)
+Evaluates test. If logical true, evaluates body in an implicit begin."
+ `(cond ~predicate
+     (begin
+       ~@body) '()))
+
+;; well, maybe somebody likes if more than when
+(defmac if [predicate & body]
+  "Usage: (if test & body)
+Evaluates test. If logical true, evaluates body in an implicit begin."
+ `(cond ~predicate
+     (begin
+       ~@body) '()))
+
+(defmac unless [predicate & body]
+  "Usage: (unless test & body)
+Evaluates test. If logical false, evaluates body in an implicit begin."
+ `(cond (not ~predicate)
+     (begin
+       ~@body) '()))
