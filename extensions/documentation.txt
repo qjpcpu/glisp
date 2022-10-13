@@ -662,3 +662,15 @@ Bitwise not.
 Usage: (zip stream1 stream2 ...)
 
 Compose multiple stream to one, and every element of new stream is a list composite by stream-x's element.
+
+========== sort ==========
+Usage: (sort coll)
+
+Sort array/list by asc.
+
+(sort f coll)
+
+Sort array/list by f.
+
+e.g.
+(sort #(> %1 %2) [1 2 3]) ;; return [3 2 1]

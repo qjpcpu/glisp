@@ -35,6 +35,7 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("/", GetNumericFunction)
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
 	env.AddNamedFunction("__doc__", GetDocFunction)
+	env.AddNamedFunction("sort", GetSortFunction)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 

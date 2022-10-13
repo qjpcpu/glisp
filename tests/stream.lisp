@@ -288,3 +288,17 @@
 
 (assert (= 2 (index-of "lisp" ["c" "golang" "lisp" "ruby" "python"])))
 (assert (= -1 (index-of "c++" ["c" "golang" "lisp" "ruby" "python"])))
+
+(assert (= "b" (nth 1 ["a" "b" "c" "d"])))
+(assert (= "b" (nth 1 '("a" "b" "c" "d"))))
+(assert (= 1 (nth 1 (range))))
+(assert (nil? (nth -1 (range))))
+(assert (nil? (nth 100 ["a" "b" "c" "d"])))
+
+
+(assert (= [3 2 1] (reverse [1 2 3])))
+(assert (= '(3 2 1 2) (reverse '(2 1 2 3))))
+
+(assert (nil? (reverse nil)))
+(assert (= [] (reverse [])))
+(assert (= "cba" (reverse "abc")))

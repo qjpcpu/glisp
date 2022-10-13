@@ -675,4 +675,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(os/run)`, `no command arguments`)
 	ExpectScriptErr(t, `(os/run 1)`, `cmd must be string`)
 	ExpectScriptSuccess(t, `(os/run "echo x >/dev/null")`)
+	ExpectScriptErr(t, `(sort)`, `sort expect 1,2 argument(s) but got 0`)
+	ExpectScriptErr(t, `(sort 1 2)`, `first argument must be function but got`)
+	ExpectScriptErr(t, `(sort + 2)`, `second argument must be array/list but got`)
 }
