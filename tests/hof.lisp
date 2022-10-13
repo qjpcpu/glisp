@@ -105,6 +105,13 @@
 (assert (= "321INIT"
         (->> ((fn [] "INIT")) (concat "1") (concat "2") (concat "3"))))
 
+;; some version
+(assert (= "321INIT"
+        (some->> "INIT" (concat "1") (concat "2") (concat "3"))))
+
+(assert (= "321INIT"
+        (some->> ((fn [] "INIT")) (concat "1") (concat "2") (concat "3"))))
+
 (assert (= 20
            (->> [1 2 3 4 5]
                 (#(map #(+ 1 %) %)) ; double parentheses
@@ -115,6 +122,17 @@
                 ((fn [e] (map #(+ 1 %) e)))
                 (apply +))))
 
+;; some version
+(assert (= 20
+           (some->> [1 2 3 4 5]
+                (#(map #(+ 1 %) %)) ; double parentheses
+                (apply +))))
+
+(assert (= 20
+           (some->> [1 2 3 4 5]
+                ((fn [e] (map #(+ 1 %) e)))
+                (apply +))))
+
 
 ;; thread first
 (assert (= "INIT123"
@@ -122,6 +140,8 @@
 
 (assert (= 1 (->> 1)))
 (assert (= 1 (-> 1)))
+(assert (= 1 (some->> 1)))
+(assert (= 1 (some-> 1)))
 
 ;; https://clojure.org/guides/learn/functions#_gotcha
 (assert (= [100] (#([%]) 100)))
@@ -142,6 +162,10 @@
                   (filter (fn [kv] (= 2 (cdr kv))))
                   (foldl #(cdr %1) 0))))
 
+(assert (= 2 (some->> {"a" 1 "b" 2}
+                  (filter (fn [kv] (= 2 (cdr kv))))
+                  (foldl #(cdr %1) 0))))
+
 (assert (= [1 2] (list-to-array (->> {"a" 1 "b" 2}
                   (flatmap #([(cdr %1)]))))))
 
@@ -152,6 +176,16 @@
 ;; composite thread first/last macro
 (assert (= "CBAabcd"
            (-> "a"
+               (concat "b")
+               (concat "c")
+               (->>
+                (concat "A")
+                (concat "B")
+                (concat "C"))
+               (concat "d"))))
+
+(assert (= "CBAabcd"
+           (some-> "a"
                (concat "b")
                (concat "c")
                (->>

@@ -54,6 +54,22 @@ example:
 Display document of function."
   `(println (__doc__ (quote ~name))))
 
+(defmac -> [init-value & functions]
+  "Usage: (-> x & forms)
+
+Threads the expr through the forms. Inserts x as the
+second item in the first form. If there are more forms, inserts the first form as the
+second item in second form, etc.
+"
+  (foldl (fn [expr acc] (concat (list (car expr)) (list acc) (cdr expr))) init-value functions))
+
+(defmac some-> [init-value & functions]
+  "Usage: (some-> expr & forms)
+When expr is not nil, threads it into the first form (via ->),
+and when that result is not nil, through the next etc"
+  (foldl (fn [expr acc]
+             (let* [x (gensym) form (concat (list (car expr)) (list x) (cdr expr))]
+                   `(let [~x ~acc] (cond (nil? ~x) nil ~form)))) init-value functions))
 
 (defmac ->> [init-value & functions]
   "Usage: (->> x & forms)
@@ -64,14 +80,14 @@ last item in second form, etc.
 "
   (foldl (fn [expr acc] (concat expr (list acc))) init-value functions))
 
-(defmac -> [init-value & functions]
-  "Usage: (-> x & forms)
-
-Threads the expr through the forms. Inserts x as the
-second item in the first form. If there are more forms, inserts the first form as the
-second item in second form, etc.
-"
-  (foldl (fn [expr acc] (concat (list (car expr)) (list acc) (cdr expr))) init-value functions))
+(defmac some->> [init-value & functions]
+  "Usage: (some->> expr & forms)
+When expr is not nil, threads it into the first form (via ->>),
+and when that result is not nil, through the next etc"
+  (foldl (fn [expr acc]
+             (let* [x (gensym) form (concat expr (list x))]
+                  `(let [~x ~acc] (cond (nil? ~x) nil ~form))))
+              init-value functions))
 
 (defn array-to-list [arr]
   "Usage: (array-to-list arr)"
@@ -94,12 +110,12 @@ test-constant, the corresponding result-expr is returned. A single
 default expression can follow the clauses, and its value will be
 returned if no clause matches.
 "
-  (let [expr (->> (cond (= 0 (mod (len clauses) 2)) (concat clauses (list 'ev)) clauses)
+  (let* [x (gensym) expr (->> (cond (= 0 (mod (len clauses) 2)) (concat clauses (list x)) clauses)
       (stream)
       (partition 2)
-      (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= 'ev (car pair)) (car (cdr pair))) pair)))
+      (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= x (car pair)) (car (cdr pair))) pair)))
       (realize))]
-      `(let [ev ~e] (cond ~@expr))))
+      `(let [~x ~e] (cond ~@expr))))
 
 (defmac foreach [f coll]
   "Usage: (foreach f coll)

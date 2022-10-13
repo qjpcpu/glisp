@@ -38,3 +38,7 @@
 
 (assert (= 1 (unless false 1)))
 (assert (= nil (unless true 1)))
+
+(assert (nil? (some-> nil)))
+(assert (nil? (some-> 1 (+ 2) ((fn [e] nil)) (/ 1 0))))
+(assert (nil? (some->> 1 (+ 2) ((fn [e] nil)) (/ 1 0))))
