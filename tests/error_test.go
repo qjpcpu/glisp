@@ -672,4 +672,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(zip)`, `zip expect 2,... argument(s) but got 0`)
 	ExpectScriptErr(t, `(zip 1 1)`, `every argument of zip must be stream but 1-th is int`)
 	ExpectScriptSuccess(t, `(sexp-str (zip (range 1) (range 2)))`)
+	ExpectScriptErr(t, `(os/run)`, `no command arguments`)
+	ExpectScriptErr(t, `(os/run 1)`, `cmd must be string`)
+	ExpectScriptSuccess(t, `(os/run "echo x >/dev/null")`)
 }

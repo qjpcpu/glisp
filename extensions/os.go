@@ -27,6 +27,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
 	env.AddNamedFunction("os/exec", ExecCommand)
+	env.AddNamedFunction("os/run", RunCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
 	return env.SourceStream(bytes.NewBufferString(os_scripts))
@@ -180,4 +181,21 @@ func chomp(b []byte) []byte {
 		return b[:len(b)-1]
 	}
 	return b
+}
+
+func RunCommand(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.SexpNull, errors.New("no command arguments")
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.InspectType(args[0]))
+		}
+		cmd := exec.Command("bash", "-c", string(args[0].(glisp.SexpStr)))
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+		return glisp.SexpNull, nil
+	}
 }
