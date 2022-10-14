@@ -773,24 +773,11 @@ func GetStringifyFunction(name string) UserFunction {
 		if len(args) != 1 && len(args) != 2 {
 			return WrongNumberArguments(name, len(args), 1, 2)
 		}
-		switch val := args[0].(type) {
-		case SexpBytes:
-			return SexpStr(string(val.bytes)), nil
-		case SexpStr:
-			return val, nil
-		case SexpFloat:
-			if len(args) == 2 {
-				if !IsInt(args[1]) {
-					return SexpNull, errors.New("prec should be integer")
-				}
-				return SexpStr(val.ToString(args[1].(SexpInt).ToInt())), nil
-			}
-			return SexpStr(val.SexpString()), nil
-		case SexpChar:
-			return SexpStr([]rune{rune(val)}), nil
+		var sb strings.Builder
+		if err := sexpToString(&sb, args); err != nil {
+			return SexpNull, err
 		}
-
-		return SexpStr(args[0].SexpString()), nil
+		return SexpStr(sb.String()), nil
 	}
 }
 
@@ -982,4 +969,42 @@ func lenOfStr(s string) int {
 func sliceOfStr(s string, i, j int) string {
 	runes := []rune(s)
 	return string(runes[i:j])
+}
+
+func sexpToString(sb *strings.Builder, args []Sexp) error {
+	if args[0] == SexpNull {
+		return nil
+	}
+	switch val := args[0].(type) {
+	case SexpBytes:
+		sb.WriteString(string(val.bytes))
+	case SexpStr:
+		sb.WriteString(string(val))
+	case SexpFloat:
+		if len(args) == 2 {
+			if !IsInt(args[1]) {
+				return errors.New("prec should be integer")
+			}
+			sb.WriteString(val.ToString(args[1].(SexpInt).ToInt()))
+			return nil
+		}
+		sb.WriteString(val.SexpString())
+	case SexpChar:
+		sb.WriteRune(rune(val))
+	case SexpArray:
+		for _, elem := range val {
+			if err := sexpToString(sb, []Sexp{elem}); err != nil {
+				return err
+			}
+		}
+	case *SexpPair:
+		var err error
+		val.Foreach(func(e Sexp) bool {
+			err = sexpToString(sb, []Sexp{e})
+			return err == nil
+		})
+	default:
+		sb.WriteString(args[0].SexpString())
+	}
+	return nil
 }

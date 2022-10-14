@@ -90,3 +90,13 @@
 (assert (= 0 (str/index "I'am中国人" "I")))
 (assert (= 0 (str/index "美I'am中国人" "美")))
 (assert (= -1 (str/index "I'am中国人" "x")))
+
+(assert (= "" (string nil)))
+(assert (= "1" (string 1)))
+(assert (= "1.2" (string 1.2)))
+(assert (= "F" (string #F)))
+(assert (= "" (string [])))
+(assert (= "s" (string '("s"))))
+(assert (= "abc" (string '(#a #b #c))))
+(assert (= "abc" (string '[#a #b #c])))
+(assert (= "atrueb1233.14BYTESd" (string ['("a" true "b") [1 2 3 3.14 (bytes "BYTES")] #d])))

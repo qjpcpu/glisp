@@ -35,4 +35,4 @@ Reverse list/array/stream."
                  (sort #(> (car %1) (car %2)))
                  (map #(car (cdr %))))]
     (cond (array? x) (list-to-array res)
-          (string? x) (foldl #(append %2 %1) "" res) res)))
+          (string? x) (string res) res)))

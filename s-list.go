@@ -46,6 +46,28 @@ func (pair *SexpPair) SexpString() string {
 	return str
 }
 
+func (pair *SexpPair) Foreach(f func(Sexp) bool) {
+	for {
+		switch pair.tail.(type) {
+		case *SexpPair:
+			if !f(pair.head) {
+				return
+			}
+			pair = pair.tail.(*SexpPair)
+			continue
+		}
+		break
+	}
+
+	if !f(pair.head) {
+		return
+	}
+
+	if pair.tail != SexpNull {
+		f(pair.tail)
+	}
+}
+
 func ListToArray(expr Sexp) ([]Sexp, error) {
 	if !IsList(expr) {
 		return nil, fmt.Errorf("expect list but got %s", Inspect(expr))
