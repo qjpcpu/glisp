@@ -341,7 +341,7 @@ func TimeFormatFunction(fname string) glisp.UserFunction {
 			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be symbol/string`, fname)
 		}
 		if len(args) == 3 && !glisp.IsString(args[2]) {
-			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.InspectType(args[2]))
+			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.Inspect(args[2]))
 		}
 		tm := time.Time(stm)
 		switch format {

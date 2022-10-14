@@ -290,7 +290,7 @@ func FormatInt(bit int) glisp.NamedUserFunction {
 				return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 			}
 			if !glisp.IsInt(args[0]) {
-				return glisp.SexpNull, fmt.Errorf("first argument of %s must be int but got %s", name, glisp.InspectType(args[0]))
+				return glisp.SexpNull, fmt.Errorf("first argument of %s must be int but got %s", name, glisp.Inspect(args[0]))
 			}
 			num := args[0].(glisp.SexpInt)
 			switch bit {

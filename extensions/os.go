@@ -189,7 +189,7 @@ func RunCommand(name string) glisp.UserFunction {
 			return glisp.SexpNull, errors.New("no command arguments")
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.InspectType(args[0]))
+			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.Inspect(args[0]))
 		}
 		cmd := exec.Command("bash", "-c", string(args[0].(glisp.SexpStr)))
 		cmd.Stdin = os.Stdin

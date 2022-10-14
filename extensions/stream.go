@@ -40,7 +40,7 @@ func StreamFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
 		if !IsStreamable(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`type %s is not streamable`, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`type %s is not streamable`, glisp.Inspect(args[0]))
 		}
 		return expr2Stream(args[0]), nil
 	}
@@ -127,7 +127,7 @@ func StreamMapFunction(name string) glisp.UserFunction {
 			return normalfn(env, args)
 		}
 		if !glisp.IsFunction(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &mapIterator{iStream: stream, f: f}, nil
@@ -144,7 +144,7 @@ func StreamFlatmapFunction(name string) glisp.UserFunction {
 			return normalfn(env, args)
 		}
 		if !glisp.IsFunction(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &flatmapIterator{iStream: stream, f: f}, nil
@@ -161,7 +161,7 @@ func StreamFilterFunction(name string) glisp.UserFunction {
 			return normalfn(env, args)
 		}
 		if !glisp.IsFunction(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &filterIterator{iStream: stream, f: f}, nil
@@ -174,7 +174,7 @@ func StreamTakeFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
 		if !IsStream(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("second argument of %s must be stream, but got %v", name, glisp.InspectType(args[1]))
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be stream, but got %v", name, glisp.Inspect(args[1]))
 		}
 		if glisp.IsInt(args[0]) {
 			num, stream := args[0].(glisp.SexpInt), args[1].(iStream)
@@ -183,7 +183,7 @@ func StreamTakeFunction(name string) glisp.UserFunction {
 			f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 			return &takeIterator{iStream: stream, f: f}, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.InspectType(args[0]))
+		return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.Inspect(args[0]))
 	}
 }
 
@@ -193,7 +193,7 @@ func StreamDropFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
 		if !IsStream(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("second argument of %s must be stream, but got %v", name, glisp.InspectType(args[1]))
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be stream, but got %v", name, glisp.Inspect(args[1]))
 		}
 		if glisp.IsInt(args[0]) {
 			num, stream := args[0].(glisp.SexpInt), args[1].(iStream)
@@ -202,7 +202,7 @@ func StreamDropFunction(name string) glisp.UserFunction {
 			f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 			return &dropIterator{iStream: stream, f: f}, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.InspectType(args[0]))
+		return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.Inspect(args[0]))
 	}
 }
 
@@ -225,7 +225,7 @@ func StreamFoldlFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 3)
 		}
 		if !glisp.IsFunction(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		if !IsStream(args[2]) {
 			return normalFn(env, args)
@@ -255,7 +255,7 @@ func StreamRealizeFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
 		if !IsStream(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`type %s is not stream`, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`type %s is not stream`, glisp.Inspect(args[0]))
 		}
 		stream := args[0].(iStream)
 		builder := glisp.NewListBuilder()
@@ -278,7 +278,7 @@ func StreamRangeFunction(name string) glisp.UserFunction {
 		var numbers []glisp.SexpInt
 		for _, arg := range args {
 			if !glisp.IsInt(arg) {
-				return glisp.SexpNull, fmt.Errorf("all arguments of %s must be int but got %v", name, glisp.InspectType(arg))
+				return glisp.SexpNull, fmt.Errorf("all arguments of %s must be int but got %v", name, glisp.Inspect(arg))
 			}
 			numbers = append(numbers, arg.(glisp.SexpInt))
 		}
@@ -307,7 +307,7 @@ func StreamPartitionFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2, 3)
 		}
 		if !IsStream(args[len(args)-1]) {
-			return glisp.SexpNull, fmt.Errorf("last argument of %s must be stream, but got %v", name, glisp.InspectType(args[len(args)-1]))
+			return glisp.SexpNull, fmt.Errorf("last argument of %s must be stream, but got %v", name, glisp.Inspect(args[len(args)-1]))
 		}
 		stream := args[len(args)-1].(iStream)
 		if len(args) == 2 {
@@ -317,13 +317,13 @@ func StreamPartitionFunction(name string) glisp.UserFunction {
 			case *glisp.SexpFunction:
 				return &partitionIterator{iStream: stream, f: expr}, nil
 			}
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be int/function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		if !glisp.IsFunction(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.Inspect(args[0]))
 		}
 		if !glisp.IsBool(args[1]) {
-			return glisp.SexpNull, fmt.Errorf(`second argument of %s must be bool, but got %v`, name, glisp.InspectType(args[1]))
+			return glisp.SexpNull, fmt.Errorf(`second argument of %s must be bool, but got %v`, name, glisp.Inspect(args[1]))
 		}
 		if bool(args[1].(glisp.SexpBool)) {
 			return &partitionIterator{iStream: stream, f: args[0].(*glisp.SexpFunction), separatorPolicy: includeSepLeft}, nil
@@ -340,7 +340,7 @@ func StreamZipFunction(name string) glisp.UserFunction {
 		expr := make([]iStream, len(args))
 		for i, stream := range args {
 			if !IsStream(stream) {
-				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.InspectType(stream))
+				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.Inspect(stream))
 			}
 			expr[i] = args[i].(iStream)
 		}
@@ -356,7 +356,7 @@ func StreamUnionFunction(name string) glisp.UserFunction {
 		expr := make([]iStream, len(args))
 		for i, stream := range args {
 			if !IsStream(stream) {
-				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.InspectType(stream))
+				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.Inspect(stream))
 			}
 			expr[i] = args[i].(iStream)
 		}

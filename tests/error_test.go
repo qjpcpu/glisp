@@ -13,7 +13,7 @@ import (
 
 func TestCompareFloatWithString(t *testing.T) {
 	script := `(= 1.0 "a")`
-	ExpectScriptErr(t, script, `cannot compare 1.0<float> to "a"<string>`)
+	ExpectScriptErr(t, script, `cannot compare float to string`)
 }
 
 func TestStack(t *testing.T) {
@@ -126,7 +126,7 @@ func TestMarshalAny(t *testing.T) {
 
 func TestCompareIntWithString(t *testing.T) {
 	script := `(= 1 "a")`
-	ExpectScriptErr(t, script, `cannot compare 1<int> to "a"<string>`)
+	ExpectScriptErr(t, script, `cannot compare int to string`)
 }
 
 func TestIsZero(t *testing.T) {
@@ -137,47 +137,47 @@ func TestIsZero(t *testing.T) {
 
 func TestCompareStringWithInt(t *testing.T) {
 	script := `(= "a" 1)`
-	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare string to int`)
 }
 
 func TestCompareCharWithHash(t *testing.T) {
 	script := `(= #a {})`
-	ExpectScriptErr(t, script, `cannot compare #a<char> to {}<hash>`)
+	ExpectScriptErr(t, script, `cannot compare char to hash`)
 }
 
 func TestCompareBytesWithHash(t *testing.T) {
 	script := `(= 0B6869 {})`
-	ExpectScriptErr(t, script, `cannot compare 0B6869<bytes> to {}<hash>`)
+	ExpectScriptErr(t, script, `cannot compare bytes to hash`)
 }
 
 func TestCompareHashWithList(t *testing.T) {
 	script := `(=  {} '(1))`
-	ExpectScriptErr(t, script, `cannot compare {}<hash> to (1)<list>`)
+	ExpectScriptErr(t, script, `cannot compare hash to list`)
 }
 
 func TestCompareListWithHash(t *testing.T) {
 	script := `(= '(1) {})`
-	ExpectScriptErr(t, script, `cannot compare (1)<list> to {}<hash>`)
+	ExpectScriptErr(t, script, `cannot compare list to hash`)
 }
 
 func TestCompareBoolWithInt(t *testing.T) {
 	script := `(= true 1)`
-	ExpectScriptErr(t, script, `cannot compare true<bool> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare bool to int`)
 }
 
 func TestCompareListStringWithListInt(t *testing.T) {
 	script := `(= '("a") '(1))`
-	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare string to int`)
 }
 
 func TestCompareArrayStringWithArrayInt(t *testing.T) {
 	script := `(= ["a"] [1])`
-	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare string to int`)
 }
 
 func TestCompareArrayWithInt(t *testing.T) {
 	script := `(= [] 1)`
-	ExpectScriptErr(t, script, `cannot compare []<array> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare array to int`)
 }
 
 func TestDiv0(t *testing.T) {
@@ -187,12 +187,12 @@ func TestDiv0(t *testing.T) {
 
 func TestNotComparable(t *testing.T) {
 	script := `(= (make-chan) 1)`
-	ExpectScriptErr(t, script, `cannot compare [chan]<channel> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare channel to int`)
 }
 
 func TestErrorExistInList(t *testing.T) {
 	script := `(exist? '("a") 1)`
-	ExpectScriptErr(t, script, `cannot compare "a"<string> to 1<int>`)
+	ExpectScriptErr(t, script, `cannot compare string to int`)
 }
 
 func TestConcatStringErr(t *testing.T) {
@@ -212,7 +212,7 @@ func TestAppendStringErr(t *testing.T) {
 
 func TestHashKey(t *testing.T) {
 	script := `(exist? {} {})`
-	ExpectScriptErr(t, script, `cannot hash type {}<hash>`)
+	ExpectScriptErr(t, script, `cannot hash type hash`)
 }
 
 func TestEvalNothing(t *testing.T) {
@@ -222,7 +222,7 @@ func TestEvalNothing(t *testing.T) {
 
 func TestExistArrayNotCompare(t *testing.T) {
 	script := `(exist? [1] "a")`
-	ExpectScriptErr(t, script, `cannot compare 1<int> to "a"<string>`)
+	ExpectScriptErr(t, script, `cannot compare int to string`)
 }
 
 func TestApplySymbolNotFound(t *testing.T) {
@@ -237,7 +237,7 @@ func TestJSONParse(t *testing.T) {
 
 func TestApplyArgMustBeList(t *testing.T) {
 	script := `(apply + (cons 1 2))`
-	ExpectScriptErr(t, script, `expect list but got (1 . 2)<list>`)
+	ExpectScriptErr(t, script, `expect list but got list`)
 }
 
 func TestDefensiveCornor(t *testing.T) {
@@ -290,7 +290,7 @@ func TestLetListFail(t *testing.T) {
 	ExpectError(t, err, "bad let binding type")
 
 	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] {1 2})) 1)`))
-	ExpectError(t, err, "hash key must be symbol but got 1<int>")
+	ExpectError(t, err, "hash key must be symbol but got int")
 
 	err = env.SourceStream(bytes.NewBufferString(`(let ((fn [] [1])) 1)`))
 	ExpectError(t, err, "bind list length must be even")
@@ -561,18 +561,18 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(json/set {} "" 3)`)
 	ExpectScriptErr(t, `(json/set {"a" +} "a.1" 3)`)
 	ExpectScriptErr(t, `(json/set [] "a" 3)`, `strconv.Atoi: parsing`)
-	ExpectScriptErr(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got 1<int>`)
-	ExpectScriptErr(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got 1<int>`)
+	ExpectScriptErr(t, `(json/set {"a" 1} "a.b" 2)`, `must set on hash/array but got int`)
+	ExpectScriptErr(t, `(json/set [{"a" 1}] "0.a.b" 2)`, `must set on hash/array but got int`)
 	ExpectScriptErr(t, `(json/del)`)
 	ExpectScriptErr(t, `(json/del 1 2)`)
 	ExpectScriptErr(t, `(json/del [] 2)`)
 	ExpectScriptErr(t, `(json/del [] "a")`, `strconv.Atoi: parsing`)
-	ExpectScriptErr(t, `(json/del [1] "0.a")`, `must del on hash/array but got 1<int>`)
+	ExpectScriptErr(t, `(json/del [1] "0.a")`, `must del on hash/array but got int`)
 	ExpectScriptErr(t, `(defn (list 1) [] 1)`, `bad function name`)
 	ExpectScriptErr(t, `(def x 1) (x)`, `is not a function`)
 	ExpectScriptErr(t, `(assert (= 1 2))`, `Assertion failed: (= 1 2)`)
 	ExpectScriptErr(t, `(source-file)`, "expect 1,... argument(s) but got 0")
-	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given 1<int>")
+	ExpectScriptErr(t, `(source-file 1)`, "Expected `string`, `list`, `array` given int")
 	ExpectScriptErr(t, `(source-file "not-exist-source-file")`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file ["not-exist-source-file"])`, "no such file or directory")
 	ExpectScriptErr(t, `(source-file '("not-exist-source-file"))`, "no such file or directory")
@@ -597,19 +597,19 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(http/get '-H "aaa")`, `bad format aaa, -H option value must like header:value`)
 	ExpectScriptErr(t, `(http/get 1)`, `unknown option 1("int")`)
 	ExpectScriptErr(t, `(http/curl '-X 123 "http://127.0.0.1:9880")`, `-X Method need string but got "int"`)
-	ExpectScriptErr(t, `(concat [] 1)`, `second argument(1<int>) is not an array`)
+	ExpectScriptErr(t, `(concat [] 1)`, `second argument(int) is not an array`)
 	ExpectScriptErr(t, `(json/parse "{{")`, `json/parse: decode json fail unexpected json char {`)
 	ExpectScriptErr(t, `((`, `Error on line 1,2: Unexpected end of input`)
 	multiLine := "(len #`" + "\na)`)\n)"
 	ExpectScriptErr(t, multiLine, `Error on line 3,1`)
 	ExpectScriptErr(t, `(os/env)`, `no arguments`)
 	ExpectScriptErr(t, `(os/setenv)`, `expect 2 argument(s) but got 0`)
-	ExpectScriptErr(t, `(os/env 1)`, `env variable should be string but got 1<int>`)
-	ExpectScriptErr(t, `(os/setenv 1 1)`, `env variable should be string but got 1<int>`)
-	ExpectScriptErr(t, `(os/setenv "d" 1)`, `env variable should be string but got 1<int>`)
+	ExpectScriptErr(t, `(os/env 1)`, `env variable should be string but got int`)
+	ExpectScriptErr(t, `(os/setenv 1 1)`, `env variable should be string but got int`)
+	ExpectScriptErr(t, `(os/setenv "d" 1)`, `env variable should be string but got int`)
 	ExpectScriptErr(t, `(os/setenv "" "")`, `env variable name can't be empty`)
 	ExpectScriptErr(t, `(len)`, `expect 1 argument(s) but got 0`)
-	ExpectScriptErr(t, `(len 1)`, `argument must be string/array/list/hash/bytes but got 1`)
+	ExpectScriptErr(t, `(len 1)`, `argument must be string/array/list/hash/bytes but got int`)
 	ExpectScriptErr(t, `(bool 1)`, `bool argument should be string/bool`)
 	ExpectScriptErr(t, `(doc)`, `doc expected 1 arguments, got 0`)
 	ExpectScriptErr(t, `(doc 1)`, `should be symbol`)

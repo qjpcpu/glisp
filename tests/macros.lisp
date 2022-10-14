@@ -42,3 +42,9 @@
 (assert (nil? (some-> nil)))
 (assert (nil? (some-> 1 (+ 2) ((fn [e] nil)) (/ 1 0))))
 (assert (nil? (some->> 1 (+ 2) ((fn [e] nil)) (/ 1 0))))
+
+;; testing macro expanding
+(assert (= "(defn my-plus [& body] (apply + body))" (sexp-str (macexpand (alias my-plus +)))))
+(assert (= "(def + (let [+ +] (fn [a b] (+ a b))))" (sexp-str (macexpand (override + (fn [a b] (+ a b)))))))
+(assert (= "(* (+ 0 1) 2)" (sexp-str (macexpand (-> 0 (+ 1) (* 2))))))
+(assert (= "(* 2 (+ 1 0))" (sexp-str (macexpand (->> 0 (+ 1) (* 2))))))

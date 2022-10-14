@@ -415,7 +415,7 @@ func concatSexp(args []Sexp) (Sexp, error) {
 			return concatSexp(args[1:])
 		}
 	}
-	return SexpNull, errors.New("expected strings/arrays/lists/bytes but got " + InspectType(args[0]))
+	return SexpNull, errors.New("expected strings/arrays/lists/bytes but got " + Inspect(args[0]))
 }
 
 func GetReadFunction(name string) UserFunction {
@@ -576,7 +576,7 @@ func GetMapFunction(name string) UserFunction {
 				return SexpNull, nil
 			}
 		}
-		return SexpNull, errors.New("second argument of map must be array/list but got " + InspectType(args[1]))
+		return SexpNull, errors.New("second argument of map must be array/list but got " + Inspect(args[1]))
 	}
 }
 
@@ -933,7 +933,7 @@ func GetFilterFunction(name string) UserFunction {
 				return e, nil
 			}
 		}
-		return SexpNull, fmt.Errorf("second argument of %s must be array/list but got %s", name, InspectType(args[1]))
+		return SexpNull, fmt.Errorf("second argument of %s must be array/list but got %s", name, Inspect(args[1]))
 	}
 }
 
