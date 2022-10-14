@@ -163,6 +163,8 @@
 (assert (= "(range 0 100 1)" (sexp-str (range 100))))
 (assert (= "(range 1 100 1)" (sexp-str (range 1 100))))
 (assert (= "(range 1 100 2)" (sexp-str (range 1 100 2))))
+(assert (= "(union (range 0 1 1) (range 0 1 1))" (sexp-str (union (range 1) (range 1)))))
+(assert (= "(zip (range 0 1 1) (range 0 1 1))" (sexp-str (zip (range 1) (range 1)))))
 
 (assert (= [0 1 2]
            (list-to-array
@@ -302,3 +304,5 @@
 (assert (nil? (reverse nil)))
 (assert (= [] (reverse [])))
 (assert (= "cba" (reverse "abc")))
+
+(assert (= [0 1 "a" "b"] (->> (union (range 2) (stream nil) (stream ["a" "b"])) (realize) (list-to-array))))

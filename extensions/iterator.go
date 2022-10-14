@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/qjpcpu/glisp"
 )
@@ -427,7 +428,11 @@ type ZipListIterator struct {
 }
 
 func (iter *ZipListIterator) SexpString() string {
-	return `zip-stream`
+	arr := make([]string, len(iter.expr))
+	for i, s := range iter.expr {
+		arr[i] = s.SexpString()
+	}
+	return `(zip ` + strings.Join(arr, " ") + ")"
 }
 
 func (iter *ZipListIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error) {
@@ -441,4 +446,34 @@ func (iter *ZipListIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, err
 	}
 
 	return elem.Get(), true, nil
+}
+
+type UnionIterator struct {
+	expr []iStream
+}
+
+func (iter *UnionIterator) SexpString() string {
+	arr := make([]string, len(iter.expr))
+	for i, s := range iter.expr {
+		arr[i] = s.SexpString()
+	}
+	return `(union ` + strings.Join(arr, " ") + ")"
+}
+
+func (iter *UnionIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error) {
+	for cur := iter.expr[0]; ; {
+		elem, ok, err := cur.Next(env)
+		if err != nil {
+			return glisp.SexpNull, false, err
+		} else if ok {
+			return elem, true, nil
+		}
+		if len(iter.expr) > 1 {
+			iter.expr = iter.expr[1:]
+			cur = iter.expr[0]
+		} else {
+			break
+		}
+	}
+	return glisp.SexpNull, false, nil
 }

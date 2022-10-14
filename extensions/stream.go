@@ -30,6 +30,7 @@ func ImportStream(vm *glisp.Environment) error {
 	env.AddNamedFunction("range", StreamRangeFunction)
 	env.AddNamedFunction("partition", StreamPartitionFunction)
 	env.AddNamedFunction("zip", StreamZipFunction)
+	env.AddNamedFunction("union", StreamUnionFunction)
 	return env.SourceStream(bytes.NewBufferString(stream_scripts))
 }
 
@@ -344,5 +345,21 @@ func StreamZipFunction(name string) glisp.UserFunction {
 			expr[i] = args[i].(iStream)
 		}
 		return &ZipListIterator{expr: expr, size: len(args)}, nil
+	}
+}
+
+func StreamUnionFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+		}
+		expr := make([]iStream, len(args))
+		for i, stream := range args {
+			if !IsStream(stream) {
+				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.InspectType(stream))
+			}
+			expr[i] = args[i].(iStream)
+		}
+		return &UnionIterator{expr: expr}, nil
 	}
 }
