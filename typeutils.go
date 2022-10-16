@@ -112,6 +112,9 @@ func IsZero(expr Sexp) bool {
 	case SexpFloat:
 		return e.Cmp(NewSexpFloat(0)) == 0
 	}
+	if isZerable(expr) {
+		return expr.(Zerable).IsZero()
+	}
 	return false
 }
 
@@ -147,4 +150,13 @@ func IsTruthy(expr Sexp) bool {
 		return e != SexpNull
 	}
 	return true
+}
+
+type Zerable interface {
+	IsZero() bool
+}
+
+func isZerable(v Sexp) bool {
+	_, ok := v.(Zerable)
+	return ok
 }

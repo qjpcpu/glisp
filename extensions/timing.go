@@ -48,6 +48,11 @@ func (t SexpTime) MarshalJSON() ([]byte, error) {
 	return glisp.Marshal(glisp.SexpStr(tm.Format(`2006-01-02 15:04:05`)))
 }
 
+func (t SexpTime) IsZero() bool {
+	tm := (time.Time)(t)
+	return tm.IsZero() || tm.Unix() <= -62135596800
+}
+
 func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
 	if _, ok := b.(SexpTime); !ok {
 		return 0, fmt.Errorf("cannot compare %s to %s", glisp.Inspect(t), glisp.Inspect(b))
