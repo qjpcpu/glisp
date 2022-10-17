@@ -306,11 +306,11 @@ func ParseTime(name string) glisp.UserFunction {
 					return SexpTime(tm), nil
 				}
 			}
-			layout, ok := readSymOrStr(args[0])
+			layout, ok := readSymOrStr(args[1])
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
+				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[1].SexpString())
 			}
-			value, ok := readSymOrStr(args[1])
+			value, ok := readSymOrStr(args[0])
 			if !ok {
 				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
 			}
@@ -318,7 +318,7 @@ func ParseTime(name string) glisp.UserFunction {
 			if len(args) == 3 {
 				loc, ok := readSymOrStr(args[2])
 				if !ok {
-					return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
+					return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[2].SexpString())
 				}
 				location, err := time.LoadLocation(loc)
 				if err != nil {

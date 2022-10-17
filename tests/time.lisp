@@ -4,10 +4,10 @@
      (assert (= 1656988237000 (time/format now 'timestamp-ms)))
      (assert (= "2022-07-05" (time/format now "2006-01-02"))))
 
-(let [now (time/parse "2006-01-02 15:04:05" "2001-10-01 00:00:00" "Asia/Shanghai")]
+(let [now (time/parse "2001-10-01 00:00:00" "2006-01-02 15:04:05" "Asia/Shanghai")]
      (assert (= 1001865600 (time/format now 'timestamp)))
      (assert (= "2001-10-01" (time/format (time/parse 1001865600) "2006-01-02" "Asia/Shanghai")))
-     (assert (= "2001-10-01" (time/format (time/parse "2006-01-02 15:04:05" "2001-10-01 00:00:00") "2006-01-02")))
+     (assert (= "2001-10-01" (time/format (time/parse "2001-10-01 00:00:00" "2006-01-02 15:04:05" ) "2006-01-02")))
      )
 
 (assert (> (time/now) (time/parse "2001-10-01 00:00:00")))
@@ -68,6 +68,6 @@
 (assert (not (zero? (time/now))))
 (assert (zero? (time/zero)))
 (assert (zero? (time/parse -62135596800)))
-(assert (zero? (time/parse "2006-01-02 15:04:05" "0001-01-01 00:00:00" "UTC")))
-(assert (zero? (time/parse "2006-01-02 15:04:05" "0000-01-01 00:00:00" "UTC")))
+(assert (zero? (time/parse "0001-01-01 00:00:00" "2006-01-02 15:04:05" "UTC")))
+(assert (zero? (time/parse "0000-01-01 00:00:00" "2006-01-02 15:04:05" "UTC")))
 (assert (= "0001-01-01 00:00:00" (time/format  (time/zero) "2006-01-02 15:04:05")))
