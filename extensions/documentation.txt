@@ -3,6 +3,11 @@ Usage: (time/now)
 
 Returns current time.
 
+========== time/zero ==========
+Usage: (time/zero)
+
+Returns time 0001-01-01 00:00:00.
+
 ========== time/format ==========
 Usage:
 (time/format Time 'timestamp) => Time to unix timestamp(integer)

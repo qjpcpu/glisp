@@ -681,4 +681,5 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(union)`, `union expect 2,... argument(s) but got 0`)
 	ExpectScriptErr(t, `(union 1 1)`, `every argument of union must be stream but 1-th is int`)
 	ExpectScriptErr(t, `(realize (union (range 3) (err-stream)))`, `error occur`)
+	ExpectScriptErr(t, `(time/zero 1)`, `time/zero expect 0 argument(s) but got 1`)
 }

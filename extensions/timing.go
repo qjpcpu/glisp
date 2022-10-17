@@ -10,6 +10,7 @@ import (
 
 func ImportTime(vm *glisp.Environment) error {
 	env := autoAddDoc(vm)
+	env.AddNamedFunction("time/zero", TimeZero)
 	env.AddNamedFunction("time/now", TimeNow)
 	env.AddNamedFunction("time/format", TimeFormatFunction)
 	env.AddNamedFunction("time/parse", ParseTime)
@@ -74,6 +75,15 @@ func TimeNow(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 0)
 		}
 		return SexpTime(time.Now().In(time.UTC)), nil
+	}
+}
+
+func TimeZero(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 0 {
+			return glisp.WrongNumberArguments(name, len(args), 0)
+		}
+		return SexpTime(time.Time{}), nil
 	}
 }
 
