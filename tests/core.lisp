@@ -4,3 +4,6 @@
 (assert (= '(1 2 3) (sort '(3 2 1))))
 
 (assert (= [2 3 1] (sort #(= % 2) [3 2 1])))
+
+(assert (= 3 ((-> "+" (resolve)) 1 2)))
+(assert (= 3 ((-> "+" (symbol) (resolve)) 1 2)))
