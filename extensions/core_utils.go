@@ -36,7 +36,6 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
 	env.AddNamedFunction("__doc__", GetDocFunction)
 	env.AddNamedFunction("sort", GetSortFunction)
-	env.AddNamedFunction("resolve", FindSymbol)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 
@@ -155,24 +154,5 @@ func GetDocFunction(name string) glisp.UserFunction {
 			doc = `No document found.`
 		}
 		return glisp.SexpStr(doc), nil
-	}
-}
-
-func FindSymbol(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
-		}
-
-		switch expr := args[0].(type) {
-		case glisp.SexpStr:
-			v, _ := env.FindObject(string(expr))
-			return v, nil
-		case glisp.SexpSymbol:
-			v, _ := env.FindObject(expr.Name())
-			return v, nil
-		default:
-			return glisp.SexpNull, fmt.Errorf("expect string/symbol but got %v", glisp.Inspect(args[0]))
-		}
 	}
 }

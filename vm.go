@@ -479,3 +479,28 @@ func (b BindlistInstr) Execute(env *Environment) error {
 	env.pc++
 	return nil
 }
+
+type RefSymInstr struct {
+}
+
+func (p RefSymInstr) InstrString() string {
+	return "ref symbol"
+}
+
+func (p RefSymInstr) Execute(env *Environment) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	if !IsSymbol(expr) {
+		return fmt.Errorf("%s is not a symbol", expr.SexpString())
+	}
+	if t, ok := env.FindObject(expr.(SexpSymbol).Name()); ok {
+		env.datastack.PushExpr(t)
+	} else {
+		env.datastack.PushExpr(SexpNull)
+	}
+
+	env.pc++
+	return nil
+}

@@ -679,8 +679,3 @@ Sort array/list by f.
 
 e.g.
 (sort #(> %1 %2) [1 2 3]) ;; return [3 2 1]
-
-========== resolve ==========
-Usage: (resolve sym)
-
-Resolve symbol or string.
