@@ -304,5 +304,8 @@
 (assert (nil? (reverse nil)))
 (assert (= [] (reverse [])))
 (assert (= "cba" (reverse "abc")))
+(assert (= "" (reverse "")))
+(assert (= (bytes "") (reverse (bytes ""))))
+(assert (= "(stream (1 0))" (sexp-str(reverse (range 2)))))
 
 (assert (= [0 1 "a" "b"] (->> (union (range 2) (stream nil) (stream ["a" "b"])) (realize) (list-to-array))))

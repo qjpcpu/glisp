@@ -29,10 +29,13 @@ Return n-th element of array/list/stream."
 (defn reverse [x]
   "Usage: (reverse x)
 
-Reverse list/array/stream."
+Reverse list/array/string/stream."
   (let [res (->> (zip (range) (stream x))
                  (realize)
                  (sort #(> (car %1) (car %2)))
                  (map #(car (cdr %))))]
     (cond (array? x) (list-to-array res)
-          (string? x) (string res) res)))
+          (string? x) (string res)
+          (bytes? x) (bytes (string res))
+          (stream? x) (stream res)
+          res)))
