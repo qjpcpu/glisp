@@ -106,6 +106,7 @@ func repl(env *glisp.Environment) {
 		if expr != glisp.SexpNull {
 			fmt.Println(expr.SexpString())
 		}
+		env.BindGlobal(`$?`, expr)
 	}
 
 	for {

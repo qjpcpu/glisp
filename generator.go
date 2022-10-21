@@ -642,9 +642,8 @@ func (gen *Generator) Generate(expr Sexp) error {
 		if IsList(e) {
 			err := gen.GenerateCall(e)
 			if err != nil {
-				return errors.New(
-					fmt.Sprintf("Error generating %s:\n%v",
-						expr.SexpString(), err))
+				return fmt.Errorf("Error generating %s: %v",
+					expr.SexpString(), err)
 			}
 			return nil
 		} else {
