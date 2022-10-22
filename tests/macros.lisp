@@ -48,3 +48,25 @@
 (assert (= "(def + (let [+ +] (fn [a b] (+ a b))))" (sexp-str (macexpand (override + (fn [a b] (+ a b)))))))
 (assert (= "(* (+ 0 1) 2)" (sexp-str (macexpand (-> 0 (+ 1) (* 2))))))
 (assert (= "(* 2 (+ 1 0))" (sexp-str (macexpand (->> 0 (+ 1) (* 2))))))
+
+;; fuzzy macro
+(defmac #`always-return-\d+` [& args] 1024)
+(assert (= 1024 (always-return-1024)))
+(assert (= 1024 (always-return-1 "useless")))
+
+
+(defmac #`^:return-number-\d+$` [name]
+        (let [arr (str/split (string name) "-")]
+                             (int (aget arr 2))))
+(assert (= 1024 (:return-number-1024)))
+(assert (= 100 (:return-number-100)))
+
+(defmac #`^:[a-zA-Z]+$` [name h]
+        (let [f (-> name (str/trim-prefix ":"))]
+             `(hget ~h ~f nil)))
+
+(def ash {"a" 1 "b" 2 "c" 3 "d" 4})
+(assert (= 1 (:a ash)))
+(assert (= 2 (:b ash)))
+(assert (nil? (:x ash)))
+(assert (= 1 (-> ash (:a))))

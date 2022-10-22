@@ -47,8 +47,8 @@ func New() *Environment {
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
-		env.builtins[sym.number] = MakeUserFunction(key, function, WithDoc(getBuiltinDoc(key)))
-		env.AddFunction(key, function, WithDoc(getBuiltinDoc(key)))
+		env.builtins[sym.number] = MakeUserFunction(key, function, WithDoc(QueryBuiltinDoc(key)))
+		env.AddFunction(key, function, WithDoc(QueryBuiltinDoc(key)))
 	}
 
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
@@ -393,9 +393,15 @@ func (env *Environment) AddNamedFunction(name string, function NamedUserFunction
 	env.BindGlobal(name, MakeUserFunction(name, function(name), opts...))
 }
 
-func (env *Environment) AddMacro(name string, function UserFunction) {
+func (env *Environment) AddMacro(name string, function UserFunction, opts ...FuntionOption) {
 	sym := env.MakeSymbol(name)
-	env.macros[sym.number] = MakeUserFunction(name, function)
+	env.macros[sym.number] = MakeUserFunction(name, function, opts...)
+}
+
+func (env *Environment) AddFuzzyMacro(name string, function UserFunction, opts ...FuntionOption) {
+	sym := env.MakeSymbol(name)
+	opts = append(opts, withNameRegexp(name))
+	env.macros[sym.number] = MakeUserFunction(name, function, opts...)
 }
 
 func (env *Environment) ImportEval() error {
@@ -577,6 +583,18 @@ func (env *Environment) OverrideFunction(name string, f OverrideFunction, opts .
 	nopts := []FuntionOption{WithDoc(fn.Doc())}
 	env.AddFunction(name, f(fn), append(nopts, opts...)...)
 	return nil
+}
+
+func (env *Environment) searchMacro(sym SexpSymbol) (*SexpFunction, bool) {
+	if macro, found := env.macros[sym.number]; found {
+		return macro, true
+	}
+	for _, macro := range env.macros {
+		if macro.nameRegexp != nil && macro.nameRegexp.MatchString(sym.name) {
+			return macro, true
+		}
+	}
+	return nil, false
 }
 
 type nextSymbol struct{ counter int64 }

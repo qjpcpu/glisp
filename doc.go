@@ -12,7 +12,7 @@ var (
 	docMap         = make(map[string]string)
 )
 
-func getBuiltinDoc(funcName string) string {
+func QueryBuiltinDoc(funcName string) string {
 	return docMap[funcName]
 }
 

@@ -3,6 +3,7 @@ package glisp
 import (
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 type Generator struct {
@@ -225,9 +226,17 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 	}
 
 	var sym SexpSymbol
+	var regName *regexp.Regexp
 	switch expr := args[0].(type) {
 	case SexpSymbol:
 		sym = expr
+	case SexpStr:
+		if r, err := regexp.Compile(string(expr)); err != nil {
+			return err
+		} else {
+			regName = r
+		}
+		sym = gen.env.GenSymbol("__annoy")
 	default:
 		return errors.New("Definition name must by symbol")
 	}
@@ -235,6 +244,9 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:])
 	if err != nil {
 		return err
+	}
+	if regName != nil {
+		sfun.nameRegexp = regName
 	}
 
 	gen.env.macros[sym.number] = sfun
@@ -266,7 +278,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if islist {
 		switch t := list.head.(type) {
 		case SexpSymbol:
-			macro, ismacrocall = gen.env.macros[t.number]
+			macro, ismacrocall = gen.env.searchMacro(t)
 		default:
 			ismacrocall = false
 		}
@@ -283,7 +295,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	}
 
 	env := gen.env.Duplicate()
-	expr, err := env.Apply(macro, macargs)
+	expr, err := env.Apply(macro, prependCallName(macro, list.head.(SexpSymbol), macargs))
 	if err != nil {
 		return err
 	}
@@ -574,12 +586,12 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateSharpQuote(args)
 	}
 
-	macro, found := gen.env.macros[sym.number]
+	macro, found := gen.env.searchMacro(sym)
 	if found {
 		// calling Apply on the current environment will screw up
 		// the stack, creating a duplicate environment is safer
 		env := gen.env.Duplicate()
-		expr, err := env.Apply(macro, args)
+		expr, err := env.Apply(macro, prependCallName(macro, sym, args))
 		if err != nil {
 			return err
 		}
@@ -830,4 +842,11 @@ func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
 	default:
 		return fmt.Errorf("sharp-quote resolve fail, unexpected s-expr %s", arg.SexpString())
 	}
+}
+
+func prependCallName(macro *SexpFunction, sym SexpSymbol, args []Sexp) []Sexp {
+	if macro.nameRegexp != nil {
+		return append([]Sexp{SexpStr(sym.Name())}, args...)
+	}
+	return args
 }

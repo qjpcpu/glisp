@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -722,7 +723,13 @@ func GetSourceFileFunction(name string) UserFunction {
 	}
 }
 
-var MissingFunction = &SexpFunction{"__missing", true, 0, false, nil, nil, nil, ``}
+var MissingFunction = &SexpFunction{
+	name:    "__missing",
+	user:    true,
+	nargs:   0,
+	varargs: false,
+	fun:     nil,
+}
 
 type FuntionOption func(*SexpFunction)
 
@@ -730,6 +737,14 @@ func WithDoc(doc string) FuntionOption {
 	return func(f *SexpFunction) {
 		if doc != `` {
 			f.doc = doc
+		}
+	}
+}
+
+func withNameRegexp(exp string) FuntionOption {
+	return func(f *SexpFunction) {
+		if exp != "" {
+			f.nameRegexp = regexp.MustCompile(exp)
 		}
 	}
 }

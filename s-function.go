@@ -1,5 +1,7 @@
 package glisp
 
+import "regexp"
+
 type SexpFunction struct {
 	name       string
 	user       bool
@@ -9,6 +11,7 @@ type SexpFunction struct {
 	userfun    UserFunction
 	closeScope *Stack
 	doc        string
+	nameRegexp *regexp.Regexp
 }
 
 func (sf *SexpFunction) SexpString() string {

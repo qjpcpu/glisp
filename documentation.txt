@@ -1,3 +1,24 @@
+========== defmac ==========
+Usage: (defmac name [args] body)
+
+Theres two format macro in glisp:
+1. normal macro matched by name extractly
+e.g. (defmac my-m1 [] (println "my-m1"))
+(my-m1) would hit the macro
+(my-m2) or (my-mx) would not hit.
+Besides, the macro name must be symbol.
+
+2. fuzzy macro matched by regexp match
+e.g. (defmac #`:[a-zA-Z]` [name & other-args] (println name))
+Both (:name h) and (:age x) would hit the macro.
+
+The special form macro has two important limitations:
+First: fuzzy macro function must conatin at least one argument, and the first arguemnt would
+be set to macro name(string) when calling.
+
+Second: the macro name must be string when `defmac`, thus this string would be compiled as
+a regular expression for matching at generating time.
+
 ========== cons ==========
 Usage: (cons x seq)
 

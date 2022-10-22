@@ -637,3 +637,33 @@ func TestListBuilder(t *testing.T) {
 		t.Fatal("should get list")
 	}
 }
+
+func TestListFuzzyMacro(t *testing.T) {
+	testMacro := func(script string) {
+		vm := loadAllExtensions(glisp.New())
+		vm.AddFuzzyMacro(`^fuzzy.+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			/* always return 1024 */
+			return glisp.NewSexpInt(1024), nil
+		})
+		ret, err := vm.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqInteger(t, 1024, ret)
+	}
+	testMacro(`(fuzzy-x 1 2 3)`)
+	testMacro(`(fuzzyAny 1 2 3)`)
+}
+
+func TestListFuzzyMacroName(t *testing.T) {
+	testMacro := func(script, docstr string) {
+		vm := loadAllExtensions(glisp.New())
+		vm.AddFuzzyMacro(`^:fuzzy-\d+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			num := strings.TrimPrefix(string(args[0].(glisp.SexpStr)), ":fuzzy-")
+			return glisp.SexpStr("number:" + num), nil
+		})
+		ret, err := vm.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqStr(t, docstr, ret)
+	}
+	testMacro(`(:fuzzy-123)`, `number:123`)
+	testMacro(`(:fuzzy-456)`, `number:456`)
+}

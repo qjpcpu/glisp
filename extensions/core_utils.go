@@ -149,6 +149,8 @@ func GetDocFunction(name string) glisp.UserFunction {
 			doc = expr.(*glisp.SexpFunction).Doc()
 		} else if mac, ok := env.FindMacro(name); ok {
 			doc = mac.Doc()
+		} else {
+			doc = glisp.QueryBuiltinDoc(name)
 		}
 		if doc == `` {
 			doc = `No document found.`
