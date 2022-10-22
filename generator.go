@@ -236,7 +236,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 		} else {
 			regName = r
 		}
-		sym = gen.env.GenSymbol("__annoy")
+		sym = gen.env.GenSymbol("__anon")
 	default:
 		return errors.New("Definition name must by symbol")
 	}

@@ -36,3 +36,7 @@ func (env *AutoAddFunctionWithDoc) AddNamedFunction(name string, function glisp.
 func (env *AutoAddFunctionWithDoc) OverrideFunction(name string, f glisp.OverrideFunction) error {
 	return env.Environment.OverrideFunction(name, f, getDoc(name))
 }
+
+func (env *AutoAddFunctionWithDoc) AddNamedMacro(name string, function glisp.NamedUserFunction, opts ...glisp.FuntionOption) {
+	env.Environment.AddMacro(name, function(name), getDoc(name))
+}

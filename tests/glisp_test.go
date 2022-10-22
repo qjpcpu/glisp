@@ -23,12 +23,6 @@ func TestAllScripts(t *testing.T) {
 	}
 }
 
-func TestAllScriptsAgain(t *testing.T) {
-	for _, script := range listScripts(t) {
-		testFileAgain(t, script)
-	}
-}
-
 func TestLoadAllFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	funcs := vm.GlobalFunctions()
@@ -241,7 +235,7 @@ func TestSandBox(t *testing.T) {
 func TestWrapExpressionsAsFunction(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	script := `(+ 2 3)`
-	name := vm.GenSymbol("__anoy")
+	name := vm.GenSymbol("__anon")
 	script = fmt.Sprintf(`(defn %s [] %s)`, name.Name(), script)
 	_, err := vm.EvalString(script)
 	ExpectSuccess(t, err)

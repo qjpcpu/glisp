@@ -186,3 +186,10 @@ Reverse list/array/string/stream."
           (bytes? x) (bytes (string res))
           (stream? x) (stream res)
           res)))
+
+(defmac assoc [record field val]
+        "Usage: (assoc record field val)
+
+Set record field to value."
+        (let [f (list (quote quote) field)]
+        `(__assoc__ ~record ~f ~val)))

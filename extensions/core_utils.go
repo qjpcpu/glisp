@@ -52,6 +52,12 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("partition", StreamPartitionFunction)
 	env.AddNamedFunction("zip", StreamZipFunction)
 	env.AddNamedFunction("union", StreamUnionFunction)
+
+	/* record related */
+	env.AddNamedMacro("defrecord", DefineRecord)
+	env.AddNamedFunction("__assoc__", AssocRecordField)
+	env.AddNamedFunction("record?", CheckIsRecord)
+	env.AddNamedFunction("record-of?", CheckIsRecordOf)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 

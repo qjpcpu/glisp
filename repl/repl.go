@@ -19,7 +19,7 @@ var (
 func registKeywords(vm *glisp.Environment) {
 	keywords = nil
 	for _, fn := range vm.GlobalFunctions() {
-		if len(fn) > 1 {
+		if len(fn) > 1 && !strings.Contains(fn, "__") {
 			keywords = append(keywords, fn)
 		}
 	}
