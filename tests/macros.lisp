@@ -55,18 +55,27 @@
 (assert (= 1024 (always-return-1 "useless")))
 
 
-(defmac #`^:return-number-\d+$` [name]
+(defmac #`^Xreturn-number-\d+$` [name]
         (let [arr (str/split (string name) "-")]
                              (int (aget arr 2))))
-(assert (= 1024 (:return-number-1024)))
-(assert (= 100 (:return-number-100)))
+(assert (= 1024 (Xreturn-number-1024)))
+(assert (= 100 (Xreturn-number-100)))
 
-(defmac #`^:[a-zA-Z]+$` [name h]
-        (let [f (-> name (str/trim-prefix ":"))]
+(defmac #`^X[a-zA-Z]+$` [name h]
+        (let [f (-> name (str/trim-prefix "X"))]
              `(hget ~h ~f nil)))
 
 (def ash {"a" 1 "b" 2 "c" 3 "d" 4})
-(assert (= 1 (:a ash)))
-(assert (= 2 (:b ash)))
-(assert (nil? (:x ash)))
-(assert (= 1 (-> ash (:a))))
+(assert (= 1 (Xa ash)))
+(assert (= 2 (Xb ash)))
+(assert (nil? (Xx ash)))
+(assert (= 1 (-> ash (Xa))))
+
+(defmac #`^Hello\d+$` [n] `(+ 1 1))
+(assert (= 2 (Hello1)))
+;; overwrite fuzzy macro
+(defmac #`^Hello\d+$` [n] `(+ 1 2))
+(assert (= 3 (Hello1)))
+;; fuzzy not work, match previous
+(defmac #`^Hello1$` [n] `(+ 1 3))
+(assert (= 3 (Hello1)))

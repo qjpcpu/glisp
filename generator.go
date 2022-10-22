@@ -249,7 +249,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 		sfun.nameRegexp = regName
 	}
 
-	gen.env.macros[sym.number] = sfun
+	gen.env.macros.Add(sym, sfun)
 	gen.AddInstruction(PushInstr{SexpNull})
 
 	return nil
@@ -278,7 +278,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if islist {
 		switch t := list.head.(type) {
 		case SexpSymbol:
-			macro, ismacrocall = gen.env.searchMacro(t)
+			macro, ismacrocall = gen.env.macros.Find(t)
 		default:
 			ismacrocall = false
 		}
@@ -586,7 +586,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateSharpQuote(args)
 	}
 
-	macro, found := gen.env.searchMacro(sym)
+	macro, found := gen.env.macros.Find(sym)
 	if found {
 		// calling Apply on the current environment will screw up
 		// the stack, creating a duplicate environment is safer

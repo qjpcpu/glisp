@@ -208,6 +208,10 @@ func GetCounterNumber(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, er
 	return glisp.NewSexpInt(num), nil
 }
 
+func (c *Counter) Explain(env *glisp.Environment, n string, args []glisp.Sexp) (glisp.Sexp, error) {
+	return glisp.SexpStr("OK"), nil
+}
+
 func (c *Counter) Next() (glisp.Sexp, bool) {
 	if c.cursor < c.Len {
 		c.cursor++

@@ -656,14 +656,14 @@ func TestListFuzzyMacro(t *testing.T) {
 func TestListFuzzyMacroName(t *testing.T) {
 	testMacro := func(script, docstr string) {
 		vm := loadAllExtensions(glisp.New())
-		vm.AddFuzzyMacro(`^:fuzzy-\d+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			num := strings.TrimPrefix(string(args[0].(glisp.SexpStr)), ":fuzzy-")
+		vm.AddFuzzyMacro(`^fuzzy-\d+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			num := strings.TrimPrefix(string(args[0].(glisp.SexpStr)), "fuzzy-")
 			return glisp.SexpStr("number:" + num), nil
 		})
 		ret, err := vm.EvalString(script)
 		ExpectSuccess(t, err)
 		ExpectEqStr(t, docstr, ret)
 	}
-	testMacro(`(:fuzzy-123)`, `number:123`)
-	testMacro(`(:fuzzy-456)`, `number:456`)
+	testMacro(`(fuzzy-123)`, `number:123`)
+	testMacro(`(fuzzy-456)`, `number:456`)
 }

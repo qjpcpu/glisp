@@ -16,3 +16,7 @@ Returns a sequence of the items in coll for which
 When coll is hash, pred function should take 2 arguments, which are hash key-value pair.
 "
   (filter (fn [e] (not (pred e))) coll))
+
+(defmac #`^:[^:]+$` [call-name & args]
+        (let* [s (slice call-name 1) nargs (concat (list s) args)]
+             `(explain ~@nargs)))

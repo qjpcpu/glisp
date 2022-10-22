@@ -19,7 +19,7 @@ type Environment struct {
 	symtable         map[string]int
 	revsymtable      map[int]string
 	builtins         map[int]*SexpFunction
-	macros           map[int]*SexpFunction
+	macros           *FuncMap
 	curfunc          *SexpFunction
 	mainfunc         *SexpFunction
 	pc               int
@@ -40,7 +40,7 @@ func New() *Environment {
 	env.stackstack = NewStack(StackStackSize)
 	env.addrstack = NewStack(CallStackSize)
 	env.builtins = make(map[int]*SexpFunction)
-	env.macros = make(map[int]*SexpFunction)
+	env.macros = NewFuncMap()
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
@@ -68,7 +68,7 @@ func (env *Environment) Clone() *Environment {
 	dupenv.addrstack = env.addrstack.Clone()
 
 	dupenv.builtins = copyFuncMap(env.builtins)
-	dupenv.macros = copyFuncMap(env.macros)
+	dupenv.macros = env.macros.Clone()
 	dupenv.symtable = make(map[string]int)
 	for k, v := range env.symtable {
 		dupenv.symtable[k] = v
@@ -101,7 +101,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.stackstack = NewStack(StackStackSize)
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
-	dupenv.macros = copyFuncMap(env.macros)
+	dupenv.macros = env.macros.Clone()
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
@@ -395,13 +395,13 @@ func (env *Environment) AddNamedFunction(name string, function NamedUserFunction
 
 func (env *Environment) AddMacro(name string, function UserFunction, opts ...FuntionOption) {
 	sym := env.MakeSymbol(name)
-	env.macros[sym.number] = MakeUserFunction(name, function, opts...)
+	env.macros.Add(sym, MakeUserFunction(name, function, opts...))
 }
 
 func (env *Environment) AddFuzzyMacro(name string, function UserFunction, opts ...FuntionOption) {
 	sym := env.MakeSymbol(name)
 	opts = append(opts, withNameRegexp(name))
-	env.macros[sym.number] = MakeUserFunction(name, function, opts...)
+	env.macros.Add(sym, MakeUserFunction(name, function, opts...))
 }
 
 func (env *Environment) ImportEval() error {
@@ -482,8 +482,7 @@ func (env *Environment) FindObject(name string) (Sexp, bool) {
 
 func (env *Environment) FindMacro(name string) (*SexpFunction, bool) {
 	sym := env.MakeSymbol(name)
-	m, ok := env.macros[sym.number]
-	return m, ok
+	return env.macros.Find(sym)
 }
 
 func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
@@ -542,9 +541,7 @@ func (env *Environment) GlobalFunctions() []string {
 			}
 		}
 	}
-	for _, fn := range env.macros {
-		ret = append(ret, fn.name)
-	}
+	ret = append(ret, env.macros.Names()...)
 	ret = append(ret,
 		"and", "or", "cond",
 		"quote",
@@ -583,18 +580,6 @@ func (env *Environment) OverrideFunction(name string, f OverrideFunction, opts .
 	nopts := []FuntionOption{WithDoc(fn.Doc())}
 	env.AddFunction(name, f(fn), append(nopts, opts...)...)
 	return nil
-}
-
-func (env *Environment) searchMacro(sym SexpSymbol) (*SexpFunction, bool) {
-	if macro, found := env.macros[sym.number]; found {
-		return macro, true
-	}
-	for _, macro := range env.macros {
-		if macro.nameRegexp != nil && macro.nameRegexp.MatchString(sym.name) {
-			return macro, true
-		}
-	}
-	return nil, false
 }
 
 type nextSymbol struct{ counter int64 }

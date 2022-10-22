@@ -76,6 +76,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,
+	"explain":    Explain,
 }
 
 func GetConsFunction(name string) UserFunction {

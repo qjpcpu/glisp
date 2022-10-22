@@ -686,4 +686,9 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `#'(int 1)`, `is not a symbol`)
 	ExpectScriptErr(t, `#'(string "xyzw")`, `is not a symbol`)
 	ExpectScriptSuccess(t, `#'(symbol "xyzw")`)
+	ExpectScriptErr(t, `(explain)`, `explain expect 2,... argument(s) but got 0`)
+	ExpectScriptErr(t, `(explain true false)`, `explain first argument must be symbol but got bool`)
+	ExpectScriptErr(t, `(explain "s" false)`, "type `bool` can't explain `\"s\"`")
+	ExpectScriptSuccess(t, `(explain "s" (my-counter 10))`, "OK")
+	ExpectScriptSuccess(t, `(:colon-symbol (my-counter 10))`, "OK")
 }
