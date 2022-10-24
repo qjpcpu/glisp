@@ -18,7 +18,7 @@ e.g.
 (defn nth [n coll]
   "Usage: (nth n coll)
 
-Return n-th element of array/list/stream."
+Return n-th element of array/list/stream, n start from 0"
   (some->> (cond (< n 0) nil coll)
            (stream)
            (drop n)

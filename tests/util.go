@@ -23,6 +23,7 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 			return e.ImportEval()
 		},
 		extensions.ImportCoreUtils,
+		extensions.ImportStream,
 		extensions.ImportContainerUtils,
 		extensions.ImportJSON,
 		extensions.ImportMathUtils,
@@ -35,7 +36,6 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 		extensions.ImportString,
 		extensions.ImportOS,
 		extensions.ImportHTTP,
-		extensions.ImportStream,
 	}
 	for _, fn := range imports {
 		if err := fn(vm); err != nil {

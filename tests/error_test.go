@@ -691,4 +691,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(explain "s" false)`, "type `bool` can't explain `\"s\"`")
 	ExpectScriptSuccess(t, `(explain "s" (my-counter 10))`, "OK")
 	ExpectScriptSuccess(t, `(:colon-symbol (my-counter 10))`, "OK")
+	ExpectScriptErr(t, `(def h {"a" 1 'b 2}) (:a h 1 2)`, `hash field accessor expect 0,1 argument(s) but got 2`)
+	ExpectScriptErr(t, `(def h {"a" 1 'b 2}) (:c h)`, `field c not found`)
 }

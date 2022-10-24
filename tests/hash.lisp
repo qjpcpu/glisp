@@ -55,3 +55,8 @@
 
 (assert (= [1 2]
            (list-to-array (map #(cdr %1) {"a" 1 "b" 2}))))
+
+(def h4 {"a" 1 'b 2})
+(assert (= 1 (:a h4)))
+(assert (= 2 (:b h4)))
+(assert (= 3 (:c h4 3)))

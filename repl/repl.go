@@ -170,6 +170,8 @@ func fmtScript(env *glisp.Environment, fname string) {
 func newEnv() *glisp.Environment {
 	env := glisp.New()
 	env.ImportEval()
+	extensions.ImportCoreUtils(env)
+	extensions.ImportStream(env)
 	extensions.ImportRandom(env)
 	extensions.ImportMathUtils(env)
 	extensions.ImportTime(env)
@@ -177,13 +179,11 @@ func newEnv() *glisp.Environment {
 	extensions.ImportCoroutines(env)
 	extensions.ImportRegex(env)
 	extensions.ImportBase64(env)
-	extensions.ImportCoreUtils(env)
 	extensions.ImportJSON(env)
 	extensions.ImportString(env)
 	extensions.ImportContainerUtils(env)
 	extensions.ImportOS(env)
 	extensions.ImportHTTP(env)
-	extensions.ImportStream(env)
 	env.AddNamedFunction("export-history", exportHistory, glisp.WithDoc(`(export-history FILE)`))
 	env.AddNamedFunction("clear-history", clearHistory, glisp.WithDoc(`(clear-history)`))
 	return env

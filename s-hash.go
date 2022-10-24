@@ -313,3 +313,21 @@ func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, erro
 
 	return result.Get(), nil
 }
+
+func (hash *SexpHash) Explain(env *Environment, field string, args []Sexp) (Sexp, error) {
+	if len(args) > 1 {
+		return WrongNumberArguments("hash field accessor", len(args), 0, 1)
+	}
+	kstr := SexpStr(field)
+	if v, err := hash.HashGet(kstr); err == nil {
+		return v, nil
+	}
+	ksym := env.MakeSymbol(field)
+	if v, err := hash.HashGet(ksym); err == nil {
+		return v, nil
+	}
+	if len(args) == 1 {
+		return args[0], nil
+	}
+	return SexpNull, fmt.Errorf("field %s not found", field)
+}
