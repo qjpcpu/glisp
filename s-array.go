@@ -83,7 +83,7 @@ func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
 		case SexpArray:
 			ret = append(ret, t...)
 		default:
-			return arr, fmt.Errorf("second argument(%s) is not an array", Inspect(expr))
+			return arr, fmt.Errorf("second argument(%s) is not an array", InspectType(expr))
 		}
 	}
 

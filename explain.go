@@ -15,12 +15,12 @@ func Explain(name string) UserFunction {
 			return WrongNumberArguments(name, len(args), 2, Many)
 		}
 		if !IsString(args[0]) {
-			return SexpNull, fmt.Errorf("%s first argument must be symbol but got %s", name, Inspect(args[0]))
+			return SexpNull, fmt.Errorf("%s first argument must be symbol but got %s", name, InspectType(args[0]))
 		}
 		if ex, ok := args[1].(ExplainSexp); ok {
 			return ex.Explain(env, string(args[0].(SexpStr)), args[2:])
 		}
-		return SexpNull, fmt.Errorf("type `%s` can't explain `%s`", Inspect(args[1]), args[0].SexpString())
+		return SexpNull, fmt.Errorf("type `%s` can't explain `%s`", InspectType(args[1]), args[0].SexpString())
 	}
 }
 

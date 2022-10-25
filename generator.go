@@ -534,7 +534,7 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 			}
 
 		default:
-			return fmt.Errorf("include: Expected `string`, `list`, `array` given %v", Inspect(item))
+			return fmt.Errorf("include: Expected `string`, `list`, `array` given %v", InspectType(item))
 		}
 
 		return nil
@@ -721,7 +721,7 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 	case *SexpPair:
 		//good, required here
 	default:
-		return fmt.Errorf("arg to generateSyntaxQuoteList() must be list; got %v", Inspect(a))
+		return fmt.Errorf("arg to generateSyntaxQuoteList() must be list; got %v", InspectType(a))
 	}
 
 	// things that need unquoting end up as
@@ -773,7 +773,7 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 		//good, required here
 		arr = a
 	default:
-		return fmt.Errorf("arg to generateSyntaxQuoteArray() must be an array; got %v", Inspect(a))
+		return fmt.Errorf("arg to generateSyntaxQuoteArray() must be an array; got %v", InspectType(a))
 	}
 
 	gen.AddInstruction(PushInstr{SexpMarker})
@@ -795,7 +795,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 		//good, required here
 		hash = a
 	default:
-		return fmt.Errorf("arg to generateSyntaxQuoteHash() must be a hash; got %v", Inspect(a))
+		return fmt.Errorf("arg to generateSyntaxQuoteHash() must be a hash; got %v", InspectType(a))
 	}
 	n := HashCountKeys(hash)
 	gen.AddInstruction(PushInstr{SexpMarker})

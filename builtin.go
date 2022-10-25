@@ -80,7 +80,7 @@ func GetTypeFunction(name string) UserFunction {
 	}
 }
 
-func Inspect(expr Sexp) string {
+func InspectType(expr Sexp) string {
 	if expr == SexpNull {
 		return `nil`
 	}

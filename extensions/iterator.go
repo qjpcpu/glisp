@@ -149,7 +149,7 @@ START:
 		} else if IsStreamable(ret) {
 			iter.inner = expr2Stream(ret)
 		} else {
-			return glisp.SexpNull, false, fmt.Errorf("flatmap element(%s) is not streamable", glisp.Inspect(ret))
+			return glisp.SexpNull, false, fmt.Errorf("flatmap element(%s) is not streamable", glisp.InspectType(ret))
 		}
 	}
 	elem, ok, err := iter.inner.Next(env)
@@ -179,7 +179,7 @@ func (iter *filterIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, erro
 			return glisp.SexpNull, false, err
 		}
 		if !glisp.IsBool(ret) {
-			return glisp.SexpNull, false, fmt.Errorf("filter function should return bool but got %s", glisp.Inspect(ret))
+			return glisp.SexpNull, false, fmt.Errorf("filter function should return bool but got %s", glisp.InspectType(ret))
 		}
 		if bool(ret.(glisp.SexpBool)) {
 			return elem, true, nil
@@ -204,7 +204,7 @@ func (iter *takeIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 			return glisp.SexpNull, false, err
 		}
 		if !glisp.IsBool(ret) {
-			return glisp.SexpNull, false, fmt.Errorf("take function should return bool but got %s", glisp.Inspect(ret))
+			return glisp.SexpNull, false, fmt.Errorf("take function should return bool but got %s", glisp.InspectType(ret))
 		}
 		return elem, bool(ret.(glisp.SexpBool)), nil
 	}
@@ -233,7 +233,7 @@ func (iter *dropIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 				return glisp.SexpNull, false, err
 			}
 			if !glisp.IsBool(ret) {
-				return glisp.SexpNull, false, fmt.Errorf("drop function should return bool but got %s", glisp.Inspect(ret))
+				return glisp.SexpNull, false, fmt.Errorf("drop function should return bool but got %s", glisp.InspectType(ret))
 			}
 			if bool(ret.(glisp.SexpBool)) {
 				continue
@@ -267,7 +267,7 @@ START:
 		} else if IsStreamable(ret) {
 			iter.inner = expr2Stream(ret)
 		} else {
-			return glisp.SexpNull, false, fmt.Errorf("flatten element(%s) is not streamable", glisp.Inspect(ret))
+			return glisp.SexpNull, false, fmt.Errorf("flatten element(%s) is not streamable", glisp.InspectType(ret))
 		}
 	}
 	elem, ok, err := iter.inner.Next(env)
@@ -395,7 +395,7 @@ func (iter *partitionIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, e
 			return glisp.SexpNull, false, err
 		}
 		if !glisp.IsBool(ret) {
-			return glisp.SexpNull, false, fmt.Errorf("partition function must return bool but get %v", glisp.Inspect(ret))
+			return glisp.SexpNull, false, fmt.Errorf("partition function must return bool but get %v", glisp.InspectType(ret))
 		}
 		if !bool(ret.(glisp.SexpBool)) {
 			group.Add(elem)

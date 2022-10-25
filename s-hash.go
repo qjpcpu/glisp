@@ -55,7 +55,7 @@ func HashExpression(expr Sexp) (int, error) {
 		}
 		return 0, nil
 	}
-	return 0, fmt.Errorf("cannot hash type %v", Inspect(expr))
+	return 0, fmt.Errorf("cannot hash type %v", InspectType(expr))
 }
 
 func MakeHash(args []Sexp) (*SexpHash, error) {

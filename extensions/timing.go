@@ -56,7 +56,7 @@ func (t SexpTime) IsZero() bool {
 
 func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
 	if _, ok := b.(SexpTime); !ok {
-		return 0, fmt.Errorf("cannot compare %s to %s", glisp.Inspect(t), glisp.Inspect(b))
+		return 0, fmt.Errorf("cannot compare %s to %s", glisp.InspectType(t), glisp.InspectType(b))
 	}
 	t1 := time.Time(t)
 	t2 := time.Time(b.(SexpTime))
@@ -356,7 +356,7 @@ func TimeFormatFunction(fname string) glisp.UserFunction {
 			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be symbol/string`, fname)
 		}
 		if len(args) == 3 && !glisp.IsString(args[2]) {
-			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.Inspect(args[2]))
+			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.InspectType(args[2]))
 		}
 		tm := time.Time(stm)
 		switch format {

@@ -74,7 +74,7 @@ func GetSortFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 1, 2)
 		}
 		if !glisp.IsFunction(args[0]) && len(args) == 2 {
-			return glisp.SexpNull, fmt.Errorf("first argument must be function but got %v", glisp.Inspect(args[0]))
+			return glisp.SexpNull, fmt.Errorf("first argument must be function but got %v", glisp.InspectType(args[0]))
 		}
 		var f *glisp.SexpFunction
 		var coll glisp.Sexp
@@ -97,7 +97,7 @@ func GetSortFunction(name string) glisp.UserFunction {
 			isList = true
 			arr, _ = glisp.ListToArray(coll)
 		} else {
-			return glisp.SexpNull, fmt.Errorf("second argument must be array/list but got %v", glisp.Inspect(coll))
+			return glisp.SexpNull, fmt.Errorf("second argument must be array/list but got %v", glisp.InspectType(coll))
 		}
 		sort.SliceStable(arr, func(i, j int) bool {
 			res, _ := env.Apply(f, []glisp.Sexp{arr[i], arr[j]})

@@ -72,7 +72,7 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 			if len(args) == 2 {
 				return args[1], nil
 			}
-			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes but got %v", name, glisp.Inspect(args[0]))
+			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes but got %v", name, glisp.InspectType(args[0]))
 		}
 	}
 }

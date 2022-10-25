@@ -455,7 +455,7 @@ func (b BindlistInstr) Execute(env *Environment) error {
 
 		for i := 0; i*2+1 < len(arr); i++ {
 			if !IsSymbol(arr[i*2]) {
-				return errors.New("odd argument of bind list must be symbol but got " + Inspect(arr[i*2]))
+				return errors.New("odd argument of bind list must be symbol but got " + InspectType(arr[i*2]))
 			}
 			env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
 		}
@@ -466,14 +466,14 @@ func (b BindlistInstr) Execute(env *Environment) error {
 				env.scopestack.BindSymbol(k.(SexpSymbol), v)
 				return true
 			}
-			err = errors.New("hash key must be symbol but got " + Inspect(k))
+			err = errors.New("hash key must be symbol but got " + InspectType(k))
 			return false
 		})
 		if err != nil {
 			return err
 		}
 	default:
-		return fmt.Errorf(`bad let binding type %v`, Inspect(expr))
+		return fmt.Errorf(`bad let binding type %v`, InspectType(expr))
 	}
 
 	env.pc++

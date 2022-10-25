@@ -48,7 +48,7 @@ func ExecCommand(name string) glisp.UserFunction {
 			case glisp.SexpBytes:
 				arguments = append(arguments, string(expr.Bytes()))
 			default:
-				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.Inspect(arg))
+				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
 			}
 		}
 		var buf bytes.Buffer
@@ -150,7 +150,7 @@ func Getenv(name string) glisp.UserFunction {
 			return glisp.SexpNull, errors.New("no arguments")
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[0]))
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[0]))
 		}
 		return glisp.SexpStr(os.Getenv(string(args[0].(glisp.SexpStr)))), nil
 	}
@@ -162,10 +162,10 @@ func Setenv(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[0]))
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[0]))
 		}
 		if !glisp.IsString(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.Inspect(args[1]))
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[1]))
 		}
 		name := string(args[0].(glisp.SexpStr))
 		if name == `` {
@@ -189,7 +189,7 @@ func RunCommand(name string) glisp.UserFunction {
 			return glisp.SexpNull, errors.New("no command arguments")
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.Inspect(args[0]))
+			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.InspectType(args[0]))
 		}
 		cmd := exec.Command("bash", "-c", string(args[0].(glisp.SexpStr)))
 		cmd.Stdin = os.Stdin

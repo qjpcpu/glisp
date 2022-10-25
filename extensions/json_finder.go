@@ -445,7 +445,7 @@ func setSexp(root glisp.Sexp, tokens []stPath, val glisp.Sexp) (glisp.Sexp, erro
 		}
 		return expr, nil
 	default:
-		return glisp.SexpNull, fmt.Errorf("must set on hash/array but got %v", glisp.Inspect(root))
+		return glisp.SexpNull, fmt.Errorf("must set on hash/array but got %v", glisp.InspectType(root))
 	}
 }
 
@@ -527,6 +527,6 @@ func delSexp(root glisp.Sexp, tokens []stPath) (glisp.Sexp, error) {
 		}
 		return expr, nil
 	default:
-		return glisp.SexpNull, fmt.Errorf("must del on hash/array but got %v", glisp.Inspect(root))
+		return glisp.SexpNull, fmt.Errorf("must del on hash/array but got %v", glisp.InspectType(root))
 	}
 }
