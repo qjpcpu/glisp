@@ -1,38 +1,9 @@
 package extensions
 
 import (
-	"bytes"
 	"fmt"
-
-	_ "embed"
-
 	"github.com/qjpcpu/glisp"
 )
-
-var (
-	//go:embed stream_utils.lisp
-	stream_scripts string
-)
-
-func ImportStream(vm *glisp.Environment) error {
-	env := autoAddDoc(vm)
-	env.AddNamedFunction("streamable?", IsStreamableFunction)
-	env.AddNamedFunction("stream?", IsStreamFunction)
-	env.AddNamedFunction("stream", StreamFunction)
-	env.AddNamedFunction("map", StreamMapFunction)
-	env.AddNamedFunction("flatmap", StreamFlatmapFunction)
-	env.AddNamedFunction("filter", StreamFilterFunction)
-	env.AddNamedFunction("take", StreamTakeFunction)
-	env.AddNamedFunction("drop", StreamDropFunction)
-	env.OverrideFunction("flatten", StreamFlattenFunction)
-	env.AddNamedFunction("foldl", StreamFoldlFunction)
-	env.AddNamedFunction("realize", StreamRealizeFunction)
-	env.AddNamedFunction("range", StreamRangeFunction)
-	env.AddNamedFunction("partition", StreamPartitionFunction)
-	env.AddNamedFunction("zip", StreamZipFunction)
-	env.AddNamedFunction("union", StreamUnionFunction)
-	return env.SourceStream(bytes.NewBufferString(stream_scripts))
-}
 
 func StreamFunction(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {

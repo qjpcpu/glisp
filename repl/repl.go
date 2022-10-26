@@ -171,7 +171,6 @@ func newEnv() *glisp.Environment {
 	env := glisp.New()
 	env.ImportEval()
 	extensions.ImportCoreUtils(env)
-	extensions.ImportStream(env)
 	extensions.ImportRandom(env)
 	extensions.ImportMathUtils(env)
 	extensions.ImportTime(env)

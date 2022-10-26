@@ -36,6 +36,22 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
 	env.AddNamedFunction("__doc__", GetDocFunction)
 	env.AddNamedFunction("sort", GetSortFunction)
+	/* stream */
+	env.AddNamedFunction("streamable?", IsStreamableFunction)
+	env.AddNamedFunction("stream?", IsStreamFunction)
+	env.AddNamedFunction("stream", StreamFunction)
+	env.AddNamedFunction("map", StreamMapFunction)
+	env.AddNamedFunction("flatmap", StreamFlatmapFunction)
+	env.AddNamedFunction("filter", StreamFilterFunction)
+	env.AddNamedFunction("take", StreamTakeFunction)
+	env.AddNamedFunction("drop", StreamDropFunction)
+	env.OverrideFunction("flatten", StreamFlattenFunction)
+	env.AddNamedFunction("foldl", StreamFoldlFunction)
+	env.AddNamedFunction("realize", StreamRealizeFunction)
+	env.AddNamedFunction("range", StreamRangeFunction)
+	env.AddNamedFunction("partition", StreamPartitionFunction)
+	env.AddNamedFunction("zip", StreamZipFunction)
+	env.AddNamedFunction("union", StreamUnionFunction)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }
 
