@@ -661,3 +661,14 @@ func TestListFuzzyMacroName(t *testing.T) {
 	testMacro(`(fuzzy-123)`, `number:123`)
 	testMacro(`(fuzzy-456)`, `number:456`)
 }
+
+func TestDefineClassInGolang(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	extensions.NewRecordClassBuilder("test/Options").
+		AddField("Name", "string").
+		AddField("Age", "int").
+		Build(vm)
+	script := `(def p (->test/Options Name "hello" Age (+ 1 2))) (assert (= "hello" (:Name p))) (assert (= 3 (:Age p)))`
+	_, err := vm.EvalString(script)
+	ExpectSuccess(t, err)
+}
