@@ -15,7 +15,7 @@ type SexpFunction struct {
 }
 
 func (sf *SexpFunction) SexpString() string {
-	return "fn [" + sf.name + "]"
+	return "fn:" + sf.name
 }
 
 func (sf *SexpFunction) Clone() *SexpFunction {

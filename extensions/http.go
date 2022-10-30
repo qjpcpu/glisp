@@ -17,15 +17,56 @@ import (
 
 func ImportHTTP(vm *glisp.Environment) error {
 	env := autoAddDoc(vm)
+	env.AddNamedMacro("http/get", DoHTTPMacro(false))
 	env.AddNamedFunction("http/get", DoHTTP(false))
+
+	env.AddNamedMacro("http/post", DoHTTPMacro(false))
 	env.AddNamedFunction("http/post", DoHTTP(false))
+
+	env.AddNamedMacro("http/put", DoHTTPMacro(false))
 	env.AddNamedFunction("http/put", DoHTTP(false))
+
+	env.AddNamedMacro("http/patch", DoHTTPMacro(false))
 	env.AddNamedFunction("http/patch", DoHTTP(false))
+
+	env.AddNamedMacro("http/delete", DoHTTPMacro(false))
 	env.AddNamedFunction("http/delete", DoHTTP(false))
+
+	env.AddNamedMacro("http/options", DoHTTPMacro(false))
 	env.AddNamedFunction("http/options", DoHTTP(false))
+
+	env.AddNamedMacro("http/head", DoHTTPMacro(false))
 	env.AddNamedFunction("http/head", DoHTTP(false))
+
+	env.AddNamedMacro("http/curl", DoHTTPMacro(true))
 	env.AddNamedFunction("http/curl", DoHTTP(true))
 	return nil
+}
+
+func DoHTTPMacro(withRespStatus bool) glisp.NamedUserFunction {
+	return func(name string) glisp.UserFunction {
+		realFn := glisp.MakeUserFunction(name, DoHTTP(withRespStatus)(name))
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			for i := 0; i < len(args); i++ {
+				arg := args[i]
+				if option, ok := _httpIsOption(arg); ok {
+					args[i] = glisp.MakeList([]glisp.Sexp{
+						env.MakeSymbol("quote"),
+						arg,
+					})
+					if option.needValue {
+						i++
+					}
+				}
+			}
+			lb := glisp.NewListBuilder()
+			lb.Add(realFn)
+			for i := range args {
+				lb.Add(args[i])
+			}
+			return lb.Get(), nil
+		}
+	}
 }
 
 /* (http/get|post|put|patch|delete OPTIONS URL) */
@@ -66,6 +107,9 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 					}
 					functions = append(functions, func(req *request) (*request, error) {
 						req.URL = string(arg.(glisp.SexpStr))
+						if !strings.HasPrefix(req.URL, "http") {
+							req.URL = "http://" + req.URL
+						}
 						return req, nil
 					})
 				}
@@ -108,7 +152,7 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			}
 			resp, err := cli.Do(req)
 			if err != nil {
-				return glisp.SexpNull, err
+				return glisp.SexpNull, fmt.Errorf("%s %v fail %v", req.Method, req.URL.String(), err)
 			}
 
 			/* parse response */
@@ -141,9 +185,6 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 func _httpIsOption(expr glisp.Sexp) (httpOption, bool) {
 	if glisp.IsSymbol(expr) {
 		opt, ok := availableHttpOptions[expr.(glisp.SexpSymbol).Name()]
-		return opt, ok
-	} else if glisp.IsString(expr) {
-		opt, ok := availableHttpOptions[string(expr.(glisp.SexpStr))]
 		return opt, ok
 	}
 	return httpOption{}, false

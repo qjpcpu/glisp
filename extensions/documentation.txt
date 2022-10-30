@@ -101,168 +101,168 @@ Encode bytes to string.
 Usage: (http/get options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/post ==========
 Usage: (http/post options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/put ==========
 Usage: (http/put options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/patch ==========
 Usage: (http/patch options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/delete ==========
 Usage: (http/delete options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/options ==========
 Usage: (http/options options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/head ==========
 Usage: (http/head options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== http/curl ==========
 Usage: (http/curl options url)
 
 Available options:
-'-H "key:val"
+-H "key:val"
   add custom header with key-val pair string.
 
-'-i
+-i
   include response header in output.
 
-'-timeout val
+-timeout val
   set request timeout. If val is integer, means timeout in seconds. Or val can be duration string. like:
   "300ms", "1.5h", "2h45m" etc.
   Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-'-X method
-  custom http method, only make sense in fucntion http/curl.
+-X method
+  custom http method, only make sense in function http/curl.
 
-'-d data
+-d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
 ========== json/stringify ==========

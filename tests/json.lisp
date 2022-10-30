@@ -41,7 +41,7 @@
 
 (assert (= [1] (json/parse "[1]")))
 
-(assert (= "\"fn [+]\"" (json/stringify +)))
+(assert (= "\"fn:+\"" (json/stringify +)))
 (assert (= "97" (json/stringify #a)))
 
 (assert (= "[1,2,3]" (json/stringify '(1 2 3))))
