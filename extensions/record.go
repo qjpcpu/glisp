@@ -264,7 +264,7 @@ func AssocRecordField(name string) glisp.UserFunction {
 			return glisp.SexpNull, fmt.Errorf("second argument must be symbol but got %v", glisp.InspectType(args[1]))
 		}
 		record, field := args[0].(*SexpRecord), args[1].(glisp.SexpSymbol)
-		return glisp.SexpNull, record.SetField(field.Name(), args[2])
+		return record, record.SetField(field.Name(), args[2])
 	}
 }
 

@@ -315,3 +315,18 @@ Convert a string to symbol.
 Usage: (bytes str)
 
 Convert string to bytes.
+
+========== read ==========
+Usage: (read str)
+
+Parse s-expr from string.
+
+========== source-file ==========
+Usage: (source-file f)
+
+Source glisp script file.
+
+========== eval ==========
+Usage: (eval s-expr)
+
+Eval s expression.

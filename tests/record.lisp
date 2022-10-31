@@ -88,3 +88,9 @@
 
 (assert (record? fam))
 (assert (record-of? fam Family))
+
+(def multiset (-> (->Person)
+    (assoc Name "multi")
+    (assoc Age 120)))
+(assert (= "multi" (:Name multiset)))
+(assert (= 120 (:Age multiset)))
