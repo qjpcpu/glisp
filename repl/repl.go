@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	history  = GetHistory()
-	keywords []string
+	history = GetHistory()
 )
 
-func registKeywords(vm *glisp.Environment) {
-	keywords = nil
+func getKeywords(vm *glisp.Environment) []string {
+	var keywords []string
 	for _, fn := range vm.GlobalFunctions() {
-		if len(fn) > 1 && !strings.Contains(fn, "__") {
+		if len(fn) > 1 && !strings.Contains(fn, "__") && !strings.Contains(fn, "/_") {
 			keywords = append(keywords, fn)
 		}
 	}
+	return keywords
 }
 
 // find word backward until space or tab or newline
@@ -35,7 +35,7 @@ func findWordBackward(line string) (string, int) {
 	return line, 0
 }
 
-func getLine(prefix string) (string, error) {
+func getLine(prefix string, keywords []string) (string, error) {
 	line := liner.NewLiner()
 	defer line.Close()
 
@@ -67,12 +67,12 @@ func getLine(prefix string) (string, error) {
 	}
 }
 
-func readLine(waitMore bool) (string, error) {
+func readLine(keywords []string, waitMore bool) (string, error) {
 	prefix := "> "
 	if waitMore {
 		prefix = ">> "
 	}
-	line, err := getLine(prefix)
+	line, err := getLine(prefix, keywords)
 	if err != nil {
 		return "", err
 	}
@@ -110,7 +110,7 @@ func repl(env *glisp.Environment) {
 	}
 
 	for {
-		line, err := readLine(waitMore)
+		line, err := readLine(getKeywords(env), waitMore)
 		if err != nil {
 			stremRepl.Stop()
 			os.Exit(-1)
@@ -197,7 +197,6 @@ func RunScript(file string, interactive bool, opts ...EnvOption) {
 	}
 	runScript(env, file)
 	if interactive {
-		registKeywords(env)
 		repl(env)
 	}
 }
@@ -224,6 +223,5 @@ func Run(opts ...EnvOption) {
 	for _, fn := range opts {
 		fn(env)
 	}
-	registKeywords(env)
 	repl(env)
 }

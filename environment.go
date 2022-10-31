@@ -405,8 +405,8 @@ func (env *Environment) AddFuzzyMacro(name string, function UserFunction, opts .
 }
 
 func (env *Environment) ImportEval() error {
-	env.AddNamedFunction("source-file", GetSourceFileFunction)
-	env.AddNamedFunction("eval", GetEvalFunction)
+	env.AddNamedFunction("source-file", GetSourceFileFunction, WithDoc(QueryBuiltinDoc("source-file")))
+	env.AddNamedFunction("eval", GetEvalFunction, WithDoc(QueryBuiltinDoc("eval")))
 	return nil
 }
 

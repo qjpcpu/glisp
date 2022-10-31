@@ -330,3 +330,13 @@ Source glisp script file.
 Usage: (eval s-expr)
 
 Eval s expression.
+
+========== function? ==========
+Usage: (function? x)
+
+Returns true if x is function.
+
+========== explain ==========
+Usage: (explain name context args...)
+
+Explain name with optional args in context.
