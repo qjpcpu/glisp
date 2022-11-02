@@ -797,7 +797,10 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	default:
 		return fmt.Errorf("arg to generateSyntaxQuoteHash() must be a hash; got %v", InspectType(a))
 	}
-	n := HashCountKeys(hash)
+	n, err := HashCountKeys(hash)
+	if err != nil {
+		return err
+	}
 	gen.AddInstruction(PushInstr{SexpMarker})
 	for i := 0; i < n; i++ {
 		// must reverse order here to preserve order on rebuild

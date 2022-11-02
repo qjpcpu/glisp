@@ -355,7 +355,8 @@ func GetLenFunction(name string) UserFunction {
 		case SexpStr:
 			return NewSexpInt(lenOfStr(string(t))), nil
 		case *SexpHash:
-			return NewSexpInt(HashCountKeys(t)), nil
+			n, err := HashCountKeys(t)
+			return NewSexpInt(n), err
 		case *SexpPair:
 			if IsList(t) {
 				arr, _ := ListToArray(t)

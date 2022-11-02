@@ -188,15 +188,15 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 	return nil
 }
 
-func HashCountKeys(hash *SexpHash) int {
+func HashCountKeys(hash *SexpHash) (int, error) {
 	var num int
 	for _, arr := range hash.Map {
 		num += len(arr)
 	}
 	if num != hash.NumKeys {
-		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, hash.NumKeys))
+		return 0, fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, hash.NumKeys)
 	}
-	return num
+	return num, nil
 }
 
 func (hash *SexpHash) Foreach(fn func(Sexp, Sexp) bool) {

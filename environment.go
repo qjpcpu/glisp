@@ -170,7 +170,7 @@ func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 	}
 
 	if env.scopestack.IsEmpty() {
-		panic("where's the global scope?")
+		return errors.New("where's the global scope?")
 	}
 	globalScopes := env.globalScopes()
 	env.stackstack.Push(env.scopestack)
