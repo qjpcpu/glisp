@@ -9,32 +9,37 @@ import (
 
 func GetCompareFunction(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
 		}
 
-		res, err := glisp.Compare(args[0], args[1])
-		if err != nil {
-			return glisp.SexpNull, err
+		for i := 1; i < len(args); i++ {
+			res, err := glisp.Compare(args[i-1], args[i])
+			if err != nil {
+				return glisp.SexpNull, err
+			}
+
+			var cond bool
+			switch name {
+			case "<":
+				cond = res < 0
+			case ">":
+				cond = res > 0
+			case "<=":
+				cond = res <= 0
+			case ">=":
+				cond = res >= 0
+			case "=":
+				cond = res == 0
+			case "not=", "!=":
+				cond = res != 0
+			}
+			if !cond {
+				return glisp.SexpBool(false), nil
+			}
 		}
 
-		cond := false
-		switch name {
-		case "<":
-			cond = res < 0
-		case ">":
-			cond = res > 0
-		case "<=":
-			cond = res <= 0
-		case ">=":
-			cond = res >= 0
-		case "=":
-			cond = res == 0
-		case "not=", "!=":
-			cond = res != 0
-		}
-
-		return glisp.SexpBool(cond), nil
+		return glisp.SexpBool(true), nil
 	}
 }
 

@@ -23,3 +23,14 @@
 (assert (= 0B6869 "hi"))
 (assert (> true false))
 (assert (< false true))
+
+(assert (<= 1 2 3 4 4 5))
+(assert (>= 5 4 3 2 1 1))
+
+(assert (not (< 1 2 3 4 4 5)))
+(assert (< 1 2 3 4 5))
+(assert (not (> 5 4 3 2 1 1)))
+
+(assert (= 1 1 (- 3 1 1)))
+(assert (!= 1 2 3 4 5))
+(assert (not (!= 1 2 3 4 5 5)))
