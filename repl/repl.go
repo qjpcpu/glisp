@@ -3,6 +3,7 @@ package repl
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ func getKeywords(vm *glisp.Environment) []string {
 			keywords = append(keywords, fn)
 		}
 	}
+	sort.Strings(keywords)
 	return keywords
 }
 
