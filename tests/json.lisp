@@ -72,3 +72,8 @@
 (assert (= "hash" (type (json/parse "[1" {}))))
 
 (assert (= 1 (json/parse '() 1)))
+
+;; json marshal float shouldn't lost precision
+(assert (= "{\"a\":119.38907218102548}" (json/stringify {"a" (+ 1 118.38907218102548)})))
+(assert (= "119.38907218102548" (string (+ 1 118.38907218102548))))
+(assert (= "119.38907218102548" (sexp-str (+ 1 118.38907218102548))))

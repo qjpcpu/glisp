@@ -39,7 +39,7 @@ func Marshal(a Sexp) ([]byte, error) {
 }
 
 func (a SexpInt) MarshalJSON() ([]byte, error) {
-	return []byte(a.SexpString()), nil
+	return a.v.MarshalText()
 }
 
 func (a *SexpFunction) MarshalJSON() ([]byte, error) {
@@ -66,7 +66,7 @@ func (a SexpSymbol) MarshalJSON() ([]byte, error) {
 }
 
 func (a SexpFloat) MarshalJSON() ([]byte, error) {
-	return []byte(a.SexpString()), nil
+	return a.v.MarshalText()
 }
 
 func (a SexpChar) MarshalJSON() ([]byte, error) {

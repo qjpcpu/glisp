@@ -33,7 +33,8 @@ func (f SexpFloat) SexpString() string {
 	if f.rawStr != "" {
 		return f.rawStr
 	}
-	return f.v.String()
+	text, _ := f.v.MarshalText()
+	return string(text)
 }
 
 func (f SexpFloat) ToString(prec int) string {
