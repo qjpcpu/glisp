@@ -11,7 +11,16 @@ import (
 type SexpRecordClass interface {
 	glisp.Sexp
 	glisp.ITypeName
-	isRecordClass()
+	MakeRecord(args []glisp.Sexp) (SexpRecord, error)
+}
+
+type SexpRecord interface {
+	glisp.Sexp
+	glisp.ITypeName
+	Class() SexpRecordClass
+	GetField(name string) (glisp.Sexp, error)
+	GetFieldDefault(name string, defaultVal glisp.Sexp) glisp.Sexp
+	SetField(name string, val glisp.Sexp) error
 }
 
 /* struct class */
@@ -36,8 +45,6 @@ func (class *sexpRecordClass) SexpString() string {
 	return sb.String()
 }
 
-func (class *sexpRecordClass) isRecordClass() {}
-
 func (class *sexpRecordClass) TypeName() string {
 	return "#class." + class.typeName
 }
@@ -61,44 +68,42 @@ func (class *sexpRecordClass) getConstructor() *glisp.SexpFunction {
 	name := class.constructorName()
 	return glisp.MakeUserFunction(
 		name,
-		buildRecordConstructor(name, class),
+		func(_e *glisp.Environment, _a []glisp.Sexp) (glisp.Sexp, error) { return class.MakeRecord(_a) },
 		glisp.WithDoc(docBuf.String()),
 	)
 }
 
-func buildRecordConstructor(name string, class *sexpRecordClass) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args)%2 != 0 {
-			return glisp.SexpNull, fmt.Errorf("argument of %s count must be even but got %v", name, len(args))
-		}
-		value, _ := glisp.MakeHash(nil)
-		/* set default value */
-		for _, name := range class.fieldNames {
-			value.HashSet(glisp.SexpStr(name), glisp.SexpNull)
-		}
-		for i := 0; i < len(args); i += 2 {
-			if !glisp.IsSymbol(args[i]) {
-				return glisp.SexpNull, fmt.Errorf("field name must be symbol but got %s", glisp.InspectType(args[i]))
-			}
-			f := args[i].(glisp.SexpSymbol).Name()
-			if ft, ok := class.fieldsMeta[f]; !ok {
-				return glisp.SexpNull, fmt.Errorf("type %s not contains a field %s", class.typeName, f)
-			} else if fv := args[i+1]; fv != glisp.SexpNull {
-				if err := checkTypeMatched(ft.Type, fv); err != nil {
-					return glisp.SexpNull, fmt.Errorf("field `%s` %v", ft.Name, err)
-				}
-			}
-			value.HashSet(glisp.SexpStr(f), args[i+1])
-		}
-		return &SexpRecord{
-			class: class,
-			value: value,
-		}, nil
+func (class *sexpRecordClass) MakeRecord(args []glisp.Sexp) (SexpRecord, error) {
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("argument of %s count must be even but got %v", class.constructorName(), len(args))
 	}
+	value, _ := glisp.MakeHash(nil)
+	/* set default value */
+	for _, name := range class.fieldNames {
+		value.HashSet(glisp.SexpStr(name), glisp.SexpNull)
+	}
+	for i := 0; i < len(args); i += 2 {
+		if !glisp.IsSymbol(args[i]) {
+			return nil, fmt.Errorf("field name must be symbol but got %s", glisp.InspectType(args[i]))
+		}
+		f := args[i].(glisp.SexpSymbol).Name()
+		if ft, ok := class.fieldsMeta[f]; !ok {
+			return nil, fmt.Errorf("type %s not contains a field %s", class.typeName, f)
+		} else if fv := args[i+1]; fv != glisp.SexpNull {
+			if err := checkTypeMatched(ft.Type, fv); err != nil {
+				return nil, fmt.Errorf("field `%s` %v", ft.Name, err)
+			}
+		}
+		value.HashSet(glisp.SexpStr(f), args[i+1])
+	}
+	return &sexpRecord{
+		class: class,
+		value: value,
+	}, nil
 }
 
 /* struct instance */
-type SexpRecord struct {
+type sexpRecord struct {
 	class *sexpRecordClass
 	value *glisp.SexpHash
 }
@@ -108,7 +113,7 @@ type sexpRecordField struct {
 	Type string
 }
 
-func (r *SexpRecord) SexpString() string {
+func (r *sexpRecord) SexpString() string {
 	var buf strings.Builder
 	buf.WriteString("#" + r.TypeName() + "{")
 	var i int
@@ -124,15 +129,17 @@ func (r *SexpRecord) SexpString() string {
 	return buf.String()
 }
 
-func (r *SexpRecord) TypeName() string {
+func (r *sexpRecord) TypeName() string {
 	return r.class.typeName
 }
 
-func (t *SexpRecord) MarshalJSON() ([]byte, error) {
+func (r *sexpRecord) Class() SexpRecordClass { return r.class }
+
+func (t *sexpRecord) MarshalJSON() ([]byte, error) {
 	return t.value.MarshalJSON()
 }
 
-func (t *SexpRecord) Explain(env *glisp.Environment, sym string, args []glisp.Sexp) (glisp.Sexp, error) {
+func (t *sexpRecord) Explain(env *glisp.Environment, sym string, args []glisp.Sexp) (glisp.Sexp, error) {
 	switch len(args) {
 	case 0:
 		return t.GetField(sym)
@@ -143,7 +150,7 @@ func (t *SexpRecord) Explain(env *glisp.Environment, sym string, args []glisp.Se
 	}
 }
 
-func (t *SexpRecord) GetField(name string) (glisp.Sexp, error) {
+func (t *sexpRecord) GetField(name string) (glisp.Sexp, error) {
 	if _, ok := t.class.fieldsMeta[name]; !ok {
 		return glisp.SexpNull, fmt.Errorf("record<%s> not have a field named %s", t.TypeName(), name)
 	}
@@ -151,7 +158,7 @@ func (t *SexpRecord) GetField(name string) (glisp.Sexp, error) {
 	return fv, nil
 }
 
-func (t *SexpRecord) GetFieldDefault(name string, defaultVal glisp.Sexp) glisp.Sexp {
+func (t *sexpRecord) GetFieldDefault(name string, defaultVal glisp.Sexp) glisp.Sexp {
 	ret, err := t.GetField(name)
 	if err != nil || ret == glisp.SexpNull {
 		return defaultVal
@@ -159,7 +166,7 @@ func (t *SexpRecord) GetFieldDefault(name string, defaultVal glisp.Sexp) glisp.S
 	return ret
 }
 
-func (t *SexpRecord) SetField(name string, val glisp.Sexp) error {
+func (t *sexpRecord) SetField(name string, val glisp.Sexp) error {
 	if f, ok := t.class.fieldsMeta[name]; ok {
 		if err := checkTypeMatched(f.Type, val); err != nil {
 			return err
@@ -170,7 +177,7 @@ func (t *SexpRecord) SetField(name string, val glisp.Sexp) error {
 }
 
 func IsRecord(args glisp.Sexp) bool {
-	_, ok := args.(*SexpRecord)
+	_, ok := args.(SexpRecord)
 	return ok
 }
 
@@ -253,18 +260,27 @@ func checkTypeMatched(typ string, v glisp.Sexp) error {
 }
 
 func AssocRecordField(name string) glisp.UserFunction {
+	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if !IsRecord(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("first argument must be record but got %v", glisp.InspectType(args[0]))
+		}
+		record, field := args[0].(SexpRecord), args[1].(glisp.SexpSymbol)
+		return record, record.SetField(field.Name(), args[2])
+	}
+	sexpfn := glisp.MakeUserFunction(name, userfn)
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 3 {
 			return glisp.WrongNumberArguments(name, len(args), 3)
 		}
-		if !IsRecord(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("first argument must be record but got %v", glisp.InspectType(args[0]))
-		}
 		if !glisp.IsSymbol(args[1]) {
 			return glisp.SexpNull, fmt.Errorf("second argument must be symbol but got %v", glisp.InspectType(args[1]))
 		}
-		record, field := args[0].(*SexpRecord), args[1].(glisp.SexpSymbol)
-		return record, record.SetField(field.Name(), args[2])
+		return glisp.MakeList([]glisp.Sexp{
+			sexpfn,
+			args[0],
+			glisp.MakeList([]glisp.Sexp{env.MakeSymbol("quote"), args[1]}),
+			args[2],
+		}), nil
 	}
 }
 
@@ -294,7 +310,7 @@ func CheckIsRecordOf(name string) glisp.UserFunction {
 }
 
 func IsRecordOf(r glisp.Sexp, typ string) bool {
-	return IsRecord(r) && r.(*SexpRecord).class.TypeName() == typ
+	return IsRecord(r) && r.(SexpRecord).Class().TypeName() == typ
 }
 
 /* (defrecord MyType  (name type) (name2 type2) ) */

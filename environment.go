@@ -127,7 +127,11 @@ func (env *Environment) MakeSymbol(name string) SexpSymbol {
 	return symbol
 }
 
-func (env *Environment) GenSymbol(prefix string) SexpSymbol {
+func (env *Environment) GenSymbol(optionalPrefix ...string) SexpSymbol {
+	prefix := "__anon"
+	if len(optionalPrefix) > 0 && optionalPrefix[0] != "" {
+		prefix = optionalPrefix[0]
+	}
 	symname := prefix + strconv.FormatInt(env.nextsymbol.Get(), 10)
 	return env.MakeSymbol(symname)
 }

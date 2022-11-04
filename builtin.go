@@ -9,6 +9,11 @@ type ITypeName interface {
 	TypeName() string
 }
 
+func IsIType(s Sexp) bool {
+	_, ok := s.(ITypeName)
+	return ok
+}
+
 func GetGenSymFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		if len(args) != 0 {

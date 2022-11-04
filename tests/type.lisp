@@ -21,3 +21,5 @@
 (assert (= "symbol" (type (symbol 'a))))
 (assert (= nil '()))
 (assert (nil? nil))
+
+(assert (= "stream" (type (range))))

@@ -187,24 +187,6 @@ func testFile(t *testing.T, file string) {
 	t.Logf("TEST %s OK", file)
 }
 
-func testFileAgain(t *testing.T, file string) {
-	testit := func(fn func([]glisp.Sexp) string, expressions []glisp.Sexp) {
-		vm := loadAllExtensions(glisp.New())
-		err := vm.LoadString(fn(expressions))
-		ExpectSuccess(t, err)
-
-		_, err = vm.Run()
-		t.Log("==========", file, "============\n", fn(expressions))
-		ExpectSuccess(t, err)
-		t.Logf("TEST %s OK", file)
-	}
-	vm := loadAllExtensions(glisp.New())
-	expressions, err := vm.ParseFile(file)
-	ExpectSuccess(t, err)
-	testit(glisp.FormatCompact, expressions)
-	testit(glisp.FormatPretty, expressions)
-}
-
 func listScripts(t *testing.T) []string {
 	files, err := ioutil.ReadDir(testDir)
 	ExpectSuccess(t, err)

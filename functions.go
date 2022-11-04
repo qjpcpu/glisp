@@ -45,11 +45,6 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"function?":  GetTypeQueryFunction,
 	"not":        GetNotFunction,
 	"apply":      GetApplyFunction,
-	"map":        GetMapFunction,
-	"flatmap":    GetFlatMapFunction,
-	"compose":    GetComposeFunction,
-	"foldl":      GetFoldlFunction,
-	"filter":     GetFilterFunction,
 	"make-array": GetMakeArrayFunction,
 	"aget":       GetArrayAccessFunction,
 	"aset!":      GetArrayAccessFunction,
@@ -76,7 +71,6 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,
-	"explain":    Explain,
 }
 
 func GetConsFunction(name string) UserFunction {
@@ -413,6 +407,9 @@ func concatSexp(args []Sexp) (Sexp, error) {
 		return ConcatList(t, args[1:]...)
 	case SexpBytes:
 		return ConcatBytes(t, args[1:]...)
+	case *SexpHash:
+		h, _ := MakeHash(nil)
+		return ConcatHash(h, args...)
 	case SexpSentinel:
 		if t == SexpNull {
 			return concatSexp(args[1:])
@@ -550,66 +547,6 @@ func GetApplyFunction(name string) UserFunction {
 		}
 
 		return env.Apply(fun, funargs)
-	}
-}
-
-func GetMapFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
-		}
-		var fun *SexpFunction
-
-		switch e := args[0].(type) {
-		case *SexpFunction:
-			fun = e
-		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %v", InspectType(e))
-		}
-
-		switch e := args[1].(type) {
-		case SexpArray:
-			return MapArray(env, fun, e)
-		case *SexpPair:
-			return MapList(env, fun, e)
-		case *SexpHash:
-			return MapHash(env, fun, e)
-		case SexpSentinel:
-			if e == SexpNull {
-				return SexpNull, nil
-			}
-		}
-		return SexpNull, errors.New("second argument of map must be array/list but got " + InspectType(args[1]))
-	}
-}
-
-func GetFlatMapFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
-		}
-		var fun *SexpFunction
-
-		switch e := args[0].(type) {
-		case *SexpFunction:
-			fun = e
-		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %v", InspectType(e))
-		}
-
-		switch e := args[1].(type) {
-		case SexpArray:
-			return FlatMapArray(env, fun, e)
-		case *SexpHash:
-			return FlatMapHash(env, fun, e)
-		case *SexpPair:
-			return FlatMapList(env, fun, e)
-		case SexpSentinel:
-			if e == SexpNull {
-				return SexpNull, nil
-			}
-		}
-		return SexpNull, errors.New("second argument of map must be array/list")
 	}
 }
 
@@ -889,93 +826,6 @@ func GetAnyToFloat(name string) UserFunction {
 			return NewSexpFloatInt(val), nil
 		}
 		return SexpNull, fmt.Errorf(`%s argument should be string/int/float`, name)
-	}
-}
-
-/* (foldl function accumulate list/array/hash) */
-func GetFoldlFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 3 {
-			return WrongNumberArguments(name, len(args), 3)
-		}
-		var fun *SexpFunction
-
-		switch e := args[0].(type) {
-		case *SexpFunction:
-			fun = e
-		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %v", InspectType(e))
-		}
-
-		switch e := args[2].(type) {
-		case SexpArray:
-			return FoldlArray(env, fun, e, args[1])
-		case *SexpPair:
-			return FoldlList(env, fun, e, args[1])
-		case *SexpHash:
-			return FoldlHash(env, fun, e, args[1])
-		case SexpSentinel:
-			if e == SexpNull {
-				return args[1], nil
-			}
-		}
-		return SexpNull, fmt.Errorf("third argument of %s must be array/list", name)
-	}
-}
-
-/* (filter function list/array/hash) */
-func GetFilterFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
-		}
-		var fun *SexpFunction
-
-		switch e := args[0].(type) {
-		case *SexpFunction:
-			fun = e
-		default:
-			return SexpNull, fmt.Errorf("first argument of map must be function had %v", InspectType(e))
-		}
-
-		switch e := args[1].(type) {
-		case SexpArray:
-			return FilterArray(env, fun, e)
-		case *SexpPair:
-			return FilterList(env, fun, e)
-		case *SexpHash:
-			return FilterHash(env, fun, e)
-		case SexpSentinel:
-			if e == SexpNull {
-				return e, nil
-			}
-		}
-		return SexpNull, fmt.Errorf("second argument of %s must be array/list but got %s", name, InspectType(args[1]))
-	}
-}
-
-func GetComposeFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 {
-			return WrongNumberArguments(name, len(args), 2, Many)
-		}
-		for _, fn := range args {
-			if !IsFunction(fn) {
-				return SexpNull, errors.New("argument should be function")
-			}
-		}
-		return MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *Environment, _args []Sexp) (Sexp, error) {
-			for i := len(args) - 1; i >= 0; i-- {
-				fn := args[i].(*SexpFunction)
-				ret, err := _env.Apply(fn, _args)
-				if err != nil {
-					return SexpNull, err
-				}
-				_args = []Sexp{ret}
-			}
-			/* len(_args) is greater than 0, because function always return something */
-			return _args[0], nil
-		}), nil
 	}
 }
 

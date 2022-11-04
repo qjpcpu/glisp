@@ -268,23 +268,6 @@ func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (S
 	return acc, nil
 }
 
-func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
-	result := NewListBuilder()
-	for _, key := range arr.KeyOrder {
-		val, err := arr.HashGet(key)
-		if err != nil {
-			return SexpNull, err
-		}
-		elem, err := env.Apply(fun, []Sexp{Cons(key, val)})
-		if err != nil {
-			return SexpNull, err
-		}
-		result.Add(elem)
-	}
-
-	return result.Get(), nil
-}
-
 func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
 	result := NewListBuilder()
 
@@ -330,4 +313,18 @@ func (hash *SexpHash) Explain(env *Environment, field string, args []Sexp) (Sexp
 		return args[0], nil
 	}
 	return SexpNull, fmt.Errorf("field %s not found", field)
+}
+
+func ConcatHash(h *SexpHash, b ...Sexp) (Sexp, error) {
+	for _, e := range b {
+		if !IsHash(e) {
+			return SexpNull, fmt.Errorf("expect hash but got %s", InspectType(e))
+		}
+		eh := e.(*SexpHash)
+		for _, key := range eh.KeyOrder {
+			val, _ := eh.HashGet(key)
+			h.HashSet(key, val)
+		}
+	}
+	return h, nil
 }

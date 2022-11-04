@@ -23,7 +23,6 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 			return e.ImportEval()
 		},
 		extensions.ImportCoreUtils,
-		extensions.ImportContainerUtils,
 		extensions.ImportJSON,
 		extensions.ImportMathUtils,
 		extensions.ImportBase64,

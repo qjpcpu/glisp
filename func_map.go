@@ -1,29 +1,5 @@
 package glisp
 
-import (
-	"fmt"
-)
-
-type ExplainSexp interface {
-	Explain(*Environment, string, []Sexp) (Sexp, error)
-}
-
-/* (explain string context args...) */
-func Explain(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 {
-			return WrongNumberArguments(name, len(args), 2, Many)
-		}
-		if !IsString(args[0]) {
-			return SexpNull, fmt.Errorf("%s first argument must be symbol but got %s", name, InspectType(args[0]))
-		}
-		if ex, ok := args[1].(ExplainSexp); ok {
-			return ex.Explain(env, string(args[0].(SexpStr)), args[2:])
-		}
-		return SexpNull, fmt.Errorf("type `%s` can't explain `%s`", InspectType(args[1]), args[0].SexpString())
-	}
-}
-
 type FuncMap struct {
 	funcs map[int]*SexpFunction
 	fuzzy []*SexpFunction

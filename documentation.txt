@@ -117,26 +117,11 @@ Usage: (apply f args)
 
 Applies fn f to the argument list. `f` can be function or symbol refer to a function, args can be list or array.
 
-========== map ==========
-Usage: (map f coll)
-
-Returns a sequence consisting of the result of applying f to
-the set of first items of each coll, followed by applying f to the
-set of second items in each coll, until any one of the colls is
-exhausted. coll can be array or list.
-
 ========== flatmap ==========
 Usage: (flatmap f coll)
 
 Applies f to every value in the reduction of coll, concatenating the result
 colls of (f val). Foldable.
-
-========== compose ==========
-Usage: (compose f1 f2 & more)
-
-Composes its arguments into a single composite function. All its arguments are assumed to designate functions which take one argument and return one argument.
-
-((compose f g) 42) is equivalent to (f (g 42)). Composition is right-associative.
 
 ========== foldl ==========
 Usage: (foldl f accumulate coll)
@@ -335,8 +320,3 @@ Eval s expression.
 Usage: (function? x)
 
 Returns true if x is function.
-
-========== explain ==========
-Usage: (explain name context args...)
-
-Explain name with optional args in context.

@@ -160,31 +160,28 @@ func runScript(env *glisp.Environment, fname string) {
 	}
 }
 
-func fmtScript(env *glisp.Environment, fname string) {
-	expressions, err := env.ParseFile(fname)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-	fmt.Println(glisp.FormatPretty(expressions))
-}
-
 func newEnv() *glisp.Environment {
 	env := glisp.New()
-	env.ImportEval()
-	extensions.ImportCoreUtils(env)
-	extensions.ImportRandom(env)
-	extensions.ImportMathUtils(env)
-	extensions.ImportTime(env)
-	extensions.ImportChannels(env)
-	extensions.ImportCoroutines(env)
-	extensions.ImportRegex(env)
-	extensions.ImportBase64(env)
-	extensions.ImportJSON(env)
-	extensions.ImportString(env)
-	extensions.ImportContainerUtils(env)
-	extensions.ImportOS(env)
-	extensions.ImportHTTP(env)
+	modules := []func(*glisp.Environment) error{
+		func(e *glisp.Environment) error { return e.ImportEval() },
+		extensions.ImportCoreUtils,
+		extensions.ImportRandom,
+		extensions.ImportMathUtils,
+		extensions.ImportTime,
+		extensions.ImportChannels,
+		extensions.ImportCoroutines,
+		extensions.ImportRegex,
+		extensions.ImportBase64,
+		extensions.ImportJSON,
+		extensions.ImportString,
+		extensions.ImportOS,
+		extensions.ImportHTTP,
+	}
+	for _, f := range modules {
+		if err := f(env); err != nil {
+			panic(err)
+		}
+	}
 	env.AddNamedFunction("export-history", exportHistory, glisp.WithDoc(`(export-history FILE)`))
 	env.AddNamedFunction("clear-history", clearHistory, glisp.WithDoc(`(clear-history)`))
 	return env
@@ -201,14 +198,6 @@ func RunScript(file string, interactive bool, opts ...EnvOption) {
 	if interactive {
 		repl(env)
 	}
-}
-
-func FormatScript(file string, opts ...EnvOption) {
-	env := newEnv()
-	for _, fn := range opts {
-		fn(env)
-	}
-	fmtScript(env, file)
 }
 
 func CompileScript(file string, opts ...EnvOption) error {

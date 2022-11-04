@@ -91,6 +91,23 @@ func MakeList(expressions []Sexp) Sexp {
 	return Cons(expressions[0], MakeList(expressions[1:]))
 }
 
+func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
+	result := NewListBuilder()
+	for _, key := range arr.KeyOrder {
+		val, err := arr.HashGet(key)
+		if err != nil {
+			return SexpNull, err
+		}
+		elem, err := env.Apply(fun, []Sexp{Cons(key, val)})
+		if err != nil {
+			return SexpNull, err
+		}
+		result.Add(elem)
+	}
+
+	return result.Get(), nil
+}
+
 func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	if expr == SexpNull {
 		return SexpNull, nil

@@ -9,3 +9,7 @@
 (assert (= 3 (#'+ 1 2)))
 (assert (nil? #'(symbol "xyzjjlk")))
 (assert (= 3 (#'(#(symbol %) "+") 1 2)))
+
+(assert (not-nil? +))
+
+(assert (= "{\"a\":1,\"b\":2}" (json/stringify (union {"a" 1} {"b" 2}))))

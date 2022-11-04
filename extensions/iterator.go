@@ -24,6 +24,15 @@ var (
 	_ iStream = &BytesIterator{}
 	_ iStream = &StringIterator{}
 	_ iStream = &IterableStream{}
+	_ iStream = &mapIterator{}
+	_ iStream = &flatmapIterator{}
+	_ iStream = &filterIterator{}
+	_ iStream = &takeIterator{}
+	_ iStream = &dropIterator{}
+	_ iStream = &HashIterator{}
+	_ iStream = &RangeIterator{}
+	_ iStream = &partitionIterator{}
+	_ iStream = &UnionIterator{}
 )
 
 type IterableStream struct {
@@ -248,37 +257,6 @@ func (iter *dropIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 		}
 	}
 	return iter.iStream.Next(env)
-}
-
-type flattenIterator struct {
-	iStream
-	inner iStream
-}
-
-func (iter *flattenIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error) {
-START:
-	if iter.inner == nil {
-		ret, ok, err := iter.iStream.Next(env)
-		if err != nil || !ok {
-			return glisp.SexpNull, false, err
-		}
-		if IsStream(ret) {
-			iter.inner = ret.(iStream)
-		} else if IsStreamable(ret) {
-			iter.inner = expr2Stream(ret)
-		} else {
-			return glisp.SexpNull, false, fmt.Errorf("flatten element(%s) is not streamable", glisp.InspectType(ret))
-		}
-	}
-	elem, ok, err := iter.inner.Next(env)
-	if err != nil {
-		return glisp.SexpNull, false, err
-	}
-	if !ok {
-		iter.inner = nil
-		goto START
-	}
-	return elem, true, nil
 }
 
 type HashIterator struct {

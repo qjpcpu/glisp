@@ -40,3 +40,7 @@ func (env *AutoAddFunctionWithDoc) OverrideFunction(name string, f glisp.Overrid
 func (env *AutoAddFunctionWithDoc) AddNamedMacro(name string, function glisp.NamedUserFunction, opts ...glisp.FuntionOption) {
 	env.Environment.AddMacro(name, function(name), getDoc(name))
 }
+
+func (env *AutoAddFunctionWithDoc) AddFuzzyMacro(name string, function glisp.NamedUserFunction, opts ...glisp.FuntionOption) {
+	env.Environment.AddFuzzyMacro(name, function(name), getDoc(name))
+}

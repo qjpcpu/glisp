@@ -27,10 +27,20 @@
 (assert (= '() (list/intersect '() '("b"))))
 
 
-(assert (= ["a" "b" "c"] (list/uniq ["a" "a" "b" "a" "b" "c" "c" "b"])))
-(assert (= '("a" "b" "c") (list/uniq '("a" "a" "b" "a" "b" "c" "c" "b"))))
+(assert (= ["a" "b" "c"] (uniq ["a" "a" "b" "a" "b" "c" "c" "b"])))
+(assert (= '("a" "b" "c") (uniq '("a" "a" "b" "a" "b" "c" "c" "b"))))
 
-(assert (= ["a" "b" "c"] (list/union ["a"] ["b" "c"])))
-(assert (= '("a" "b" "c") (list/union '("a") '("b" "c"))))
+(assert (= ["a" "b" "c"] (union ["a"] ["b" "c"])))
+(assert (= '("a" "b" "c") (union '("a") '("b" "c"))))
 
 (assert (nil? (car '())))
+
+(assert (= '(1 2) (- '(1 2 3 4) '(3) '(4))))
+(assert (= [1 2] (- [1 2 3 4] [3] [4])))
+
+(assert (= '(1 2) (realize (- (stream '(1 2 3 4)) (stream '(3)) (stream '(4))))))
+(assert (= '(1 2 3 6 7 99) (->> (- (range 1 100) (range 4 6) (range 8 99)) (realize))))
+
+(assert (= '(1 2 3) (union '(1) '(2 3))))
+(assert (= [1 2 3] (union [1] [2 3])))
+(assert (= '(1 2 10 11 12) (realize (union (range 1 3) (range 10 13)))))

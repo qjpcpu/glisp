@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -34,9 +35,12 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("*", GetNumericFunction)
 	env.AddNamedFunction("/", GetNumericFunction)
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
-	env.AddNamedFunction("__doc__", GetDocFunction)
+	env.AddNamedMacro("doc", GetDocFunction)
+	env.AddFuzzyMacro(`^:[^:]+$`, ExplainColonMacro)
 	env.AddNamedFunction("sort", GetSortFunction)
+	env.AddNamedFunction("compose", GetComposeFunction)
 	/* stream */
+	env.OverrideFunction("type", OverrideTypeFunction)
 	env.AddNamedFunction("streamable?", IsStreamableFunction)
 	env.AddNamedFunction("stream?", IsStreamFunction)
 	env.AddNamedFunction("stream", StreamFunction)
@@ -45,7 +49,6 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("filter", StreamFilterFunction)
 	env.AddNamedFunction("take", StreamTakeFunction)
 	env.AddNamedFunction("drop", StreamDropFunction)
-	env.OverrideFunction("flatten", StreamFlattenFunction)
 	env.AddNamedFunction("foldl", StreamFoldlFunction)
 	env.AddNamedFunction("realize", StreamRealizeFunction)
 	env.AddNamedFunction("range", StreamRangeFunction)
@@ -55,7 +58,7 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 
 	/* record related */
 	env.AddNamedMacro("defrecord", DefineRecord)
-	env.AddNamedFunction("__assoc__", AssocRecordField)
+	env.AddNamedMacro("assoc", AssocRecordField)
 	env.AddNamedFunction("record?", CheckIsRecord)
 	env.AddNamedFunction("record-of?", CheckIsRecordOf)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
@@ -157,14 +160,7 @@ func refactFmtStr(str string) string {
 }
 
 func GetDocFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		name = `doc`
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
-		}
-		if !glisp.IsSymbol(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol", name)
-		}
+	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		name := args[0].(glisp.SexpSymbol).Name()
 		var doc string
 		if expr, ok := env.FindObject(name); ok && glisp.IsFunction(expr) {
@@ -178,5 +174,74 @@ func GetDocFunction(name string) glisp.UserFunction {
 			doc = `No document found.`
 		}
 		return glisp.SexpStr(doc), nil
+	}
+	sexpfn := glisp.MakeUserFunction(name, userfn)
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !glisp.IsSymbol(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol", name)
+		}
+		return glisp.MakeList([]glisp.Sexp{
+			env.MakeSymbol("println"),
+			glisp.MakeList([]glisp.Sexp{
+				sexpfn,
+				glisp.MakeList([]glisp.Sexp{
+					env.MakeSymbol("quote"),
+					args[0].(glisp.SexpSymbol),
+				}),
+			}),
+		}), nil
+	}
+}
+
+type ExplainSexp interface {
+	Explain(*glisp.Environment, string, []glisp.Sexp) (glisp.Sexp, error)
+}
+
+func ExplainColonMacro(name string) glisp.UserFunction {
+	sexpfn := glisp.MakeUserFunction(name, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if ex, ok := args[1].(ExplainSexp); ok {
+			return ex.Explain(env, string(args[0].(glisp.SexpStr)), args[2:])
+		}
+		return glisp.SexpNull, fmt.Errorf("type `%s` can't explain `%s`", glisp.InspectType(args[1]), args[0].SexpString())
+	})
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("%s first argument must be string but got %s", name, glisp.InspectType(args[0]))
+		}
+		colon := string(args[0].(glisp.SexpStr))
+		vargs := []glisp.Sexp{sexpfn, glisp.SexpStr(colon[1:])}
+		vargs = append(vargs, args[1:]...)
+		return glisp.MakeList(vargs), nil
+	}
+}
+
+func GetComposeFunction(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) < 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+		}
+		for _, fn := range args {
+			if !glisp.IsFunction(fn) {
+				return glisp.SexpNull, errors.New("argument should be function")
+			}
+		}
+		return glisp.MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *glisp.Environment, _args []glisp.Sexp) (glisp.Sexp, error) {
+			for i := len(args) - 1; i >= 0; i-- {
+				fn := args[i].(*glisp.SexpFunction)
+				ret, err := _env.Apply(fn, _args)
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				_args = []glisp.Sexp{ret}
+			}
+			/* len(_args) is greater than 0, because function always return something */
+			return _args[0], nil
+		}), nil
 	}
 }

@@ -1,7 +1,9 @@
 package extensions
 
 import (
+	"errors"
 	"fmt"
+
 	"github.com/qjpcpu/glisp"
 )
 
@@ -89,16 +91,31 @@ func IsStreamable(expr glisp.Sexp) bool {
 }
 
 func StreamMapFunction(name string) glisp.UserFunction {
-	normalfn := glisp.GetMapFunction(name)
+	normalfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		fun := args[0].(*glisp.SexpFunction)
+		switch e := args[1].(type) {
+		case glisp.SexpArray:
+			return glisp.MapArray(env, fun, e)
+		case *glisp.SexpPair:
+			return glisp.MapList(env, fun, e)
+		case *glisp.SexpHash:
+			return glisp.MapHash(env, fun, e)
+		case glisp.SexpSentinel:
+			if e == glisp.SexpNull {
+				return glisp.SexpNull, nil
+			}
+		}
+		return glisp.SexpNull, errors.New("second argument of map must be array/list but got " + glisp.InspectType(args[1]))
+	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
-		if !IsStream(args[1]) {
-			return normalfn(env, args)
-		}
 		if !glisp.IsFunction(args[0]) {
 			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+		}
+		if !IsStream(args[1]) {
+			return normalfn(env, args)
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &mapIterator{iStream: stream, f: f}, nil
@@ -106,16 +123,31 @@ func StreamMapFunction(name string) glisp.UserFunction {
 }
 
 func StreamFlatmapFunction(name string) glisp.UserFunction {
-	normalfn := glisp.GetFlatMapFunction(name)
+	normalfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		fun := args[0].(*glisp.SexpFunction)
+		switch e := args[1].(type) {
+		case glisp.SexpArray:
+			return glisp.FlatMapArray(env, fun, e)
+		case *glisp.SexpHash:
+			return glisp.FlatMapHash(env, fun, e)
+		case *glisp.SexpPair:
+			return glisp.FlatMapList(env, fun, e)
+		case glisp.SexpSentinel:
+			if e == glisp.SexpNull {
+				return glisp.SexpNull, nil
+			}
+		}
+		return glisp.SexpNull, errors.New("second argument of map must be array/list")
+	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
-		if !IsStream(args[1]) {
-			return normalfn(env, args)
-		}
 		if !glisp.IsFunction(args[0]) {
 			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+		}
+		if !IsStream(args[1]) {
+			return normalfn(env, args)
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &flatmapIterator{iStream: stream, f: f}, nil
@@ -123,16 +155,31 @@ func StreamFlatmapFunction(name string) glisp.UserFunction {
 }
 
 func StreamFilterFunction(name string) glisp.UserFunction {
-	normalfn := glisp.GetFilterFunction(name)
+	normalfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		fun := args[0].(*glisp.SexpFunction)
+		switch e := args[1].(type) {
+		case glisp.SexpArray:
+			return glisp.FilterArray(env, fun, e)
+		case *glisp.SexpPair:
+			return glisp.FilterList(env, fun, e)
+		case *glisp.SexpHash:
+			return glisp.FilterHash(env, fun, e)
+		case glisp.SexpSentinel:
+			if e == glisp.SexpNull {
+				return e, nil
+			}
+		}
+		return glisp.SexpNull, fmt.Errorf("second argument of %s must be array/list but got %s", name, glisp.InspectType(args[1]))
+	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
-		if !IsStream(args[1]) {
-			return normalfn(env, args)
-		}
 		if !glisp.IsFunction(args[0]) {
 			return glisp.SexpNull, fmt.Errorf(`first argument of %s must be function, but got %v`, name, glisp.InspectType(args[0]))
+		}
+		if !IsStream(args[1]) {
+			return normalfn(env, args)
 		}
 		f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 		return &filterIterator{iStream: stream, f: f}, nil
@@ -177,20 +224,32 @@ func StreamDropFunction(name string) glisp.UserFunction {
 	}
 }
 
-func StreamFlattenFunction(orig *glisp.SexpFunction) glisp.UserFunction {
+func OverrideTypeFunction(orig *glisp.SexpFunction) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(orig.Name(), len(args), 1)
+		if len(args) == 1 && IsStream(args[0]) && !glisp.IsIType(args[0]) {
+			return glisp.SexpStr(`stream`), nil
 		}
-		if !IsStream(args[0]) {
-			return env.Apply(orig, args)
-		}
-		return &flattenIterator{iStream: args[0].(iStream)}, nil
+		return env.Apply(orig, args)
 	}
 }
 
 func StreamFoldlFunction(name string) glisp.UserFunction {
-	normalFn := glisp.GetFoldlFunction(name)
+	normalFn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		fun := args[0].(*glisp.SexpFunction)
+		switch e := args[2].(type) {
+		case glisp.SexpArray:
+			return glisp.FoldlArray(env, fun, e, args[1])
+		case *glisp.SexpPair:
+			return glisp.FoldlList(env, fun, e, args[1])
+		case *glisp.SexpHash:
+			return glisp.FoldlHash(env, fun, e, args[1])
+		case glisp.SexpSentinel:
+			if e == glisp.SexpNull {
+				return args[1], nil
+			}
+		}
+		return glisp.SexpNull, fmt.Errorf("third argument of %s must be array/list", name)
+	}
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 3 {
 			return glisp.WrongNumberArguments(name, len(args), 3)
@@ -320,16 +379,21 @@ func StreamZipFunction(name string) glisp.UserFunction {
 }
 
 func StreamUnionFunction(name string) glisp.UserFunction {
+	concat := glisp.GetConcatFunction(name)
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) < 2 {
 			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
 		}
+		if !IsStream(args[0]) {
+			return concat(env, args)
+		}
 		expr := make([]iStream, len(args))
 		for i, stream := range args {
 			if !IsStream(stream) {
-				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream but %v-th is %v", name, i+1, glisp.InspectType(stream))
+				return glisp.SexpNull, fmt.Errorf("every argument of %s must be stream/streamable but %v-th is %v", name, i+1, glisp.InspectType(stream))
+			} else {
+				expr[i] = args[i].(iStream)
 			}
-			expr[i] = args[i].(iStream)
 		}
 		return &UnionIterator{expr: expr}, nil
 	}

@@ -1,3 +1,9 @@
+;; not-nil?
+(defn not-nil? [x]
+  "Usaage: (not-nil? x)
+Return true if x is not nil."
+  (not (nil? x)))
+
 ;; alias function
 (defmac alias [new old]
   "Usage: (alias new_name orig_name)
@@ -7,17 +13,17 @@ Set alias for function."
 )
 
 ;; currying
-(defn __gen_curry [function arg_count iargs args]
+(defn core/__gen_curry [function arg_count iargs args]
   (cond (>= (+ (len iargs) (len args)) arg_count)
             (apply function (concat iargs args))
         (fn [& body]
-          (__gen_curry function arg_count (concat iargs args) body))))
+          (core/__gen_curry function arg_count (concat iargs args) body))))
 
 (defn currying [function arg_count & args]
   "Usage: (currying f total-arguments-count & args)
 
 Transform a function that takes multiple arguments into a function for which some of the arguments are preset."
-  (__gen_curry function arg_count args '())
+  (core/__gen_curry function arg_count args '())
 )
 
 ;; partial
@@ -48,12 +54,8 @@ example:
 "
   `(def ~function (let [~function ~function] ~new_function)))
 
-(defmac doc [name]
-  "Usage: (doc f)
 
-Display document of function."
-  `(println (__doc__ (quote ~name))))
-
+;; thread first
 (defmac -> [init-value & functions]
   "Usage: (-> x & forms)
 
@@ -187,9 +189,51 @@ Reverse list/array/string/stream."
           (stream? x) (stream res)
           res)))
 
-(defmac assoc [record field val]
-        "Usage: (assoc record field val)
+(defn list/complement [a b]
+  "Usage: (list/complement a b)
 
-Set record field to value."
-        (let [f (list (quote quote) field)]
-        `(__assoc__ ~record ~f ~val)))
+Return coll which elements belongs to a but not belongs to b.
+Result coll = a \\ b."
+  (let [h (foldl (fn [e acc] (hset! acc e '()) acc) {} b)]
+       (filter (fn [e] (not (exist? h e))) a)))
+
+(override - (fn [& args]
+    (cond (and (>= (len args) 2) (list? (car args)) (list? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
+          (and (>= (len args) 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
+          (and (>= (len args) 2) (stream? (car args)) (stream? (car (cdr args))))
+                                 (foldl (fn [b a]
+                                            (let [h (core/__stream2hash b)] (drop #(exist? h %) a))) (car args) (cdr args))
+          (apply - args))))
+
+(defn list/intersect [a b]
+  "Usage: (list/intersect a b)
+Return coll which elements belongs to a and b."
+  (let [h (foldl (fn [e acc] (hset! acc e '()) acc) {} b)]
+       (filter (fn [e] (exist? h e)) a)))
+
+(defn core/__stream2hash [s]
+  (foldl (fn [e acc] (hset! acc e true)) {} s))
+
+(defn uniq [a]
+  "Usage: (uniq a)
+Drop duplicate elements of list/array/stream a."
+  (let* [h {} ret (foldl (fn [e acc] (cond (exist? h e) acc (begin (hset! h e 1) (concat acc (list e))))) '() a)]
+        (cond (list? a) ret
+              (array? a) (list-to-array ret)
+              (stream ret))))
+
+(defn reject [pred coll]
+  "Usage: (reject pred coll)
+Returns a sequence of the items in coll for which
+(pred item) returns logical false. pred must be free of side-effects.
+
+When coll is hash, pred function should take 2 arguments, which are hash key-value pair.
+"
+  (filter (fn [e] (not (pred e))) coll))
+
+(defn flatten [x]
+  "Usage: (flatten coll)
+Takes any nested combination of sequential things (lists, vectors,
+etc.) and returns their contents as a single, flat foldable
+collection."
+  (flatmap (fn [e] e) x))

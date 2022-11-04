@@ -512,7 +512,7 @@ Usage: (map f coll)
 Returns a sequence consisting of the result of applying f to
 the set of first items of each coll, followed by applying f to the
 set of second items in each coll, until any one of the colls is
-exhausted. coll can be array or list.
+exhausted. coll can be array or list or strema or even hash.
 
 ========== flatmap ==========
 Usage: (flatmap f coll)
@@ -706,3 +706,15 @@ Return true if x is a record.
 Usage: (record-of? x cls)
 
 Return true if x is a record of class cls.
+
+========== doc ==========
+Usage: (doc f)
+
+Show documentation of f.
+
+========== compose ==========
+Usage: (compose f1 f2 & more)
+
+Composes its arguments into a single composite function. All its arguments are assumed to designate functions which take one argument and return one argument.
+
+((compose f g) 42) is equivalent to (f (g 42)). Composition is right-associative.
