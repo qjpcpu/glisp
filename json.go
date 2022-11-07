@@ -66,6 +66,9 @@ func (a SexpSymbol) MarshalJSON() ([]byte, error) {
 }
 
 func (a SexpFloat) MarshalJSON() ([]byte, error) {
+	if a.rawStr != "" {
+		return []byte(a.rawStr), nil
+	}
 	return a.v.MarshalText()
 }
 

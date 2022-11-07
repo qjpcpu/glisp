@@ -658,3 +658,14 @@ func TestDefineClassInGolang(t *testing.T) {
 	_, err := vm.EvalString(script)
 	ExpectSuccess(t, err)
 }
+
+func TestFloat64(t *testing.T) {
+	sf := glisp.NewSexpFloat(113.965916)
+	if f := sf.ToFloat64(); f != 113.965916 {
+		t.Fatal("not equal", 113.965916, f)
+	}
+	sf, _ = glisp.NewSexpFloatStr("113.965916")
+	if f := sf.ToFloat64(); f != 113.965916 {
+		t.Fatal("not equal", 113.965916, f)
+	}
+}

@@ -3,13 +3,14 @@ package glisp
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 )
 
 var Float64EqualityThreshold = 1e-10
 
 type SexpFloat struct {
 	v *big.Float
-	/* well, sometimes we want SexpString show it's original string value */
+	/* well, sometimes we want it's original string value */
 	rawStr string
 }
 
@@ -79,6 +80,11 @@ func (f SexpFloat) Cmp(f2 SexpFloat) int {
 }
 
 func (f SexpFloat) ToFloat64() float64 {
+	if f.rawStr != "" {
+		if rf, err := strconv.ParseFloat(f.rawStr, 64); err == nil {
+			return rf
+		}
+	}
 	v, _ := f.v.Float64()
 	return v
 }
