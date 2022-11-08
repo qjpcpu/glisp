@@ -119,11 +119,11 @@ returned if no clause matches.
       (realize))]
       `(let [~x ~e] (cond ~@expr))))
 
-(defmac foreach [f coll]
+(defn foreach [f coll]
   "Usage: (foreach f coll)
 
-Apply f to each item of coll, returns nil."
-  `(begin (map ~f ~coll) '()))
+Apply f to each item of coll"
+  (let [f2 (fn [e] (f e) e)] (map f2 coll)))
 
 (defmac when [predicate & body]
   "Usage: (when test & body)

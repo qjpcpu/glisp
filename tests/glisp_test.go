@@ -664,8 +664,32 @@ func TestFloat64(t *testing.T) {
 	if f := sf.ToFloat64(); f != 113.965916 {
 		t.Fatal("not equal", 113.965916, f)
 	}
+	bs, _ := sf.MarshalJSON()
+	if string(bs) != "113.965916" {
+		t.Fatal("not equal", string(bs))
+	}
 	sf, _ = glisp.NewSexpFloatStr("113.965916")
 	if f := sf.ToFloat64(); f != 113.965916 {
 		t.Fatal("not equal", 113.965916, f)
+	}
+	bs, _ = sf.MarshalJSON()
+	if string(bs) != "113.965916" {
+		t.Fatal("not equal", string(bs))
+	}
+
+	sf = glisp.NewSexpFloat(114.711036)
+	if f := sf.ToFloat64(); f != 114.711036 {
+		t.Fatal("not equal", 114.711036, f)
+	}
+	bs, _ = sf.MarshalJSON()
+	if string(bs) != "114.711036" {
+		t.Fatal("not equal", string(bs))
+	}
+	sf, _ = glisp.NewSexpFloatStr("114.711036")
+	if f := sf.ToFloat64(); f != 114.711036 {
+		t.Fatal("not equal", 114.711036, f)
+	}
+	if string(bs) != "114.711036" {
+		t.Fatal("not equal", string(bs))
 	}
 }
