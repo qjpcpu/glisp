@@ -179,10 +179,8 @@ Return n-th element of array/list/stream, n start from 0"
   "Usage: (reverse x)
 
 Reverse list/array/string/stream."
-  (let [res (->> (zip (range) (stream x))
-                 (realize)
-                 (sort #(> (car %1) (car %2)))
-                 (map #(car (cdr %))))]
+  (let [res (->> (stream x)
+                 (foldl cons '()))]
     (cond (array? x) (list-to-array res)
           (string? x) (string res)
           (bytes? x) (bytes (string res))
@@ -198,12 +196,13 @@ Result coll = a \\ b."
        (filter (fn [e] (not (exist? h e))) a)))
 
 (override - (fn [& args]
-    (cond (and (>= (len args) 2) (list? (car args)) (list? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
-          (and (>= (len args) 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
-          (and (>= (len args) 2) (stream? (car args)) (stream? (car (cdr args))))
-                                 (foldl (fn [b a]
-                                            (let [h (core/__stream2hash b)] (drop #(exist? h %) a))) (car args) (cdr args))
-          (apply - args))))
+    (let [length (len args)]
+      (cond (and (>= length 2) (list? (car args)) (list? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
+            (and (>= length 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a]  (list/complement a b)) (car args) (cdr args))
+            (and (>= length 2) (stream? (car args)) (stream? (car (cdr args))))
+                 (foldl (fn [b a]
+                    (let [h (core/__stream2hash b)] (drop #(exist? h %) a))) (car args) (cdr args))
+            (apply - args)))))
 
 (defn list/intersect [a b]
   "Usage: (list/intersect a b)
