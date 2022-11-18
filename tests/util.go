@@ -153,6 +153,12 @@ func ExpectScriptSuccess(t *testing.T, script string, keywords ...string) {
 	}
 }
 
+func ExpectEqString(t *testing.T, s1, s2 string) {
+	if s1 != s2 {
+		t.Fatalf("%s != %s", s1, s2)
+	}
+}
+
 func getTestStack() string {
 	bs := debug.Stack()
 	arr := strings.Split(string(bs), "\n")

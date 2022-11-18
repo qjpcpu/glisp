@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -157,9 +158,20 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 
 			/* parse response */
 			defer resp.Body.Close()
-			bs, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return glisp.SexpNull, err
+			var bs []byte
+			if hreq.Outfile != "" {
+				os.MkdirAll(filepath.Dir(hreq.Outfile), 0755)
+				file, err := os.OpenFile(hreq.Outfile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				defer file.Close()
+				io.Copy(file, resp.Body)
+			} else {
+				bs, err = ioutil.ReadAll(resp.Body)
+				if err != nil {
+					return glisp.SexpNull, err
+				}
 			}
 
 			if hreq.IncludeHeaderInOutput {
@@ -198,6 +210,7 @@ type request struct {
 	Timeout               time.Duration
 	IncludeHeaderInOutput bool
 	Method                string
+	Outfile               string
 }
 
 func newHttpReq() *request {
@@ -268,6 +281,15 @@ var availableHttpOptions = map[string]httpOption{
 		needValue: false,
 		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
 			req.Verbose = true
+			return req, nil
+		},
+	},
+	"-o": {
+		needValue: true,
+		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
+			if glisp.IsString(val) {
+				req.Outfile = string(val.(glisp.SexpStr))
+			}
 			return req, nil
 		},
 	},

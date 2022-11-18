@@ -423,6 +423,14 @@ func TestHTTPMethods(t *testing.T) {
 		script := fmt.Sprintf(`(http/get "%s" -d [1 2 3])`, url)
 		ExpectScriptSuccess(t, script, `"method":"GET"`)
 
+		fi, _ := os.CreateTemp(os.TempDir(), "http2")
+		file := fi.Name()
+		script = fmt.Sprintf(`(http/get -o "%s" "%s" -d [1 2 3])`, file, url)
+		ExpectScriptSuccess(t, script)
+		data, _ := ioutil.ReadFile(file)
+		ExpectEqString(t, string(data), `{"args":{},"body":"[1,2,3]","headers":{"Accept-Encoding":"gzip","Content-Length":"7","Content-Type":"application/json","User-Agent":"Go-http-client/1.1"},"method":"GET","url":"/echo"}`)
+		os.RemoveAll(file)
+
 		script = fmt.Sprintf(`(http/get -X "POST" "%s" -d [1 2 3])`, url)
 		ExpectScriptSuccess(t, script, `"method":"GET"`)
 
