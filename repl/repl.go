@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/peterh/liner"
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/glisp/extensions"
 )
@@ -16,14 +15,24 @@ var (
 	history = GetHistory()
 )
 
-func getKeywords(vm *glisp.Environment) []string {
-	var keywords []string
+func getKeywords(vm *glisp.Environment) []KeyWord {
+	var keywords []KeyWord
 	for _, fn := range vm.GlobalFunctions() {
 		if len(fn) > 1 && !strings.Contains(fn, "__") && !strings.Contains(fn, "/_") {
-			keywords = append(keywords, fn)
+			sg := KeyWord{Word: fn}
+			if expr, ok := vm.FindObject(fn); ok && glisp.IsFunction(expr) {
+				sg.Desc = expr.(*glisp.SexpFunction).Doc()
+			} else if mac, ok := vm.FindMacro(fn); ok {
+				sg.Desc = mac.Doc()
+			} else {
+				sg.Desc = glisp.QueryBuiltinDoc(fn)
+			}
+			keywords = append(keywords, sg)
 		}
 	}
-	sort.Strings(keywords)
+	sort.SliceStable(keywords, func(i, j int) bool {
+		return keywords[i].Word < keywords[j].Word
+	})
 	return keywords
 }
 
@@ -37,44 +46,22 @@ func findWordBackward(line string) (string, int) {
 	return line, 0
 }
 
-func getLine(prefix string, keywords []string) (string, error) {
-	line := liner.NewLiner()
+func getLine(liner LinerProducer, prefix string, keywords []KeyWord) (string, error) {
+	line := liner()
 	defer line.Close()
-
-	line.SetCtrlCAborts(true)
-	for _, kw := range history.Get() {
-		line.AppendHistory(kw)
+	result, err := line.Prompt(prefix, PromptOption{History: history.List, Keywords: keywords})
+	if result != "" {
+		history.Append(result)
 	}
-
-	line.SetCompleter(func(line string) (c []string) {
-		word, idx := findWordBackward(line)
-		prependLParen := strings.HasPrefix(word, "(") || line == ""
-		for _, n := range keywords {
-			if prependLParen {
-				n = "(" + n
-			}
-			if strings.HasPrefix(n, word) {
-				c = append(c, line[0:idx]+n)
-			}
-		}
-		return
-	})
-
-	if sentence, err := line.Prompt(prefix); err == nil {
-		line.AppendHistory(sentence)
-		history.Append(sentence)
-		return sentence, nil
-	} else {
-		return "", err
-	}
+	return result, err
 }
 
-func readLine(keywords []string, waitMore bool) (string, error) {
+func readLine(liner LinerProducer, keywords []KeyWord, waitMore bool) (string, error) {
 	prefix := "> "
 	if waitMore {
 		prefix = ">> "
 	}
-	line, err := getLine(prefix, keywords)
+	line, err := getLine(liner, prefix, keywords)
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +79,7 @@ func processDumpCommand(env *glisp.Environment, args []string) {
 	}
 }
 
-func repl(env *glisp.Environment) {
+func repl(liner LinerProducer, env *glisp.Environment) {
 	stremRepl := NewStreamRepl(env)
 	var waitMore bool
 	var pendingCount int
@@ -112,7 +99,7 @@ func repl(env *glisp.Environment) {
 	}
 
 	for {
-		line, err := readLine(getKeywords(env), waitMore)
+		line, err := readLine(liner, getKeywords(env), waitMore)
 		if err != nil {
 			stremRepl.Stop()
 			os.Exit(-1)
@@ -139,7 +126,7 @@ func repl(env *glisp.Environment) {
 	}
 }
 
-func runScript(env *glisp.Environment, fname string) {
+func runScript(env *Repl, fname string) {
 	file, err := os.Open(fname)
 	if err != nil {
 		fmt.Println(err)
@@ -160,7 +147,7 @@ func runScript(env *glisp.Environment, fname string) {
 	}
 }
 
-func newEnv() *glisp.Environment {
+func newEnv() *Repl {
 	env := glisp.New()
 	modules := []func(*glisp.Environment) error{
 		func(e *glisp.Environment) error { return e.ImportEval() },
@@ -184,23 +171,30 @@ func newEnv() *glisp.Environment {
 	}
 	env.AddNamedFunction("export-history", exportHistory, glisp.WithDoc(`(export-history FILE)`))
 	env.AddNamedFunction("clear-history", clearHistory, glisp.WithDoc(`(clear-history)`))
-	return env
+	return &Repl{Environment: env, liner: Default()}
 }
 
-type EnvOption func(*glisp.Environment)
+type Repl struct {
+	*glisp.Environment
+	liner LinerProducer
+}
 
-func RunScript(file string, interactive bool, opts ...EnvOption) {
+func SetLiner(l LinerProducer) ReplOption { return func(r *Repl) { r.liner = l } }
+
+type ReplOption func(*Repl)
+
+func RunScript(file string, interactive bool, opts ...ReplOption) {
 	env := newEnv()
 	for _, fn := range opts {
 		fn(env)
 	}
 	runScript(env, file)
 	if interactive {
-		repl(env)
+		repl(env.liner, env.Environment)
 	}
 }
 
-func CompileScript(file string, opts ...EnvOption) error {
+func CompileScript(file string, opts ...ReplOption) error {
 	env := newEnv()
 	for _, fn := range opts {
 		fn(env)
@@ -209,10 +203,10 @@ func CompileScript(file string, opts ...EnvOption) error {
 	return err
 }
 
-func Run(opts ...EnvOption) {
+func Run(opts ...ReplOption) {
 	env := newEnv()
 	for _, fn := range opts {
 		fn(env)
 	}
-	repl(env)
+	repl(env.liner, env.Environment)
 }
