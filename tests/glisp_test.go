@@ -704,7 +704,7 @@ func TestFloat64(t *testing.T) {
 
 func TestGoRecord(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	ret, err := vm.EvalString(`(defrecord GoR (Str string) (Int int) (Bool bool) (Bytes bytes)) (->GoR Str "text")`)
+	ret, err := vm.EvalString(`(defrecord GoR (Str string) (Int int) (Bool bool) (Bytes bytes "stream")) (->GoR Str "text")`)
 	ExpectSuccess(t, err)
 	r := extensions.ToGoRecord(ret.(extensions.SexpRecord))
 	ExpectEqString(t, "text", r.GetStringField("Str"))
@@ -718,4 +718,5 @@ func TestGoRecord(t *testing.T) {
 	ExpectEqAny(t, true, r.GetBoolField("Bool"))
 	r.SetBytesField("Bytes", []byte("abc"))
 	ExpectEqAny(t, []byte("abc"), r.GetBytesField("Bytes"))
+	ExpectEqAny(t, "stream", r.GetTag("Bytes"))
 }

@@ -19,6 +19,7 @@ type SexpRecord interface {
 	glisp.ITypeName
 	Class() SexpRecordClass
 	GetField(name string) (glisp.Sexp, error)
+	GetTag(name string) glisp.SexpStr
 	GetFieldDefault(name string, defaultVal glisp.Sexp) glisp.Sexp
 	SetField(name string, val glisp.Sexp) error
 }
@@ -40,7 +41,11 @@ func (class *sexpRecordClass) SexpString() string {
 		}
 	}
 	for _, name := range class.fieldNames {
-		sb.WriteString(paddingRight(name, maxLen) + ":  " + class.fieldsMeta[name].Type + "\n")
+		if tag := class.fieldsMeta[name].Tag; tag != "" {
+			sb.WriteString(paddingRight(name, maxLen) + ":  " + class.fieldsMeta[name].Type + "  " + tag + "\n")
+		} else {
+			sb.WriteString(paddingRight(name, maxLen) + ":  " + class.fieldsMeta[name].Type + "\n")
+		}
 	}
 	return sb.String()
 }
@@ -111,6 +116,7 @@ type sexpRecord struct {
 type sexpRecordField struct {
 	Name string
 	Type string
+	Tag  string
 }
 
 func (r *sexpRecord) SexpString() string {
@@ -142,12 +148,19 @@ func (t *sexpRecord) MarshalJSON() ([]byte, error) {
 func (t *sexpRecord) Explain(env *glisp.Environment, sym string, args []glisp.Sexp) (glisp.Sexp, error) {
 	switch len(args) {
 	case 0:
+		if strings.HasSuffix(sym, ".tag") {
+			return t.GetTag(strings.TrimSuffix(sym, ".tag")), nil
+		}
 		return t.GetField(sym)
 	case 1:
 		return t.GetFieldDefault(sym, args[0]), nil
 	default:
 		return glisp.SexpNull, fmt.Errorf("record field accessor need not more than one argument but got %v", len(args))
 	}
+}
+
+func (t *sexpRecord) GetTag(name string) glisp.SexpStr {
+	return glisp.SexpStr(t.class.fieldsMeta[name].Tag)
 }
 
 func (t *sexpRecord) GetField(name string) (glisp.Sexp, error) {
@@ -332,16 +345,22 @@ func DefineRecord(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf("field definition should be list but got %s", glisp.InspectType(field))
 			}
 			arr, _ := glisp.ListToArray(field)
-			if len(arr) != 2 {
-				return glisp.SexpNull, errors.New("field definition format must be (name type)")
+			if len(arr) != 2 && len(arr) != 3 {
+				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
 			}
 			if !glisp.IsSymbol(arr[0]) || !glisp.IsSymbol(arr[1]) {
-				return glisp.SexpNull, errors.New("field definition format must be (name type)")
+				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
+			}
+			if len(arr) == 3 && !glisp.IsString(arr[2]) {
+				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
 			}
 			if strings.Contains(arr[1].(glisp.SexpSymbol).Name(), " ") {
 				return glisp.SexpNull, errors.New("field type can't contains space")
 			}
 			fd := sexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name()}
+			if len(arr) == 3 {
+				fd.Tag = string(arr[2].(glisp.SexpStr))
+			}
 			class.fieldsMeta[fd.Name] = fd
 			class.fieldNames = append(class.fieldNames, fd.Name)
 		}
@@ -476,6 +495,10 @@ func ToGoRecord(r SexpRecord) *SexpGoRecord { return &SexpGoRecord{SexpRecord: r
 
 type SexpGoRecord struct {
 	SexpRecord
+}
+
+func (r *SexpGoRecord) GetTag(name string) string {
+	return string(r.SexpRecord.GetTag(name))
 }
 
 func (r *SexpGoRecord) GetStringField(name string) string {

@@ -94,3 +94,9 @@
     (assoc Age 120)))
 (assert (= "multi" (:Name multiset)))
 (assert (= 120 (:Age multiset)))
+
+
+(defrecord WithTag (Int int "age") (Name string "name"))
+(def tag-record (->WithTag Int 1 Name "Jack"))
+(assert (= "age" (:Int.tag tag-record)))
+(assert (= "name" (:Name.tag tag-record)))
