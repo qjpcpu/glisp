@@ -470,3 +470,55 @@ func (b *RecordClassBuilder) Build(env *glisp.Environment) SexpRecordClass {
 	})
 	return b.cls
 }
+
+/* record accessor */
+func ToGoRecord(r SexpRecord) *SexpGoRecord { return &SexpGoRecord{SexpRecord: r} }
+
+type SexpGoRecord struct {
+	SexpRecord
+}
+
+func (r *SexpGoRecord) GetStringField(name string) string {
+	return string(r.SexpRecord.GetFieldDefault(name, glisp.SexpStr("")).(glisp.SexpStr))
+}
+
+func (r *SexpGoRecord) GetBoolField(name string) bool {
+	return bool(r.SexpRecord.GetFieldDefault(name, glisp.SexpBool(false)).(glisp.SexpBool))
+}
+
+func (r *SexpGoRecord) GetIntField(name string) int64 {
+	return r.SexpRecord.GetFieldDefault(name, glisp.NewSexpInt64(0)).(glisp.SexpInt).ToInt64()
+}
+
+func (r *SexpGoRecord) GetUintField(name string) uint64 {
+	return r.SexpRecord.GetFieldDefault(name, glisp.NewSexpInt64(0)).(glisp.SexpInt).ToUint64()
+}
+
+func (r *SexpGoRecord) GetBytesField(name string) []byte {
+	return r.SexpRecord.GetFieldDefault(name, glisp.NewSexpBytes(nil)).(glisp.SexpBytes).Bytes()
+}
+
+func (r *SexpGoRecord) SetStringField(name string, val string) *SexpGoRecord {
+	r.SexpRecord.SetField(name, glisp.SexpStr(val))
+	return r
+}
+
+func (r *SexpGoRecord) SetBoolField(name string, val bool) *SexpGoRecord {
+	r.SexpRecord.SetField(name, glisp.SexpBool(val))
+	return r
+}
+
+func (r *SexpGoRecord) SetIntField(name string, val int64) *SexpGoRecord {
+	r.SexpRecord.SetField(name, glisp.NewSexpInt64(val))
+	return r
+}
+
+func (r *SexpGoRecord) SetUintField(name string, val uint64) *SexpGoRecord {
+	r.SexpRecord.SetField(name, glisp.NewSexpUint64(val))
+	return r
+}
+
+func (r *SexpGoRecord) SetBytesField(name string, val []byte) *SexpGoRecord {
+	r.SexpRecord.SetField(name, glisp.NewSexpBytes(val))
+	return r
+}

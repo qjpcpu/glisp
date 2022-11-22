@@ -701,3 +701,21 @@ func TestFloat64(t *testing.T) {
 		t.Fatal("not equal", string(bs))
 	}
 }
+
+func TestGoRecord(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	ret, err := vm.EvalString(`(defrecord GoR (Str string) (Int int) (Bool bool) (Bytes bytes)) (->GoR Str "text")`)
+	ExpectSuccess(t, err)
+	r := extensions.ToGoRecord(ret.(extensions.SexpRecord))
+	ExpectEqString(t, "text", r.GetStringField("Str"))
+	r.SetStringField("Str", "text2")
+	ExpectEqString(t, "text2", r.GetStringField("Str"))
+	r.SetIntField("Int", 1)
+	ExpectEqAny(t, int64(1), r.GetIntField("Int"))
+	r.SetUintField("Int", 1)
+	ExpectEqAny(t, uint64(1), r.GetUintField("Int"))
+	r.SetBoolField("Bool", true)
+	ExpectEqAny(t, true, r.GetBoolField("Bool"))
+	r.SetBytesField("Bytes", []byte("abc"))
+	ExpectEqAny(t, []byte("abc"), r.GetBytesField("Bytes"))
+}

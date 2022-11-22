@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"runtime/debug"
 	"strings"
 	"testing"
@@ -156,6 +157,12 @@ func ExpectScriptSuccess(t *testing.T, script string, keywords ...string) {
 func ExpectEqString(t *testing.T, s1, s2 string) {
 	if s1 != s2 {
 		t.Fatalf("%s != %s", s1, s2)
+	}
+}
+
+func ExpectEqAny(t *testing.T, s1, s2 interface{}) {
+	if !reflect.DeepEqual(s1, s2) {
+		t.Fatalf("%v != %v", s1, s2)
 	}
 }
 
