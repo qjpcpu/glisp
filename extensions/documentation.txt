@@ -718,3 +718,18 @@ Usage: (compose f1 f2 & more)
 Composes its arguments into a single composite function. All its arguments are assumed to designate functions which take one argument and return one argument.
 
 ((compose f g) 42) is equivalent to (f (g 42)). Composition is right-associative.
+
+========== record-class? ==========
+Usage: (record-class? x)
+
+Return true if x is a record class.
+
+========== get-record-class ==========
+Usage: (get-record-class x)
+
+Return class of record x.
+
+========== record-class-definition ==========
+Usage: (record-class-definition x)
+
+Return class object definition of record class x.

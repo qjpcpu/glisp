@@ -717,6 +717,9 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(defrecord Class (Name list<int>)) (def p (->Class Name {1 "b"}))`, `expect list<int> but got hash`)
 	ExpectScriptErr(t, `(record?)`, `expect 1 argument(s)`)
 	ExpectScriptErr(t, `(record-of?)`, `expect 2 argument(s)`)
+	ExpectScriptErr(t, `(record-class-definition)`, `expect 1 argument(s)`)
+	ExpectScriptErr(t, `(record-class-definition 1)`, `first argument must be record class but got int`)
+	ExpectScriptErr(t, `(record-class?)`, `expect 1 argument(s)`)
 	ExpectScriptErr(t, `(record-of? 1 2)`, `first argument must be record`)
 	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (record-of? p 1)`, `second argument must be record class`)
 }

@@ -12,6 +12,7 @@ type SexpRecordClass interface {
 	glisp.Sexp
 	glisp.ITypeName
 	MakeRecord(args []glisp.Sexp) (SexpRecord, error)
+	Fields() []SexpRecordField
 }
 
 type SexpRecord interface {
@@ -27,8 +28,24 @@ type SexpRecord interface {
 /* struct class */
 type sexpRecordClass struct {
 	typeName   string
-	fieldsMeta map[string]sexpRecordField
+	fieldsMeta map[string]SexpRecordField
 	fieldNames []string
+}
+
+func (class *sexpRecordClass) Cmp(o glisp.Comparable) (int, error) {
+	if cls, ok := o.(SexpRecordClass); ok {
+		if cls.TypeName() == class.TypeName() && len(cls.Fields()) == len(class.Fields()) {
+			fs := class.Fields()
+			for i, f := range cls.Fields() {
+				if f.Name != fs[i].Name || f.Type != fs[i].Type || f.Tag != fs[i].Tag {
+					return -1, nil
+				}
+			}
+			return 0, nil
+		}
+		return -1, nil
+	}
+	return 0, fmt.Errorf("can't compare %v with %v", glisp.InspectType(class), glisp.InspectType(o))
 }
 
 func (class *sexpRecordClass) SexpString() string {
@@ -48,6 +65,13 @@ func (class *sexpRecordClass) SexpString() string {
 		}
 	}
 	return sb.String()
+}
+
+func (class *sexpRecordClass) Fields() (fs []SexpRecordField) {
+	for _, name := range class.fieldNames {
+		fs = append(fs, class.fieldsMeta[name])
+	}
+	return
 }
 
 func (class *sexpRecordClass) TypeName() string {
@@ -113,7 +137,7 @@ type sexpRecord struct {
 	value *glisp.SexpHash
 }
 
-type sexpRecordField struct {
+type SexpRecordField struct {
 	Name string
 	Type string
 	Tag  string
@@ -306,6 +330,27 @@ func CheckIsRecord(name string) glisp.UserFunction {
 	}
 }
 
+func GetRecordClass(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !IsRecord(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("%v is not record", glisp.InspectType(args[0]))
+		}
+		return args[0].(SexpRecord).Class(), nil
+	}
+}
+
+func CheckIsRecordClass(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		return glisp.SexpBool(IsRecordClass(args[0])), nil
+	}
+}
+
 func CheckIsRecordOf(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
@@ -319,6 +364,36 @@ func CheckIsRecordOf(name string) glisp.UserFunction {
 		}
 		cls := args[1].(SexpRecordClass)
 		return glisp.SexpBool(IsRecordOf(args[0], cls.TypeName())), nil
+	}
+}
+
+func ClassDefinition(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !IsRecordClass(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("first argument must be record class but got %s", glisp.InspectType(args[0]))
+		}
+		cls := args[0].(SexpRecordClass)
+		var fields glisp.SexpArray
+		for _, f := range cls.Fields() {
+			hash, _ := glisp.MakeHash([]glisp.Sexp{
+				glisp.SexpStr("name"),
+				glisp.SexpStr(f.Name),
+				glisp.SexpStr("type"),
+				glisp.SexpStr(f.Type),
+				glisp.SexpStr("tag"),
+				glisp.SexpStr(f.Tag),
+			})
+			fields = append(fields, hash)
+		}
+		return glisp.MakeHash([]glisp.Sexp{
+			glisp.SexpStr("name"),
+			glisp.SexpStr(strings.TrimPrefix(cls.TypeName(), "#class.")),
+			glisp.SexpStr("fields"),
+			fields,
+		})
 	}
 }
 
@@ -338,7 +413,7 @@ func DefineRecord(name string) glisp.UserFunction {
 		typeName := args[0].(glisp.SexpSymbol).Name()
 		class := &sexpRecordClass{
 			typeName:   typeName,
-			fieldsMeta: make(map[string]sexpRecordField),
+			fieldsMeta: make(map[string]SexpRecordField),
 		}
 		for _, field := range args[1:] {
 			if !glisp.IsList(field) {
@@ -357,7 +432,7 @@ func DefineRecord(name string) glisp.UserFunction {
 			if strings.Contains(arr[1].(glisp.SexpSymbol).Name(), " ") {
 				return glisp.SexpNull, errors.New("field type can't contains space")
 			}
-			fd := sexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name()}
+			fd := SexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name()}
 			if len(arr) == 3 {
 				fd.Tag = string(arr[2].(glisp.SexpStr))
 			}
@@ -458,7 +533,7 @@ type RecordClassBuilder struct {
 }
 
 func NewRecordClassBuilder(className string) *RecordClassBuilder {
-	return &RecordClassBuilder{cls: &sexpRecordClass{typeName: className, fieldsMeta: make(map[string]sexpRecordField)}}
+	return &RecordClassBuilder{cls: &sexpRecordClass{typeName: className, fieldsMeta: make(map[string]SexpRecordField)}}
 }
 
 func (b *RecordClassBuilder) AddField(name string, typ string) *RecordClassBuilder {
@@ -466,7 +541,7 @@ func (b *RecordClassBuilder) AddField(name string, typ string) *RecordClassBuild
 		return b
 	}
 	b.cls.fieldNames = append(b.cls.fieldNames, name)
-	b.cls.fieldsMeta[name] = sexpRecordField{Name: name, Type: typ}
+	b.cls.fieldsMeta[name] = SexpRecordField{Name: name, Type: typ}
 	return b
 }
 

@@ -60,6 +60,9 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedMacro("defrecord", DefineRecord)
 	env.AddNamedMacro("assoc", AssocRecordField)
 	env.AddNamedFunction("record?", CheckIsRecord)
+	env.AddNamedFunction("record-class?", CheckIsRecordClass)
+	env.AddNamedFunction("get-record-class", GetRecordClass)
+	env.AddNamedFunction("record-class-definition", ClassDefinition)
 	env.AddNamedFunction("record-of?", CheckIsRecordOf)
 	return env.SourceStream(bytes.NewBufferString(core_scripts))
 }

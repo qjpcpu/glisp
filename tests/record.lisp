@@ -100,3 +100,6 @@
 (def tag-record (->WithTag Int 1 Name "Jack"))
 (assert (= "age" (:Int.tag tag-record)))
 (assert (= "name" (:Name.tag tag-record)))
+(assert (record-class? WithTag))
+(assert (= WithTag (get-record-class tag-record)))
+(assert (= "WithTag" (hget (record-class-definition (get-record-class tag-record)) "name")))
