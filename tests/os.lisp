@@ -19,3 +19,7 @@
 (os/setenv "AAAABBBBCCCC" "111")
 (assert (= "111" (os/env "AAAABBBBCCCC")))
 (os/setenv "AAAABBBBCCCC" "")
+
+(assert (not (empty? (os/read-dir "."))))
+(assert (not (empty? (os/read-dir "~"))))
+(assert (empty? (os/read-dir "~xxyyzz")))

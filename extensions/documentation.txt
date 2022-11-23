@@ -733,3 +733,8 @@ Return class of record x.
 Usage: (record-class-definition x)
 
 Return class object definition of record class x.
+
+========== os/read-dir ==========
+Usage: (os/read-dir x)
+
+Return files in dir x.

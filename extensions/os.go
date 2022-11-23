@@ -25,6 +25,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/read-file", GetReadFile)
 	env.AddNamedFunction("os/write-file", GetWriteFile)
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
+	env.AddNamedFunction("os/read-dir", ReadDir)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
 	env.AddNamedFunction("os/exec", ExecCommand)
 	env.AddNamedFunction("os/run", RunCommand)
@@ -101,6 +102,31 @@ func GetWriteFile(name string) glisp.UserFunction {
 		default:
 			return glisp.SexpNull, fmt.Errorf("%s expect write string/bytes to file", name)
 		}
+	}
+}
+
+func ReadDir(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		str, ok := args[0].(glisp.SexpStr)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		}
+		dir := replaceHomeDirSymbol(string(str))
+		fs, err := ioutil.ReadDir(dir)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return glisp.SexpNull, nil
+			}
+			return glisp.SexpNull, err
+		}
+		var files glisp.SexpArray
+		for _, f := range fs {
+			files = append(files, glisp.SexpStr(f.Name()))
+		}
+		return files, nil
 	}
 }
 
