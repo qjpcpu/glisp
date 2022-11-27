@@ -691,11 +691,15 @@ Usage: (assoc record field value)
 Set field value of record.
 
 ========== defrecord ==========
-Usage: (defrecord TypeName (fiedl1 type1) (field2 type2))
+Usage: (defrecord TypeName (field1 type1) (field2 type2))
 
 Define record type. Then, the type t constructor `->t` is available
 
 (->t Field1 v1 Field2 v2)
+
+(defrecord TypeName (field1 type1 tag1 default1) (field2 type2 tag2 default2))
+
+Define record with tag and default value.
 
 ========== record? ==========
 Usage: (record? x)

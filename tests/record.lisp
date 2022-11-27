@@ -103,3 +103,9 @@
 (assert (record-class? WithTag))
 (assert (= WithTag (get-record-class tag-record)))
 (assert (= "WithTag" (hget (record-class-definition (get-record-class tag-record)) "name")))
+
+;; record with default value
+(defrecord DefaultRecord (Host string "" "www.example.com") (Port int "" (+ 3305 1)))
+(def dr (->DefaultRecord))
+(assert (= "www.example.com" (:Host dr)))
+(assert (= 3306 (:Port dr)))

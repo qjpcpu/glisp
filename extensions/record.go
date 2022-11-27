@@ -109,7 +109,7 @@ func (class *sexpRecordClass) MakeRecord(args []glisp.Sexp) (SexpRecord, error) 
 	value, _ := glisp.MakeHash(nil)
 	/* set default value */
 	for _, name := range class.fieldNames {
-		value.HashSet(glisp.SexpStr(name), glisp.SexpNull)
+		value.HashSet(glisp.SexpStr(name), class.fieldsMeta[name].DefaultValue)
 	}
 	for i := 0; i < len(args); i += 2 {
 		if !glisp.IsSymbol(args[i]) {
@@ -138,9 +138,10 @@ type sexpRecord struct {
 }
 
 type SexpRecordField struct {
-	Name string
-	Type string
-	Tag  string
+	Name         string
+	Type         string
+	Tag          string
+	DefaultValue glisp.Sexp
 }
 
 func (r *sexpRecord) SexpString() string {
@@ -420,21 +421,32 @@ func DefineRecord(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf("field definition should be list but got %s", glisp.InspectType(field))
 			}
 			arr, _ := glisp.ListToArray(field)
-			if len(arr) != 2 && len(arr) != 3 {
-				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
+			if argNum := len(arr); argNum < 2 || argNum > 4 {
+				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag) or (name type tag default-value)")
 			}
 			if !glisp.IsSymbol(arr[0]) || !glisp.IsSymbol(arr[1]) {
-				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
-			}
-			if len(arr) == 3 && !glisp.IsString(arr[2]) {
 				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
 			}
 			if strings.Contains(arr[1].(glisp.SexpSymbol).Name(), " ") {
 				return glisp.SexpNull, errors.New("field type can't contains space")
 			}
-			fd := SexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name()}
-			if len(arr) == 3 {
+			if (len(arr) == 3 || len(arr) == 4) && !glisp.IsString(arr[2]) {
+				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
+			}
+			fd := SexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name(), DefaultValue: glisp.SexpNull}
+			if len(arr) >= 3 {
 				fd.Tag = string(arr[2].(glisp.SexpStr))
+			}
+			/* default value */
+			if len(arr) == 4 {
+				if err := env.LoadExpressions([]glisp.Sexp{arr[3]}); err != nil {
+					return glisp.SexpNull, err
+				}
+				if dfv, err := env.Run(); err != nil {
+					return glisp.SexpNull, err
+				} else {
+					fd.DefaultValue = dfv
+				}
 			}
 			class.fieldsMeta[fd.Name] = fd
 			class.fieldNames = append(class.fieldNames, fd.Name)
@@ -537,11 +549,15 @@ func NewRecordClassBuilder(className string) *RecordClassBuilder {
 }
 
 func (b *RecordClassBuilder) AddField(name string, typ string) *RecordClassBuilder {
+	return b.AddFullField(name, typ, "", glisp.SexpNull)
+}
+
+func (b *RecordClassBuilder) AddFullField(name, typ, tag string, defaultValue glisp.Sexp) *RecordClassBuilder {
 	if _, ok := b.cls.fieldsMeta[name]; ok {
 		return b
 	}
 	b.cls.fieldNames = append(b.cls.fieldNames, name)
-	b.cls.fieldsMeta[name] = SexpRecordField{Name: name, Type: typ}
+	b.cls.fieldsMeta[name] = SexpRecordField{Name: name, Type: typ, DefaultValue: defaultValue, Tag: tag}
 	return b
 }
 
