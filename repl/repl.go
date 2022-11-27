@@ -147,7 +147,7 @@ func runScript(env *Repl, fname string) {
 	}
 }
 
-func newEnv() *Repl {
+func NewRepl() *Repl {
 	env := glisp.New()
 	modules := []func(*glisp.Environment) error{
 		func(e *glisp.Environment) error { return e.ImportEval() },
@@ -184,7 +184,7 @@ func SetLiner(l LinerProducer) ReplOption { return func(r *Repl) { r.liner = l }
 type ReplOption func(*Repl)
 
 func RunScript(file string, interactive bool, opts ...ReplOption) {
-	env := newEnv()
+	env := NewRepl()
 	for _, fn := range opts {
 		fn(env)
 	}
@@ -195,7 +195,7 @@ func RunScript(file string, interactive bool, opts ...ReplOption) {
 }
 
 func CompileScript(file string, opts ...ReplOption) error {
-	env := newEnv()
+	env := NewRepl()
 	for _, fn := range opts {
 		fn(env)
 	}
@@ -204,7 +204,7 @@ func CompileScript(file string, opts ...ReplOption) error {
 }
 
 func Run(opts ...ReplOption) {
-	env := newEnv()
+	env := NewRepl()
 	for _, fn := range opts {
 		fn(env)
 	}
