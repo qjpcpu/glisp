@@ -1,11 +1,13 @@
 package extensions
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/qjpcpu/glisp"
+	"github.com/qjpcpu/qjson"
 )
 
 type SexpRecordClass interface {
@@ -612,6 +614,20 @@ func (r *SexpGoRecord) GetBytesField(name string) []byte {
 	return r.SexpRecord.GetFieldDefault(name, glisp.NewSexpBytes(nil)).(glisp.SexpBytes).Bytes()
 }
 
+func (r *SexpGoRecord) GetHashField(name string) map[string]interface{} {
+	ret := make(map[string]interface{})
+	h, _ := glisp.MakeHash(nil)
+	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, h))
+	json.Unmarshal(bs, &ret)
+	return ret
+}
+
+func (r *SexpGoRecord) GetListField(name string) (ret []interface{}) {
+	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, glisp.SexpArray{}))
+	json.Unmarshal(bs, &ret)
+	return ret
+}
+
 func (r *SexpGoRecord) SetStringField(name string, val string) *SexpGoRecord {
 	r.SexpRecord.SetField(name, glisp.SexpStr(val))
 	return r
@@ -634,5 +650,33 @@ func (r *SexpGoRecord) SetUintField(name string, val uint64) *SexpGoRecord {
 
 func (r *SexpGoRecord) SetBytesField(name string, val []byte) *SexpGoRecord {
 	r.SexpRecord.SetField(name, glisp.NewSexpBytes(val))
+	return r
+}
+
+func (r *SexpGoRecord) SetHashField(name string, val map[string]interface{}) *SexpGoRecord {
+	bytes := qjson.JSONMarshalWithPanic(val)
+	hash, _ := ParseJSON(bytes)
+	r.SexpRecord.SetField(name, hash)
+	return r
+}
+
+func (r *SexpGoRecord) SetListField(name string, val []interface{}) *SexpGoRecord {
+	bytes := qjson.JSONMarshalWithPanic(val)
+	list, _ := ParseJSON(bytes)
+	if glisp.IsArray(list) {
+		for _, f := range r.Class().Fields() {
+			if f.Name == name {
+				if strings.HasPrefix(f.Type, "list") {
+					arr := []glisp.Sexp(list.(glisp.SexpArray))
+					r.SexpRecord.SetField(name,
+						glisp.NewListBuilder().Add(arr...).Get())
+				} else {
+					r.SexpRecord.SetField(name, list)
+				}
+				return r
+			}
+		}
+	}
+	r.SexpRecord.SetField(name, list)
 	return r
 }

@@ -704,7 +704,7 @@ func TestFloat64(t *testing.T) {
 
 func TestGoRecord(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	ret, err := vm.EvalString(`(defrecord GoR (Str string) (Int int) (Bool bool) (Bytes bytes "stream")) (->GoR Str "text")`)
+	ret, err := vm.EvalString(`(defrecord GoR (Str string) (Int int) (Bool bool) (Bytes bytes "stream") (List list) (Array array) (Hash hash)) (->GoR Str "text")`)
 	ExpectSuccess(t, err)
 	r := extensions.ToGoRecord(ret.(extensions.SexpRecord))
 	ExpectEqString(t, "text", r.GetStringField("Str"))
@@ -719,4 +719,14 @@ func TestGoRecord(t *testing.T) {
 	r.SetBytesField("Bytes", []byte("abc"))
 	ExpectEqAny(t, []byte("abc"), r.GetBytesField("Bytes"))
 	ExpectEqAny(t, "stream", r.GetTag("Bytes"))
+
+	r.SetHashField("Hash", map[string]interface{}{"key": "value"})
+	ExpectEqAny(t, r.GetHashField("Hash"), map[string]interface{}{"key": "value"})
+	r.SetHashField("Hash", map[string]interface{}{"key": 1024})
+
+	r.SetListField("List", []interface{}{1, 2, 3})
+	ExpectEqList(t, r.GetListField("List"), []interface{}{1, 2, 3})
+
+	r.SetListField("Array", []interface{}{1, 2, 3})
+	ExpectEqList(t, r.GetListField("Array"), []interface{}{1, 2, 3})
 }

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -162,6 +163,17 @@ func ExpectEqString(t *testing.T, s1, s2 string) {
 
 func ExpectEqAny(t *testing.T, s1, s2 interface{}) {
 	if !reflect.DeepEqual(s1, s2) {
+		t.Fatalf("%v != %v", s1, s2)
+	}
+}
+
+func ExpectEqList(t *testing.T, s1, s2 []interface{}) {
+	if len(s1) != len(s2) {
+		t.Fatalf("%v != %v", s1, s2)
+	}
+	j1, _ := json.Marshal(s1)
+	j2, _ := json.Marshal(s2)
+	if string(j1) != string(j2) {
 		t.Fatalf("%v != %v", s1, s2)
 	}
 }
