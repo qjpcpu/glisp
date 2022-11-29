@@ -91,6 +91,18 @@ and when that result is not nil, through the next etc"
                   `(let [~x ~acc] (cond (nil? ~x) nil ~form))))
               init-value functions))
 
+(defmac inverse-> [arg & args]
+  "Usage: (inverse-> f & args)
+Tranform a thread first form to a thread last form."
+        (let [a (concat args (list arg))]
+             `(~@a)))
+
+(defmac inverse->> [f & args]
+  "Usage: (inverse->> f & args)
+Tranform a thread last form to a thread first form."
+        (let* [arr (list-to-array args) n (len arr) arg (aget arr (- n 1)) args2 (cons arg (array-to-list (slice arr 0 (- n 1))))]
+              `(~f ~@args2)))
+
 (defn array-to-list [arr]
   "Usage: (array-to-list arr)"
   (cond (empty? arr) nil
