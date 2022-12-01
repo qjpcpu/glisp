@@ -1,9 +1,12 @@
+(defrecord TestStreamRecord (Int int) (Str string))
+
 (assert (not (stream? nil)))
 (assert (not (stream? [])))
 (assert (not (stream? {})))
 (assert (not (stream? "")))
 (assert (not (stream? (bytes ""))))
 (assert (not (stream? (list 1))))
+(assert (not (stream? (->TestStreamRecord))))
 
 (assert (stream? (stream nil)))
 (assert (stream? (stream [])))
@@ -20,6 +23,7 @@
 (assert (streamable? ""))
 (assert (streamable? (bytes "")))
 (assert (streamable? (list 1)))
+(assert (streamable? (->TestStreamRecord)))
 
 (assert (not (stream? (my-counter 1))))
 (assert (stream? (stream (my-counter 1))))
@@ -309,3 +313,9 @@
 (assert (= "(stream (1 0))" (sexp-str(reverse (range 2)))))
 
 (assert (= [0 1 "a" "b"] (->> (union (range 2) (stream nil) (stream ["a" "b"])) (realize) (list-to-array))))
+
+;; stream record
+(assert (= "Int100StrLisp"
+           (->> (->TestStreamRecord Int 100 Str "Lisp")
+                (stream)
+                (foldl (fn [e acc] (concat acc (car e) (string(cdr e)))) ""))))

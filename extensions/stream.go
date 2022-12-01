@@ -34,6 +34,8 @@ func expr2Stream(v glisp.Sexp) iStream {
 		return &StringIterator{expr: []rune(expr)}
 	case *glisp.SexpHash:
 		return &HashIterator{expr: expr}
+	case SexpRecord:
+		return &RecordIterator{expr: expr}
 	}
 	if v == glisp.SexpNull {
 		return &ListIterator{expr: glisp.SexpNull}
@@ -85,6 +87,8 @@ func IsStreamable(expr glisp.Sexp) bool {
 	case glisp.SexpStr:
 		return true
 	case *glisp.SexpHash:
+		return true
+	case SexpRecord:
 		return true
 	}
 	return false

@@ -284,6 +284,26 @@ func (iter *HashIterator) Next(*glisp.Environment) (glisp.Sexp, bool, error) {
 	return glisp.SexpNull, false, nil
 }
 
+type RecordIterator struct {
+	expr SexpRecord
+	idx  int
+}
+
+func (iter *RecordIterator) SexpString() string {
+	return fmt.Sprintf(`(stream %s)`, iter.expr.SexpString())
+}
+
+func (iter *RecordIterator) Next(*glisp.Environment) (glisp.Sexp, bool, error) {
+	fs := iter.expr.Class().Fields()
+	if iter.idx >= len(fs) {
+		return glisp.SexpNull, false, nil
+	}
+	key := glisp.SexpStr(fs[iter.idx].Name)
+	val := iter.expr.GetFieldDefault(fs[iter.idx].Name, glisp.SexpNull)
+	iter.idx++
+	return glisp.Cons(key, val), true, nil
+}
+
 type RangeIterator struct {
 	isDefault      bool
 	from, to, step glisp.SexpInt
