@@ -304,21 +304,31 @@ func AssocRecordField(name string) glisp.UserFunction {
 		if !IsRecord(args[0]) {
 			return glisp.SexpNull, fmt.Errorf("first argument must be record but got %v", glisp.InspectType(args[0]))
 		}
-		record, field := args[0].(SexpRecord), args[1].(glisp.SexpSymbol)
-		return record, record.SetField(field.Name(), args[2])
+		var field string
+		switch expr := args[1].(type) {
+		case glisp.SexpStr:
+			field = string(expr)
+		case glisp.SexpSymbol:
+			field = expr.Name()
+		default:
+			return glisp.SexpNull, fmt.Errorf("second argument must be symbol/string but got %v", glisp.InspectType(args[1]))
+		}
+		record := args[0].(SexpRecord)
+		return record, record.SetField(field, args[2])
 	}
 	sexpfn := glisp.MakeUserFunction(name, userfn)
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 3 {
 			return glisp.WrongNumberArguments(name, len(args), 3)
 		}
-		if !glisp.IsSymbol(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("second argument must be symbol but got %v", glisp.InspectType(args[1]))
+		key := args[1]
+		if glisp.IsSymbol(args[1]) {
+			key = glisp.MakeList([]glisp.Sexp{env.MakeSymbol("quote"), args[1]})
 		}
 		return glisp.MakeList([]glisp.Sexp{
 			sexpfn,
 			args[0],
-			glisp.MakeList([]glisp.Sexp{env.MakeSymbol("quote"), args[1]}),
+			key,
 			args[2],
 		}), nil
 	}

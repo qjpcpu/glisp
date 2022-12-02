@@ -711,6 +711,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (assoc p 2 333)`, `second argument must be symbol`)
 	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (assoc p Name 12)`, `expect string but got int`)
 	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (assoc p Name2 12)`, `not found`)
+	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (assoc p 123 12)`, `second argument must be symbol/string`)
 	ExpectScriptErr(t, `(defrecord Class (Name hash<string,int>)) (def p (->Class Name "Tom"))`, `expect hash<string,int> but got string`)
 	ExpectScriptErr(t, `(defrecord Class (Name hash<string,int>)) (def p (->Class Name {"a" "b"}))`, `expect int but got string`)
 	ExpectScriptErr(t, `(defrecord Class (Name hash<string,int>)) (def p (->Class Name {1 "b"}))`, `expect string but got int`)

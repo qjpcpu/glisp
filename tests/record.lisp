@@ -109,3 +109,8 @@
 (def dr (->DefaultRecord))
 (assert (= "www.example.com" (:Host dr)))
 (assert (= 3306 (:Port dr)))
+
+(assoc dr (symbol "Host") "github.com")
+(assoc dr  "Port" 5432)
+(assert (= "github.com" (:Host dr)))
+(assert (= 5432 (:Port dr)))
