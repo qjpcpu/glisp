@@ -13,6 +13,7 @@
 (assert (str/start-with? "abc" "ab"))
 (assert (str/end-with? "abc" "bc"))
 (assert (str/contains? "abc" "b"))
+(assert (str/contains-ignore-case? "abc" "B"))
 (assert (= "Abc" (str/title "abc")))
 (assert (= "abc" (str/lower "ABC")))
 (assert (= "ABC" (str/upper "abc")))

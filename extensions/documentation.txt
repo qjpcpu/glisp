@@ -386,6 +386,11 @@ Usage: (str/contains? s substr)
 
 Reports whether substr is within s.
 
+========== str/contains-ignore-case? ==========
+Usage: (str/contains-ignore-case? s substr)
+
+Reports whether substr is within s ignore case.
+
 ========== str/title ==========
 Usage: (str/title s)
 

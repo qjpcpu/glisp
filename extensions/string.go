@@ -14,6 +14,7 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/start-with?", StringPredict(strings.HasPrefix))
 	env.AddNamedFunction("str/end-with?", StringPredict(strings.HasSuffix))
 	env.AddNamedFunction("str/contains?", StringPredict(strings.Contains))
+	env.AddNamedFunction("str/contains-ignore-case?", containsIgnoreCase())
 	env.AddNamedFunction("str/title", StringMap(strings.Title))
 	env.AddNamedFunction("str/lower", StringMap(strings.ToLower))
 	env.AddNamedFunction("str/upper", StringMap(strings.ToUpper))
@@ -280,6 +281,12 @@ func isTitle() glisp.NamedUserFunction {
 			return s[1] > 'Z' || s[1] < 'A'
 		}
 		return true
+	})
+}
+
+func containsIgnoreCase() glisp.NamedUserFunction {
+	return StringPredict(func(s0, s1 string) bool {
+		return strings.Contains(strings.ToLower(s0), strings.ToLower(s1))
 	})
 }
 
