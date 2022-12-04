@@ -14,17 +14,17 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/start-with?", StringPredict(strings.HasPrefix))
 	env.AddNamedFunction("str/end-with?", StringPredict(strings.HasSuffix))
 	env.AddNamedFunction("str/contains?", StringPredict(strings.Contains))
-	env.AddNamedFunction("str/contains-ignore-case?", containsIgnoreCase())
+	env.AddNamedFunction("str/equal-fold?", StringPredict(strings.EqualFold))
 	env.AddNamedFunction("str/title", StringMap(strings.Title))
 	env.AddNamedFunction("str/lower", StringMap(strings.ToLower))
 	env.AddNamedFunction("str/upper", StringMap(strings.ToUpper))
-	env.AddNamedFunction("str/replace", StringMap3(strings.ReplaceAll))
+	env.AddNamedFunction("str/replace", StringReplace)
 	env.AddNamedFunction("str/trim-prefix", StringMap2(strings.TrimPrefix))
 	env.AddNamedFunction("str/trim-suffix", StringMap2(strings.TrimSuffix))
 	env.AddNamedFunction("str/trim-space", StringMap(strings.TrimSpace))
 	env.AddNamedFunction("str/count", StringSearch(strings.Count))
 	env.AddNamedFunction("str/index", StringSearch(stringIndex))
-	env.AddNamedFunction("str/split", StringSplit(strings.Split))
+	env.AddNamedFunction("str/split", StringSplit)
 	env.AddNamedFunction("str/join", StringJoin(strings.Join))
 	env.AddNamedFunction("str/digit?", isDigit())
 	env.AddNamedFunction("str/alpha?", isAlpha())
@@ -40,8 +40,8 @@ func ImportString(vm *glisp.Environment) error {
 func StringPredict(fn func(string, string) bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 2 {
-				return glisp.WrongNumberArguments(name, len(args), 2)
+			if len(args) != 2 && len(args) != 3 {
+				return glisp.WrongNumberArguments(name, len(args), 2, 3)
 			}
 			if !glisp.IsString(args[0]) {
 				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
@@ -49,7 +49,12 @@ func StringPredict(fn func(string, string) bool) glisp.NamedUserFunction {
 			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
-			return glisp.SexpBool(fn(toStr(args[0]), toStr(args[1]))), nil
+			s, substr := toStr(args[0]), toStr(args[1])
+			if len(args) == 3 && glisp.IsBool(args[2]) && bool(args[2].(glisp.SexpBool)) {
+				s = strings.ToLower(s)
+				substr = strings.ToLower(substr)
+			}
+			return glisp.SexpBool(fn(s, substr)), nil
 		}
 	}
 }
@@ -71,25 +76,28 @@ func StringSearch(fn func(string, string) int) glisp.NamedUserFunction {
 	}
 }
 
-func StringSplit(fn func(string, string) []string) glisp.NamedUserFunction {
-	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 2 {
-				return glisp.WrongNumberArguments(name, len(args), 2)
-			}
-			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
-			}
-			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
-			}
-			list := fn(toStr(args[0]), toStr(args[1]))
-			var array glisp.SexpArray
-			for _, str := range list {
-				array = append(array, glisp.SexpStr(str))
-			}
-			return array, nil
+func StringSplit(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 2 && len(args) != 3 {
+			return glisp.WrongNumberArguments(name, len(args), 2, 3)
 		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+		}
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+		}
+		var list []string
+		if len(args) == 3 && glisp.IsInt(args[2]) {
+			list = strings.SplitN(toStr(args[0]), toStr(args[1]), args[2].(glisp.SexpInt).ToInt())
+		} else {
+			list = strings.Split(toStr(args[0]), toStr(args[1]))
+		}
+		var array glisp.SexpArray
+		for _, str := range list {
+			array = append(array, glisp.SexpStr(str))
+		}
+		return array, nil
 	}
 }
 
@@ -163,23 +171,24 @@ func StringMap2(fn func(string, string) string) glisp.NamedUserFunction {
 	}
 }
 
-func StringMap3(fn func(string, string, string) string) glisp.NamedUserFunction {
-	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 3 {
-				return glisp.WrongNumberArguments(name, len(args), 3)
-			}
-			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
-			}
-			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
-			}
-			if !glisp.IsString(args[2]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
-			}
-			return glisp.SexpStr(fn(toStr(args[0]), toStr(args[1]), toStr(args[2]))), nil
+func StringReplace(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 3 && len(args) != 4 {
+			return glisp.WrongNumberArguments(name, len(args), 3, 4)
 		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+		}
+		if !glisp.IsString(args[1]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+		}
+		if !glisp.IsString(args[2]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+		}
+		if len(args) == 4 && glisp.IsInt(args[3]) {
+			return glisp.SexpStr(strings.Replace(toStr(args[0]), toStr(args[1]), toStr(args[2]), args[3].(glisp.SexpInt).ToInt())), nil
+		}
+		return glisp.SexpStr(strings.ReplaceAll(toStr(args[0]), toStr(args[1]), toStr(args[2]))), nil
 	}
 }
 
@@ -281,12 +290,6 @@ func isTitle() glisp.NamedUserFunction {
 			return s[1] > 'Z' || s[1] < 'A'
 		}
 		return true
-	})
-}
-
-func containsIgnoreCase() glisp.NamedUserFunction {
-	return StringPredict(func(s0, s1 string) bool {
-		return strings.Contains(strings.ToLower(s0), strings.ToLower(s1))
 	})
 }
 

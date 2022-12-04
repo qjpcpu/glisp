@@ -376,19 +376,25 @@ Usage: (str/start-with? s substr)
 
 Tests whether the string s begins with prefix.
 
+(str/start-with? s substr)
+
+Tests whether the string s begins with prefix ignore case.
+
 ========== str/end-with? ==========
 Usage: (str/end-with? s substr)
 
 Tests whether the string s ends with suffix.
+
+(str/end-with? s substr true)
+
+Tests whether the string s ends with suffix ignore case.
 
 ========== str/contains? ==========
 Usage: (str/contains? s substr)
 
 Reports whether substr is within s.
 
-========== str/contains-ignore-case? ==========
-Usage: (str/contains-ignore-case? s substr)
-
+(str/contains? s substr true)
 Reports whether substr is within s ignore case.
 
 ========== str/title ==========
@@ -407,6 +413,13 @@ Returns s with all Unicode letters mapped to their lower case.
 Usage: (str/upper s)
 
 Returns s with all Unicode letters mapped to their upper case.
+
+========== str/equal-fold? ==========
+Usage: (str/equal-fold? s1 s2)
+
+str/equal-fold? reports whether s and t, interpreted as UTF-8 strings,
+are equal under Unicode case-folding, which is a more general
+form of case-insensitivity.
 
 ========== str/replace ==========
 Usage: (str/replace s old new)
@@ -459,6 +472,16 @@ slice of length 1 whose only element is s.
 
 If sep is empty, Split splits after each UTF-8 sequence. If both s
 and sep are empty, Split returns an empty slice.
+
+(str/split s sep n)
+
+split slices s into substrings separated by sep and returns a slice of
+the substrings between those separators.
+
+The count determines the number of substrings to return:
+  n > 0: at most n substrings; the last substring will be the unsplit remainder.
+  n == 0: the result is nil (zero substrings)
+  n < 0: all substrings
 
 ========== str/join ==========
 Usage: (str/join elems sep)

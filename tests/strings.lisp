@@ -11,13 +11,16 @@
 (assert (symbol? 'a))
 
 (assert (str/start-with? "abc" "ab"))
+(assert (not (str/start-with? "abc" "aB")))
+(assert (str/start-with? "abc" "aB" true))
 (assert (str/end-with? "abc" "bc"))
 (assert (str/contains? "abc" "b"))
-(assert (str/contains-ignore-case? "abc" "B"))
+(assert (str/contains? "abc" "B" true))
 (assert (= "Abc" (str/title "abc")))
 (assert (= "abc" (str/lower "ABC")))
 (assert (= "ABC" (str/upper "abc")))
 (assert (= "aBBc" (str/replace "abc" "b" "BB")))
+(assert (= "aBbc" (str/replace "abbc" "b" "B" 1)))
 (assert (= "bc" (str/trim-prefix "abc" "a")))
 (assert (= "ab" (str/trim-suffix "abc" "c")))
 (assert (= "abc" (str/trim-space " abc ")))
@@ -29,7 +32,9 @@
 (assert (= "1024" (string 1024)))
 (assert (= "true" (string true)))
 
+(assert (str/equal-fold? "abc" "AbC"))
 (assert (= ["a" "b"] (str/split "a b" " ")))
+(assert (= ["a" "b c d"] (str/split "a b c d" " " 2)))
 
 (assert (= "a_b" (str/join ["a" "b"] "_")))
 
