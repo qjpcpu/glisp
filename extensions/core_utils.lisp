@@ -4,6 +4,9 @@
 Return true if x is not nil."
   (not (nil? x)))
 
+;; (car (cdr x))
+(defn cadr [x] (car (cdr x)))
+
 ;; alias function
 (defmac alias [new old]
   "Usage: (alias new_name orig_name)
