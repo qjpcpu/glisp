@@ -1,20 +1,12 @@
 package extensions
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 
-	_ "embed"
-
 	"github.com/qjpcpu/glisp"
-)
-
-var (
-	//go:embed core_utils.lisp
-	core_scripts string
 )
 
 func ImportCoreUtils(vm *glisp.Environment) error {
@@ -64,7 +56,8 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("get-record-class", GetRecordClass)
 	env.AddNamedFunction("record-class-definition", ClassDefinition)
 	env.AddNamedFunction("record-of?", CheckIsRecordOf)
-	return env.SourceStream(bytes.NewBufferString(core_scripts))
+	mustLoadScript(env.Environment, "core")
+	return nil
 }
 
 func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {

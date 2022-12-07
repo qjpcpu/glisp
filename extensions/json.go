@@ -6,15 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	_ "embed"
-
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/qjson"
-)
-
-var (
-	//go:embed json_utils.lisp
-	json_scripts string
 )
 
 func ImportJSON(vm *glisp.Environment) error {
@@ -24,7 +17,8 @@ func ImportJSON(vm *glisp.Environment) error {
 	env.AddNamedFunction("json/query", QueryJSONSexp)
 	env.AddNamedFunction("json/set", SetJSONSexp)
 	env.AddNamedFunction("json/del", DelJSONSexp)
-	return env.SourceStream(bytes.NewBufferString(json_scripts))
+	mustLoadScript(env.Environment, "json")
+	return nil
 }
 
 func jsonMarshal(name string) glisp.UserFunction {

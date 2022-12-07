@@ -34,6 +34,7 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/bool?", isBool())
 	env.AddNamedFunction("str/md5", strMD5())
 	env.AddNamedFunction("str/mask", strMask)
+	mustLoadScript(env.Environment, "str")
 	return nil
 }
 

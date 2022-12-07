@@ -136,6 +136,20 @@ func ExpectNonEmptyStr(t *testing.T, str string) {
 	}
 }
 
+func ExpectPanic(t *testing.T, fn func()) {
+	f := func() (r interface{}) {
+		defer func() {
+			r = recover()
+		}()
+		fn()
+		return
+	}
+	r := f()
+	if r == nil {
+		t.Fatal("expect panic but success")
+	}
+}
+
 func ExpectScriptErr(t *testing.T, script string, keywords ...string) {
 	env := newFullEnv()
 	_, err := env.EvalString(script)

@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	//go:embed builtin.lisp
+	//go:embed builtin.clj
 	buitin_scripts string
 )
 
