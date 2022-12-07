@@ -549,7 +549,7 @@ func (env *Environment) GlobalFunctions() []string {
 	ret = append(ret,
 		"and", "or", "cond",
 		"quote",
-		"def", "fn", "defn",
+		"def", "fn", "defn", "set!",
 		"begin",
 		"let", "let*",
 		"assert",

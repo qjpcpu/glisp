@@ -19,6 +19,20 @@ be set to macro name(string) when calling.
 Second: the macro name must be string when `defmac`, thus this string would be compiled as
 a regular expression for matching at generating time.
 
+========== def ==========
+(Usage: (def x expr))
+
+Assignment is done using either the (def) or the (set!) operator.
+
+(def x 10) will always define a new variable x in the current scope. If there is already an x in the current scope, it will be updated. No scope up the stack will ever be effected. def should be your choice for most operations.
+
+========== set! ==========
+(Usage: (set! x expr))
+
+Assignment is done using either the (def) or the (set!) operator.
+
+While def is the workhorse, sometimes set! is needed. set! is more powerful and thus more dangerous; it can modify non-local variables. Like def expression (set! x 10) will update the value of x with 10 if x is already defined in the current scope, and define a new binding if there is no x anywhere on the stack. However, if x is not found in the current scope, we will search up the scope stack for an earlier binding to x. If x is indeed found up the stack, the value of x in that higher scope will be updated to 10. If no binding is found, a local one is created. The non-local update of set! is essential is some cases, but should be used with care.
+
 ========== cons ==========
 Usage: (cons x seq)
 

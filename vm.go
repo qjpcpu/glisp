@@ -149,7 +149,8 @@ func (g GetInstr) Execute(env *Environment) error {
 }
 
 type PutInstr struct {
-	sym SexpSymbol
+	sym   SexpSymbol
+	isSet bool
 }
 
 func (p PutInstr) InstrString() string {
@@ -162,6 +163,9 @@ func (p PutInstr) Execute(env *Environment) error {
 		return err
 	}
 	env.pc++
+	if p.isSet {
+		return env.scopestack.SetSymbol(p.sym, expr)
+	}
 	return env.scopestack.BindSymbol(p.sym, expr)
 }
 

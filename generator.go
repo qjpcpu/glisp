@@ -97,7 +97,7 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	}
 
 	for i := len(argsyms) - 1; i >= 0; i-- {
-		gen.AddInstruction(PutInstr{argsyms[i]})
+		gen.AddInstruction(PutInstr{sym: argsyms[i]})
 	}
 
 	var doc string
@@ -140,7 +140,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateDef(args []Sexp) error {
+func (gen *Generator) GenerateDef(args []Sexp, isSet bool) error {
 	if len(args) != 2 {
 		return errors.New("Wrong number of arguments to def")
 	}
@@ -158,7 +158,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PutInstr{sym})
+	gen.AddInstruction(PutInstr{sym: sym, isSet: isSet})
 	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }
@@ -201,7 +201,7 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 
 	if !dynName {
 		gen.AddInstruction(PushInstr{sfun})
-		gen.AddInstruction(PutInstr{sym})
+		gen.AddInstruction(PutInstr{sym: sym})
 		gen.AddInstruction(PushInstr{SexpNull})
 	} else {
 		gen.AddInstruction(PushInstr{sfun})
@@ -421,7 +421,7 @@ func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []S
 			if err != nil {
 				return err
 			}
-			gen.AddInstruction(PutInstr{lstatements[i]})
+			gen.AddInstruction(PutInstr{sym: lstatements[i]})
 		}
 	} else if name == "let" {
 		for _, rs := range rstatements {
@@ -431,7 +431,7 @@ func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []S
 			}
 		}
 		for i := len(lstatements) - 1; i >= 0; i-- {
-			gen.AddInstruction(PutInstr{lstatements[i]})
+			gen.AddInstruction(PutInstr{sym: lstatements[i]})
 		}
 	}
 	err := gen.GenerateBegin(args)
@@ -561,7 +561,9 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	case "quote":
 		return gen.GenerateQuote(args)
 	case "def":
-		return gen.GenerateDef(args)
+		return gen.GenerateDef(args, false)
+	case "set!":
+		return gen.GenerateDef(args, true)
 	case "fn":
 		return gen.GenerateFn(args)
 	case "defn":

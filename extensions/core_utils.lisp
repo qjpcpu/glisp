@@ -1,11 +1,14 @@
 ;; not-nil?
 (defn not-nil? [x]
-  "Usaage: (not-nil? x)
+  "Usage: (not-nil? x)
 Return true if x is not nil."
   (not (nil? x)))
 
 ;; (car (cdr x))
-(defn cadr [x] (car (cdr x)))
+(defn cadr [x]
+  "Usage: (cadr x)
+Equivalent to (car (cdr x))"
+  (car (cdr x)))
 
 ;; alias function
 (defmac alias [new old]
