@@ -443,7 +443,16 @@ func DefineRecord(name string) glisp.UserFunction {
 				return glisp.SexpNull, errors.New("field type can't contains space")
 			}
 			if (len(arr) == 3 || len(arr) == 4) && !glisp.IsString(arr[2]) {
-				return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag)")
+				if err := env.LoadExpressions([]glisp.Sexp{arr[2]}); err != nil {
+					return glisp.SexpNull, fmt.Errorf("eval field %s tag %s fail %v", arr[0].SexpString(), arr[2].SexpString(), err)
+				}
+				if expr, err := env.Run(); err != nil {
+					return glisp.SexpNull, fmt.Errorf("eval field %s tag %s fail %v", arr[0].SexpString(), arr[2].SexpString(), err)
+				} else if !glisp.IsString(expr) {
+					return glisp.SexpNull, errors.New("field definition format must be (name type) or (name type tag) or (name type tag default-value)")
+				} else {
+					arr[2] = expr
+				}
 			}
 			fd := SexpRecordField{Name: arr[0].(glisp.SexpSymbol).Name(), Type: arr[1].(glisp.SexpSymbol).Name(), DefaultValue: glisp.SexpNull}
 			if len(arr) >= 3 {

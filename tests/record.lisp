@@ -114,3 +114,5 @@
 (assoc dr  "Port" 5432)
 (assert (= "github.com" (:Host dr)))
 (assert (= 5432 (:Port dr)))
+
+(defrecord CalcuRec (Age int (concat "age" "of" "sth") (+ 1 2)))
