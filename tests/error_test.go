@@ -725,4 +725,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(defrecord Class (Name string)) (def p (->Class Name "Tom")) (record-of? p 1)`, `second argument must be record class`)
 	ExpectScriptErr(t, `(os/read-dir 1)`, `argument should be string`)
 	ExpectScriptErr(t, `(os/read-dir)`, `expect 1 argument(s)`)
+	ExpectScriptErr(t, `(str/repeat)`, `expect 2 argument(s)`)
+	ExpectScriptErr(t, `(str/repeat 1 1)`, `first argument should be string`)
+	ExpectScriptErr(t, `(str/repeat "" "")`, `second argument should be int`)
 }

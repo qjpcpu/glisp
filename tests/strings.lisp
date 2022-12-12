@@ -106,3 +106,5 @@
 (assert (= "abc" (string '(#a #b #c))))
 (assert (= "abc" (string '[#a #b #c])))
 (assert (= "atrueb1233.14BYTESd" (string ['("a" true "b") [1 2 3 3.14 (bytes "BYTES")] #d])))
+
+(assert (= "AAA" (str/repeat "A" 3)))

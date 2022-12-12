@@ -421,6 +421,11 @@ str/equal-fold? reports whether s and t, interpreted as UTF-8 strings,
 are equal under Unicode case-folding, which is a more general
 form of case-insensitivity.
 
+========== str/repeat ==========
+Usage: (str/repeat s n)
+
+str/repeat returns a new string consisting of n copies of the string s.
+
 ========== str/replace ==========
 Usage: (str/replace s old new)
 

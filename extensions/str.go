@@ -19,6 +19,7 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/lower", StringMap(strings.ToLower))
 	env.AddNamedFunction("str/upper", StringMap(strings.ToUpper))
 	env.AddNamedFunction("str/replace", StringReplace)
+	env.AddNamedFunction("str/repeat", StringRepeat)
 	env.AddNamedFunction("str/trim-prefix", StringMap2(strings.TrimPrefix))
 	env.AddNamedFunction("str/trim-suffix", StringMap2(strings.TrimSuffix))
 	env.AddNamedFunction("str/trim-space", StringMap(strings.TrimSpace))
@@ -190,6 +191,21 @@ func StringReplace(name string) glisp.UserFunction {
 			return glisp.SexpStr(strings.Replace(toStr(args[0]), toStr(args[1]), toStr(args[2]), args[3].(glisp.SexpInt).ToInt())), nil
 		}
 		return glisp.SexpStr(strings.ReplaceAll(toStr(args[0]), toStr(args[1]), toStr(args[2]))), nil
+	}
+}
+
+func StringRepeat(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 2)
+		}
+		if !glisp.IsString(args[0]) {
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+		}
+		if !glisp.IsInt(args[1]) {
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be int`, name)
+		}
+		return glisp.SexpStr(strings.Repeat(toStr(args[0]), args[1].(glisp.SexpInt).ToInt())), nil
 	}
 }
 
