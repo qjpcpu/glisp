@@ -4,6 +4,26 @@
 Return true if x is not nil."
   (not (nil? x)))
 
+(defn not-empty? [x]
+  "Usage: (not-empty? x)
+Return true if x is not empty."
+  (not (empty? x)))
+
+(defn core/id [x]
+  "Usage: (core/id x)
+Always return x"
+  x)
+
+(defn core/const [x]
+  "Usage: (core/const x)
+Return a function which always return x."
+  (fn [& anything] x))
+
+(defn core/dummy [x]
+  "Usage: (core/dummy x)
+Always return nil."
+  nil)
+
 ;; (car (cdr x))
 (defn cadr [x]
   "Usage: (cadr x)
