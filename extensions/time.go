@@ -24,6 +24,7 @@ func ImportTime(vm *glisp.Environment) error {
 	env.AddNamedFunction("time/minute", TimeMinuteOf)
 	env.AddNamedFunction("time/second", TimeSecondOf)
 	env.AddNamedFunction("time/weekday", TimeWeekdayOf)
+	mustLoadScript(env.Environment, "time")
 	return nil
 }
 
