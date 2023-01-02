@@ -141,8 +141,7 @@ Takes an expression, and a set of clauses.
  Each clause can take the form of either:
  test-constant result-expr
  (test-constant1 ... test-constantN)  result-expr
- The test-constants are not evaluated. They must be compile-time
-literals, and need not be quoted.  If the expression is equal to a
+If the expression is equal to a
 test-constant, the corresponding result-expr is returned. A single
 default expression can follow the clauses, and its value will be
 returned if no clause matches.
