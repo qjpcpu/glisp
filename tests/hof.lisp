@@ -194,8 +194,8 @@
                 (concat "C"))
                (concat "d"))))
 
-(assert (= "no cases" (case "no cases")))
+(assert (= nil (case "no cases")))
 (assert (= "match1" (case 1 0 "match0" 1 (concat "match" "1"))))
 (assert (= "default" (case 33 0 "match0" 1 (concat "match" "1") "default")))
-(assert (= "orig" (case "orig" "a" "match0" "b" (concat "match" "1"))))
+(assert (= nil (case "orig" "a" "match0" "b" (concat "match" "1"))))
 (assert (= [1 2 3] (foreach string [1 2 3])))

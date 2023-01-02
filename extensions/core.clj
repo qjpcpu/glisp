@@ -146,8 +146,22 @@ literals, and need not be quoted.  If the expression is equal to a
 test-constant, the corresponding result-expr is returned. A single
 default expression can follow the clauses, and its value will be
 returned if no clause matches.
+
+example:
+;; return result x when value x matched
+;; return nil when nothing matched
+(case expr
+      value1 result1
+      value2 result2)
+
+;; return result x when value x matched
+;; return default-result when nothing matched
+(case expr
+      value1 result1
+      value2 result2
+      default-result)
 "
-  (let* [x (gensym) expr (->> (cond (= 0 (mod (len clauses) 2)) (concat clauses (list x)) clauses)
+  (let* [x (gensym) expr (->> (cond (= 0 (mod (len clauses) 2)) (concat clauses (list nil)) clauses)
                               (stream)
                               (partition 2)
                               (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= x (car pair)) (car (cdr pair))) pair)))
