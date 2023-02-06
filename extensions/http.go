@@ -153,6 +153,13 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			}
 			resp, err := cli.Do(req)
 			if err != nil {
+				if hreq.IgnoreErr {
+					if withRespStatus {
+						return glisp.Cons(glisp.NewSexpInt(http.StatusBadGateway), glisp.NewSexpBytes([]byte(err.Error()))), nil
+					} else {
+						return glisp.NewSexpBytes([]byte(err.Error())), nil
+					}
+				}
 				return glisp.SexpNull, fmt.Errorf("%s %v fail %v", req.Method, req.URL.String(), err)
 			}
 
@@ -211,6 +218,7 @@ type request struct {
 	IncludeHeaderInOutput bool
 	Method                string
 	Outfile               string
+	IgnoreErr             bool
 }
 
 func newHttpReq() *request {
@@ -274,6 +282,13 @@ var availableHttpOptions = map[string]httpOption{
 				return nil, fmt.Errorf("-X Method need string but got %v", querySexpType(env, val))
 			}
 			req.Method = strings.ToUpper(string(val.(glisp.SexpStr)))
+			return req, nil
+		},
+	},
+	"-ignore-error": {
+		needValue: false,
+		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
+			req.IgnoreErr = true
 			return req, nil
 		},
 	},
