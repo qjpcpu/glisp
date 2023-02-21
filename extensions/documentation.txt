@@ -118,6 +118,9 @@ Available options:
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
+-ignore-error
+  ignore http network error
+
 ========== http/post ==========
 Usage: (http/post options url)
 
@@ -138,6 +141,9 @@ Available options:
 
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+-ignore-error
+  ignore http network error
 
 ========== http/put ==========
 Usage: (http/put options url)
@@ -160,6 +166,9 @@ Available options:
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
+-ignore-error
+  ignore http network error
+
 ========== http/patch ==========
 Usage: (http/patch options url)
 
@@ -180,6 +189,9 @@ Available options:
 
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+-ignore-error
+  ignore http network error
 
 ========== http/delete ==========
 Usage: (http/delete options url)
@@ -202,6 +214,9 @@ Available options:
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
+-ignore-error
+  ignore http network error
+
 ========== http/options ==========
 Usage: (http/options options url)
 
@@ -222,6 +237,9 @@ Available options:
 
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+-ignore-error
+  ignore http network error
 
 ========== http/head ==========
 Usage: (http/head options url)
@@ -244,6 +262,9 @@ Available options:
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
 
+-ignore-error
+  ignore http network error
+
 ========== http/curl ==========
 Usage: (http/curl options url)
 
@@ -264,6 +285,9 @@ Available options:
 
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+-ignore-error
+  ignore http network error
 
 ========== json/stringify ==========
 Usage: (json/stringify x)

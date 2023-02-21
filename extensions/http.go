@@ -154,10 +154,11 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			resp, err := cli.Do(req)
 			if err != nil {
 				if hreq.IgnoreErr {
+					errBytes := []byte(fmt.Sprintf("[GLISP_HTTP_ERROR]%v", err.Error()))
 					if withRespStatus {
-						return glisp.Cons(glisp.NewSexpInt(http.StatusBadGateway), glisp.NewSexpBytes([]byte(err.Error()))), nil
+						return glisp.Cons(glisp.NewSexpInt(http.StatusBadGateway), glisp.NewSexpBytes(errBytes)), nil
 					} else {
-						return glisp.NewSexpBytes([]byte(err.Error())), nil
+						return glisp.NewSexpBytes(errBytes), nil
 					}
 				}
 				return glisp.SexpNull, fmt.Errorf("%s %v fail %v", req.Method, req.URL.String(), err)
