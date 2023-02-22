@@ -77,7 +77,7 @@ func ParseJSON(rawBytes []byte) (glisp.Sexp, error) {
 	}
 	tree, err := qjson.Decode(rawBytes)
 	if err != nil {
-		return glisp.SexpNull, fmt.Errorf("decode json fail %v", err)
+		return glisp.SexpNull, fmt.Errorf("decode json fail %v, input is %v", err, string(rawBytes))
 	}
 	defer tree.Release()
 	return mapJsonNodeToSexp(tree.Root), nil
