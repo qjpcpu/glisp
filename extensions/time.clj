@@ -11,7 +11,7 @@ Return time string in utc."
   (time/format tm "2006-01-02 15:04:05" "UTC"))
 
 (defn time/parse-beijing [tm]
-  "Usage: (time/parse-beijgin)
+  "Usage: (time/parse-beijing)
 
 Parse time string of format 2006-01-02 15:04:05 in beijing."
   (time/parse tm "2006-01-02 15:04:05" "Asia/Shanghai"))
