@@ -47,14 +47,15 @@ func ExecCommand(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
 			}
 		}
-		var buf bytes.Buffer
+		var buf, errBuf bytes.Buffer
 		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
-		cmd.Stderr = &buf
-		ret, err := cmd.Output()
+		cmd.Stderr = &errBuf
+		cmd.Stdout = &buf
+		err := cmd.Run()
 		if err != nil {
-			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
+			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBuf.Bytes()))), nil
 		}
-		return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(ret))), nil
+		return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 	}
 }
 
