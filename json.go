@@ -83,23 +83,35 @@ func (a SexpSentinel) MarshalJSON() ([]byte, error) {
 func (a *SexpPair) MarshalJSON() ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	buffer.WriteByte('[')
-	var addComma bool
-	for elem := a; elem.head != SexpNull && elem.head != nil; {
-		if addComma {
+	pair := a
+	for {
+		switch pair.tail.(type) {
+		case *SexpPair:
+			data, err := Marshal(pair.head)
+			if err != nil {
+				return nil, err
+			}
+			buffer.Write(data)
 			buffer.WriteByte(',')
-		} else {
-			addComma = true
+			pair = pair.tail.(*SexpPair)
+			continue
 		}
-		data, err := Marshal(elem.head)
+		break
+	}
+	data, err := Marshal(pair.head)
+	if err != nil {
+		return nil, err
+	}
+	buffer.Write(data)
+	if pair.tail != SexpNull {
+		data, err := Marshal(pair.tail)
 		if err != nil {
 			return nil, err
 		}
+		buffer.WriteByte(',')
 		buffer.Write(data)
-		var ok bool
-		if elem, ok = elem.tail.(*SexpPair); !ok {
-			break
-		}
 	}
+
 	buffer.WriteByte(']')
 	return buffer.Bytes(), nil
 }

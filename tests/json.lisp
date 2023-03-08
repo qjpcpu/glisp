@@ -11,7 +11,7 @@
 (hset! h1 'hash c1)
 (hset! h1 'list c2)
 (hset! h1 'array c3)
-(assert (= "{\"a\":1,\"b\":null,\"c\":true,\"hash\":{\"a\":1,\"b\":null},\"list\":[\"element\"],\"array\":[1,2,3]}" (json/stringify h1)))
+(assert (= "{\"a\":1,\"b\":null,\"c\":true,\"hash\":{\"a\":1,\"b\":null},\"list\":[\"element\",null],\"array\":[1,2,3]}" (json/stringify h1)))
 
 
 (def h2 {'a (time/parse 1656988237)})
@@ -77,3 +77,8 @@
 (assert (= "{\"a\":119.38907218102548}" (json/stringify {"a" (+ 1 118.38907218102548)})))
 (assert (= "119.38907218102548" (string (+ 1 118.38907218102548))))
 (assert (= "119.38907218102548" (sexp-str (+ 1 118.38907218102548))))
+
+(assert (= "[\"nil\",1,2,\"nil\"]" (json/stringify '(nil 1 2 nil))))
+(assert (= "[null,1,2,null]" (json/stringify (list nil 1 2 nil))))
+(assert (= "[1,2,null]" (json/stringify '(1 2 ()))))
+(assert (= "[1,2]" (json/stringify (cons 1 2 ))))
