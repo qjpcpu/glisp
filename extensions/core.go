@@ -201,6 +201,10 @@ func ExplainColonMacro(name string) glisp.UserFunction {
 		if ex, ok := args[1].(ExplainSexp); ok {
 			return ex.Explain(env, string(args[0].(glisp.SexpStr)), args[2:])
 		}
+		/* nil explain anything as nil */
+		if args[1] == glisp.SexpNull {
+			return glisp.SexpNull, nil
+		}
 		return glisp.SexpNull, fmt.Errorf("type `%s` can't explain `%s`", glisp.InspectType(args[1]), args[0].SexpString())
 	})
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {

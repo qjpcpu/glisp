@@ -13,3 +13,6 @@
 (assert (not-nil? +))
 
 (assert (= "{\"a\":1,\"b\":2}" (json/stringify (union {"a" 1} {"b" 2}))))
+
+(assert (nil? (:not-exist-property nil)))
+(assert (nil? (:not-exist-property (car '()))))
