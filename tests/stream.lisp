@@ -319,3 +319,9 @@
            (->> (->TestStreamRecord Int 100 Str "Lisp")
                 (stream)
                 (foldl (fn [e acc] (concat acc (car e) (string(cdr e)))) ""))))
+
+(assert (= '(1 2 3) (realize (take -1 (stream [1 2 3]))) ))
+(assert (= '() (realize (take 0 (stream [1 2 3]))) ))
+
+(assert (= '() (realize (drop -1 (stream [1 2 3]))) ))
+(assert (= '(1 2 3) (realize (drop 0 (stream [1 2 3]))) ))

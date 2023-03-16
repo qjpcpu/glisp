@@ -3,6 +3,7 @@ package extensions
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/qjpcpu/glisp"
 )
@@ -190,6 +191,13 @@ func StreamFilterFunction(name string) glisp.UserFunction {
 	}
 }
 
+func negtiveAsMaxUint64(num glisp.SexpInt) uint64 {
+	if num.Sign() < 0 {
+		return math.MaxUint64
+	}
+	return num.ToUint64()
+}
+
 func StreamTakeFunction(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
@@ -200,7 +208,7 @@ func StreamTakeFunction(name string) glisp.UserFunction {
 		}
 		if glisp.IsInt(args[0]) {
 			num, stream := args[0].(glisp.SexpInt), args[1].(iStream)
-			return &takeIterator{iStream: stream, count: num.ToUint64()}, nil
+			return &takeIterator{iStream: stream, count: negtiveAsMaxUint64(num)}, nil
 		} else if glisp.IsFunction(args[0]) {
 			f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 			return &takeIterator{iStream: stream, f: f}, nil
@@ -219,7 +227,7 @@ func StreamDropFunction(name string) glisp.UserFunction {
 		}
 		if glisp.IsInt(args[0]) {
 			num, stream := args[0].(glisp.SexpInt), args[1].(iStream)
-			return &dropIterator{iStream: stream, count: num.ToUint64()}, nil
+			return &dropIterator{iStream: stream, count: negtiveAsMaxUint64(num)}, nil
 		} else if glisp.IsFunction(args[0]) {
 			f, stream := args[0].(*glisp.SexpFunction), args[1].(iStream)
 			return &dropIterator{iStream: stream, f: f}, nil
