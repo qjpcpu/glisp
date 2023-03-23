@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/read-dir", ReadDir)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
-	env.AddNamedFunction("os/exec", ExecCommand)
+	env.AddNamedFunction("os/exec", ExecCommand(nil, nil))
 	env.AddNamedFunction("os/run", RunCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
@@ -29,33 +30,43 @@ func ImportOS(vm *glisp.Environment) error {
 	return nil
 }
 
-func ExecCommand(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) == 0 {
-			return glisp.SexpNull, errors.New("no command arguments")
-		}
-		var arguments []string
-		for _, arg := range args {
-			switch expr := arg.(type) {
-			case glisp.SexpStr:
-				arguments = append(arguments, string(expr))
-			case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
-				arguments = append(arguments, arg.SexpString())
-			case glisp.SexpBytes:
-				arguments = append(arguments, string(expr.Bytes()))
-			default:
-				return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
+func ExecCommand(stdout, stderr io.Writer) glisp.NamedUserFunction {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			if len(args) == 0 {
+				return glisp.SexpNull, errors.New("no command arguments")
 			}
+			var arguments []string
+			for _, arg := range args {
+				switch expr := arg.(type) {
+				case glisp.SexpStr:
+					arguments = append(arguments, string(expr))
+				case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
+					arguments = append(arguments, arg.SexpString())
+				case glisp.SexpBytes:
+					arguments = append(arguments, string(expr.Bytes()))
+				default:
+					return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
+				}
+			}
+			var buf, errBuf bytes.Buffer
+			cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
+			if stdout != nil {
+				cmd.Stdout = stdout
+			} else {
+				cmd.Stdout = &buf
+			}
+			if stderr != nil {
+				cmd.Stderr = stderr
+			} else {
+				cmd.Stderr = &errBuf
+			}
+			err := cmd.Run()
+			if err != nil {
+				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBuf.Bytes()))), nil
+			}
+			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 		}
-		var buf, errBuf bytes.Buffer
-		cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
-		cmd.Stderr = &errBuf
-		cmd.Stdout = &buf
-		err := cmd.Run()
-		if err != nil {
-			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBuf.Bytes()))), nil
-		}
-		return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 	}
 }
 

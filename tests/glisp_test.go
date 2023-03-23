@@ -730,3 +730,17 @@ func TestGoRecord(t *testing.T) {
 	r.SetListField("Array", []interface{}{1, 2, 3})
 	ExpectEqList(t, r.GetListField("Array"), []interface{}{1, 2, 3})
 }
+
+func TestOSCmd(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	buf := new(bytes.Buffer)
+	vm.AddNamedFunction("os/exec", extensions.ExecCommand(buf, buf))
+	_, err := vm.EvalString(`(os/exec! "echo -n aaa")`)
+	ExpectSuccess(t, err)
+	ExpectEqString(t, buf.String(), "aaa")
+
+	buf.Reset()
+	_, err = vm.EvalString(`(os/exec! "lsl")`)
+	ExpectError(t, err)
+	ExpectContainsStr(t, glisp.SexpStr(buf.String()), "bash: lsl: command not found")
+}
