@@ -330,6 +330,11 @@ Usage: (os/read-file file)
 
 Return file content as bytes.
 
+========== os/mkdir ==========
+Usage: (os/mkdir dirname)
+
+Make directory.
+
 ========== os/write-file ==========
 Usage: (os/write-file file x)
 

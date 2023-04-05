@@ -26,6 +26,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/run", RunCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
+	env.AddNamedFunction("os/mkdir", Mkdir)
 	mustLoadScript(env.Environment, "os")
 	return nil
 }
@@ -88,6 +89,21 @@ func GetReadFile(name string) glisp.UserFunction {
 	}
 }
 
+func Mkdir(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		str, ok := args[0].(glisp.SexpStr)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		}
+		filename := replaceHomeDirSymbol(string(str))
+		os.MkdirAll(filename, 0755)
+		return glisp.SexpNull, nil
+	}
+}
+
 func GetWriteFile(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		if len(args) != 2 {
@@ -114,12 +130,27 @@ func GetWriteFile(name string) glisp.UserFunction {
 
 func ReadDir(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+		if len(args) != 1 && len(args) != 2 {
+			return glisp.WrongNumberArguments(name, len(args), 1, 2)
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		}
+		var listType int
+		if len(args) == 2 {
+			sy, ok := args[1].(glisp.SexpSymbol)
+			if !ok {
+				return glisp.SexpNull, fmt.Errorf(`second argument of %s should be symbol but got %v`, name, glisp.InspectType(args[1]))
+			}
+			switch sy.Name() {
+			case "file":
+				listType = 1
+			case "dir":
+				listType = 2
+			default:
+				listType = 3
+			}
 		}
 		dir := replaceHomeDirSymbol(string(str))
 		fs, err := ioutil.ReadDir(dir)
@@ -131,7 +162,9 @@ func ReadDir(name string) glisp.UserFunction {
 		}
 		var files glisp.SexpArray
 		for _, f := range fs {
-			files = append(files, glisp.SexpStr(f.Name()))
+			if listType == 0 || (listType == 1 && !f.IsDir()) || (listType == 2 && f.IsDir()) {
+				files = append(files, glisp.SexpStr(f.Name()))
+			}
 		}
 		return files, nil
 	}
