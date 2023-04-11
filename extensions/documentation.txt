@@ -121,6 +121,12 @@ Available options:
 -ignore-error
   ignore http network error
 
+-v
+  verbose.
+
+-o
+  save response to file.
+
 ========== http/post ==========
 Usage: (http/post options url)
 
@@ -144,6 +150,12 @@ Available options:
 
 -ignore-error
   ignore http network error
+
+-v
+  verbose.
+
+-o
+  save response to file.
 
 ========== http/put ==========
 Usage: (http/put options url)
@@ -169,6 +181,12 @@ Available options:
 -ignore-error
   ignore http network error
 
+-v
+  verbose.
+
+-o
+  save response to file.
+
 ========== http/patch ==========
 Usage: (http/patch options url)
 
@@ -192,6 +210,12 @@ Available options:
 
 -ignore-error
   ignore http network error
+
+-v
+  verbose.
+
+-o
+  save response to file.
 
 ========== http/delete ==========
 Usage: (http/delete options url)
@@ -217,6 +241,12 @@ Available options:
 -ignore-error
   ignore http network error
 
+-v
+  verbose.
+
+-o
+  save response to file.
+
 ========== http/options ==========
 Usage: (http/options options url)
 
@@ -240,6 +270,13 @@ Available options:
 
 -ignore-error
   ignore http network error
+
+-v
+  verbose.
+
+-o
+  save response to file.
+
 
 ========== http/head ==========
 Usage: (http/head options url)
@@ -265,6 +302,12 @@ Available options:
 -ignore-error
   ignore http network error
 
+-v
+  verbose.
+
+-o
+  save response to file.
+
 ========== http/curl ==========
 Usage: (http/curl options url)
 
@@ -285,6 +328,12 @@ Available options:
 
 -d data
   data can be string, bytes, array, list, hash, int, float or bool. For array, list, hash, the header `Content-Type: application/json` would be set automatic.
+
+-v
+  verbose.
+
+-o
+  save response to file.
 
 -ignore-error
   ignore http network error
