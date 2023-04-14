@@ -149,25 +149,8 @@ func runScript(env *Repl, fname string) {
 
 func NewRepl() *Repl {
 	env := glisp.New()
-	modules := []func(*glisp.Environment) error{
-		func(e *glisp.Environment) error { return e.ImportEval() },
-		extensions.ImportCoreUtils,
-		extensions.ImportRandom,
-		extensions.ImportMathUtils,
-		extensions.ImportTime,
-		extensions.ImportChannels,
-		extensions.ImportCoroutines,
-		extensions.ImportRegex,
-		extensions.ImportBase64,
-		extensions.ImportJSON,
-		extensions.ImportString,
-		extensions.ImportOS,
-		extensions.ImportHTTP,
-	}
-	for _, f := range modules {
-		if err := f(env); err != nil {
-			panic(err)
-		}
+	if err := extensions.ImportAll(env); err != nil {
+		panic(err)
 	}
 	env.AddNamedFunction("export-history", exportHistory, glisp.WithDoc(`(export-history FILE)`))
 	env.AddNamedFunction("clear-history", clearHistory, glisp.WithDoc(`(clear-history)`))

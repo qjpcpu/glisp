@@ -20,27 +20,8 @@ func newFullEnv() *glisp.Environment {
 }
 
 func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
-	imports := []func(*glisp.Environment) error{
-		func(e *glisp.Environment) error {
-			return e.ImportEval()
-		},
-		extensions.ImportCoreUtils,
-		extensions.ImportJSON,
-		extensions.ImportMathUtils,
-		extensions.ImportBase64,
-		extensions.ImportChannels,
-		extensions.ImportCoroutines,
-		extensions.ImportRandom,
-		extensions.ImportRegex,
-		extensions.ImportTime,
-		extensions.ImportString,
-		extensions.ImportOS,
-		extensions.ImportHTTP,
-	}
-	for _, fn := range imports {
-		if err := fn(vm); err != nil {
-			panic(err)
-		}
+	if err := extensions.ImportAll(vm); err != nil {
+		panic(err)
 	}
 	vm.AddFunction("my-counter", MakeCounter)
 	vm.AddFunction("err-stream", MakeErrStream)

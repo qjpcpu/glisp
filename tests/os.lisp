@@ -23,3 +23,6 @@
 (assert (not (empty? (os/read-dir "."))))
 (assert (not (empty? (os/read-dir "~"))))
 (assert (empty? (os/read-dir "~xxyyzz")))
+
+(assert (= "100" (os/exec! {"cmd" "echo $XY" "env" ["XY=100"] "cwd" "/"})))
+(assert (= "/" (os/exec! {"cmd" "pwd" "env" ["XY=100"] "cwd" "/"})))

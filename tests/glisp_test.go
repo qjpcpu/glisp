@@ -734,7 +734,7 @@ func TestGoRecord(t *testing.T) {
 func TestOSCmd(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	buf := new(bytes.Buffer)
-	vm.AddNamedFunction("os/exec", extensions.ExecCommand(buf, buf))
+	vm.AddNamedFunction("os/exec!", extensions.ExecCommand(buf, buf, true))
 	_, err := vm.EvalString(`(os/exec! "echo -n aaa")`)
 	ExpectSuccess(t, err)
 	ExpectEqString(t, buf.String(), "aaa")

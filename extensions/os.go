@@ -22,36 +22,53 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/read-dir", ReadDir)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
-	env.AddNamedFunction("os/exec", ExecCommand(nil, nil))
+	env.AddNamedFunction("os/exec", ExecCommand(nil, nil, false))
+	env.AddNamedFunction("os/exec!", ExecCommand(nil, nil, true))
 	env.AddNamedFunction("os/run", RunCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
 	env.AddNamedFunction("os/mkdir", Mkdir)
-	mustLoadScript(env.Environment, "os")
+	//mustLoadScript(env.Environment, "os")
 	return nil
 }
 
-func ExecCommand(stdout, stderr io.Writer) glisp.NamedUserFunction {
+func ExecCommand(stdout, stderr io.Writer, assertSuccess bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			if len(args) == 0 {
 				return glisp.SexpNull, errors.New("no command arguments")
 			}
-			var arguments []string
-			for _, arg := range args {
-				switch expr := arg.(type) {
-				case glisp.SexpStr:
-					arguments = append(arguments, string(expr))
-				case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
-					arguments = append(arguments, arg.SexpString())
-				case glisp.SexpBytes:
-					arguments = append(arguments, string(expr.Bytes()))
-				default:
-					return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
+			var cmd *exec.Cmd
+			if len(args) == 1 && glisp.IsHash(args[0]) {
+				hash := args[0].(*glisp.SexpHash)
+				cmdstr := getHashStr(hash, "cmd")
+				if cmdstr == "" {
+					return glisp.SexpNull, errors.New("no cmd found")
 				}
+				cmd = exec.Command("bash", "-c", cmdstr)
+				if cwd := getHashStr(hash, "cwd"); cwd != "" {
+					cmd.Dir = replaceHomeDirSymbol(cwd)
+				}
+				if env := getHashStrList(hash, "env"); len(env) > 0 {
+					cmd.Env = mergeCurrentEnv(env)
+				}
+			} else {
+				var arguments []string
+				for _, arg := range args {
+					switch expr := arg.(type) {
+					case glisp.SexpStr:
+						arguments = append(arguments, string(expr))
+					case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
+						arguments = append(arguments, arg.SexpString())
+					case glisp.SexpBytes:
+						arguments = append(arguments, string(expr.Bytes()))
+					default:
+						return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
+					}
+				}
+				cmd = exec.Command("bash", "-c", strings.Join(arguments, " "))
 			}
 			var buf, errBuf bytes.Buffer
-			cmd := exec.Command("bash", "-c", strings.Join(arguments, " "))
 			if stdout != nil {
 				cmd.Stdout = stdout
 			} else {
@@ -63,6 +80,12 @@ func ExecCommand(stdout, stderr io.Writer) glisp.NamedUserFunction {
 				cmd.Stderr = &errBuf
 			}
 			err := cmd.Run()
+			if assertSuccess {
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+				return glisp.SexpStr(chomp(buf.Bytes())), nil
+			}
 			if err != nil {
 				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBuf.Bytes()))), nil
 			}
@@ -264,4 +287,55 @@ func RunCommand(name string) glisp.UserFunction {
 		cmd.Run()
 		return glisp.SexpNull, nil
 	}
+}
+
+func getHashStr(hash *glisp.SexpHash, key string) string {
+	val, err := hash.HashGet(glisp.SexpStr(key))
+	if err != nil {
+		return ""
+	}
+	str, ok := val.(glisp.SexpStr)
+	if !ok {
+		return ""
+	}
+	return string(str)
+}
+
+func mergeCurrentEnv(env []string) []string {
+	kv := make(map[string]string)
+	for _, item := range os.Environ() {
+		if arr := strings.SplitN(item, "=", 2); len(arr) == 2 {
+			kv[arr[0]] = arr[1]
+		}
+	}
+	for _, item := range env {
+		if arr := strings.SplitN(item, "=", 2); len(arr) == 2 {
+			kv[arr[0]] = arr[1]
+		}
+	}
+	var ret []string
+	for k, v := range kv {
+		ret = append(ret, fmt.Sprintf("%v=%v", k, v))
+	}
+	return ret
+}
+
+func getHashStrList(hash *glisp.SexpHash, key string) []string {
+	val, err := hash.HashGet(glisp.SexpStr(key))
+	if err != nil {
+		return nil
+	}
+	str, ok := val.(glisp.SexpArray)
+	if !ok {
+		return nil
+	}
+	var ret []string
+	for _, item := range str {
+		if glisp.IsString(item) {
+			if s, ok := item.(glisp.SexpStr); ok && s != "" {
+				ret = append(ret, string(s))
+			}
+		}
+	}
+	return ret
 }
