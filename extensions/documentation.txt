@@ -408,8 +408,8 @@ examples:
 (os/exec "ls -l")
 (os/exec "ps -ef | grep glisp")
 (os/exec {"cmd" "ls"})
-(os/exec {"cmd" "ls" "env" ["k1=v1,k2=v2"] "stdout" writer "stderr" writer})
-(os/exec {"cmd" "ls" "env" ["k1=v1,k2=v2"] "cwd" "/tmp" "stdout" writer "stderr" writer})
+(os/exec {"cmd" "ls" "env" ["k1=v1" "k2=v2"] "stdout" writer "stderr" writer})
+(os/exec {"cmd" "ls" "env" ["k1=v1" "k2=v2"] "cwd" "/tmp" "stdout" writer "stderr" writer})
 
 ========== os/exec! ==========
 Usage: (os/exec! args)
@@ -420,8 +420,8 @@ examples:
 (os/exec! "ls -l")
 (os/exec! "ps -ef | grep glisp")
 (os/exec! {"cmd" "ls"})
-(os/exec! {"cmd" "ls" "env" ["k1=v1,k2=v2"] "stdout" writer "stderr" writer})
-(os/exec!  {"cmd" "ls" "env" ["k1=v1,k2=v2"] "cwd" "/tmp" "stdout" writer "stderr" writer})
+(os/exec! {"cmd" "ls" "env" ["k1=v1" "k2=v2"] "stdout" writer "stderr" writer})
+(os/exec!  {"cmd" "ls" "env" ["k1=v1" "k2=v2"] "cwd" "/tmp" "stdout" writer "stderr" writer})
 
 ========== os/env ==========
 Usage: (os/env name)
