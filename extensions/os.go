@@ -22,8 +22,8 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/read-dir", ReadDir)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
-	env.AddNamedFunction("os/exec", ExecCommand(nil, nil, false))
-	env.AddNamedFunction("os/exec!", ExecCommand(nil, nil, true))
+	env.AddNamedFunction("os/exec", ExecCommand(&CommandOptions{AssertSuccess: false}))
+	env.AddNamedFunction("os/exec!", ExecCommand(&CommandOptions{AssertSuccess: true}))
 	env.AddNamedFunction("os/run", RunCommand)
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
@@ -32,55 +32,59 @@ func ImportOS(vm *glisp.Environment) error {
 	return nil
 }
 
-func ExecCommand(stdout, stderr io.Writer, assertSuccess bool) glisp.NamedUserFunction {
+type CommandOptions struct {
+	Stdout, Stderr io.Writer
+	AssertSuccess  bool
+}
+
+func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) == 0 {
-				return glisp.SexpNull, errors.New("no command arguments")
+			if len(args) != 1 {
+				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
-			var cmd *exec.Cmd
-			if len(args) == 1 && glisp.IsHash(args[0]) {
-				hash := args[0].(*glisp.SexpHash)
-				cmdstr := getHashStr(hash, "cmd")
-				if cmdstr == "" {
-					return glisp.SexpNull, errors.New("no cmd found")
-				}
-				cmd = exec.Command("bash", "-c", cmdstr)
-				if cwd := getHashStr(hash, "cwd"); cwd != "" {
-					cmd.Dir = replaceHomeDirSymbol(cwd)
-				}
-				if env := getHashStrList(hash, "env"); len(env) > 0 {
-					cmd.Env = mergeCurrentEnv(env)
-				}
-			} else {
-				var arguments []string
-				for _, arg := range args {
-					switch expr := arg.(type) {
-					case glisp.SexpStr:
-						arguments = append(arguments, string(expr))
-					case glisp.SexpInt, glisp.SexpFloat, glisp.SexpBool, glisp.SexpChar, glisp.SexpSymbol:
-						arguments = append(arguments, arg.SexpString())
-					case glisp.SexpBytes:
-						arguments = append(arguments, string(expr.Bytes()))
-					default:
-						return glisp.SexpNull, fmt.Errorf("argument of command must be string but got %v", glisp.InspectType(arg))
-					}
-				}
-				cmd = exec.Command("bash", "-c", strings.Join(arguments, " "))
+			switch args[0].(type) {
+			case glisp.SexpStr:
+				args[0], _ = glisp.MakeHash([]glisp.Sexp{glisp.SexpStr("cmd"), args[0]})
+			case *glisp.SexpHash:
+			default:
+				return glisp.SexpNull, fmt.Errorf("argument of command must be string/hash but got %v", glisp.InspectType(args[0]))
+			}
+
+			hash := args[0].(*glisp.SexpHash)
+			/* command */
+			cmdstr := getHashStr(hash, "cmd")
+			if cmdstr == "" {
+				return glisp.SexpNull, errors.New("no cmd found")
+			}
+			cmd := exec.Command("bash", "-c", cmdstr)
+			/* workding directory */
+			if cwd := getHashStr(hash, "cwd"); cwd != "" {
+				cmd.Dir = replaceHomeDirSymbol(cwd)
+			}
+			/* env */
+			if env := getHashStrList(hash, "env"); len(env) > 0 {
+				cmd.Env = mergeCurrentEnv(env)
 			}
 			var buf, errBuf bytes.Buffer
-			if stdout != nil {
+			/* stdout */
+			if stdout := getHashWriter(hash, "stdout"); stdout != nil {
 				cmd.Stdout = stdout
+			} else if opts.Stdout != nil {
+				cmd.Stdout = opts.Stdout
 			} else {
 				cmd.Stdout = &buf
 			}
-			if stderr != nil {
+			/* stderr */
+			if stderr := getHashWriter(hash, "stderr"); stderr != nil {
 				cmd.Stderr = stderr
+			} else if opts.Stderr != nil {
+				cmd.Stderr = opts.Stderr
 			} else {
 				cmd.Stderr = &errBuf
 			}
 			err := cmd.Run()
-			if assertSuccess {
+			if opts.AssertSuccess {
 				if err != nil {
 					return glisp.SexpNull, err
 				}
@@ -299,6 +303,18 @@ func getHashStr(hash *glisp.SexpHash, key string) string {
 		return ""
 	}
 	return string(str)
+}
+
+func getHashWriter(hash *glisp.SexpHash, key string) io.Writer {
+	val, err := hash.HashGet(glisp.SexpStr(key))
+	if err != nil {
+		return nil
+	}
+	v, ok := val.(*SexpWriter)
+	if !ok {
+		return nil
+	}
+	return v.w
 }
 
 func mergeCurrentEnv(env []string) []string {

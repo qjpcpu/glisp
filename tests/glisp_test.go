@@ -734,7 +734,11 @@ func TestGoRecord(t *testing.T) {
 func TestOSCmd(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	buf := new(bytes.Buffer)
-	vm.AddNamedFunction("os/exec!", extensions.ExecCommand(buf, buf, true))
+	vm.AddNamedFunction("os/exec!", extensions.ExecCommand(&extensions.CommandOptions{
+		Stdout:        buf,
+		Stderr:        buf,
+		AssertSuccess: true,
+	}))
 	_, err := vm.EvalString(`(os/exec! "echo -n aaa")`)
 	ExpectSuccess(t, err)
 	ExpectEqString(t, buf.String(), "aaa")
@@ -743,4 +747,14 @@ func TestOSCmd(t *testing.T) {
 	_, err = vm.EvalString(`(os/exec! "lsl")`)
 	ExpectError(t, err)
 	ExpectContainsStr(t, glisp.SexpStr(buf.String()), "bash: lsl: command not found")
+}
+
+func TestOSCmd2(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	buf := new(bytes.Buffer)
+	vm.BindGlobal("stdout", extensions.NewWriter(buf))
+	vm.BindGlobal("stderr", extensions.NewWriter(buf))
+	_, err := vm.EvalString(`(os/exec! {"cmd" "echo -n aaa" "stdout" stdout "stderr" stderr})`)
+	ExpectSuccess(t, err)
+	ExpectEqString(t, buf.String(), "aaa")
 }
