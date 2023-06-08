@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/qjpcpu/glisp"
 )
@@ -75,20 +76,19 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 				}
 			}
 
-			var items []interface{}
-			for _, item := range args {
-				items = append(items, mapSexpToGoPrintableInterface(item))
-			}
-
 			switch name {
 			case "println":
+				_, items := transformFmt("", args)
 				fmt.Fprintln(w, items...)
 			case "print":
+				_, items := transformFmt("", args)
 				fmt.Fprint(w, items...)
 			case "printf":
-				fmt.Fprintf(w, refactFmtStr(items[0].(string)), items[1:]...)
+				fmtstr, vargs := transformFmt(string(args[0].(glisp.SexpStr)), args[1:])
+				fmt.Fprintf(w, fmtstr, vargs...)
 			case "sprintf":
-				return glisp.SexpStr(fmt.Sprintf(refactFmtStr(items[0].(string)), items[1:]...)), nil
+				fmtstr, vargs := transformFmt(string(args[0].(glisp.SexpStr)), args[1:])
+				return glisp.SexpStr(fmt.Sprintf(fmtstr, vargs...)), nil
 			}
 
 			return glisp.SexpNull, nil
@@ -96,63 +96,93 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 	}
 }
 
-func mapSexpToGoPrintableInterface(sexp glisp.Sexp) interface{} {
+func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, interface{}) {
+	if fmtstr == "" {
+		fmtstr = "%v"
+	}
 	if sexp == glisp.SexpNull {
-		return nil
+		return fmtstr, nil
 	}
 	switch expr := sexp.(type) {
 	case glisp.SexpStr:
-		return string(expr)
+		return fmtstr, string(expr)
 	case glisp.SexpBool:
-		return bool(expr)
+		return fmtstr, bool(expr)
 	case glisp.SexpInt:
-		if expr.IsInt64() {
-			return expr.ToInt64()
-		} else if expr.IsUint64() {
-			return expr.ToUint64()
-		} else {
-			return expr.SexpString()
-		}
+		return "%s", expr.Format(fmtstr)
 	case glisp.SexpFloat:
-		return expr.SexpString()
+		return "%s", expr.Format(fmtstr)
 	case glisp.SexpSymbol:
-		return expr.Name()
+		return fmtstr, expr.Name()
 	case glisp.SexpChar:
-		return rune(expr)
+		return fmtstr, rune(expr)
 	default:
-		return expr.SexpString()
+		return fmtstr, expr.SexpString()
 	}
 }
 
-func refactFmtStr(str string) string {
+func parseFmtStr(str string) ([]string, []int) {
+	var ret []string
+	var cache []rune
+	var mark []int
+	addSymbol := func(sym string) {
+		if len(cache) > 0 {
+			ret = append(ret, string(cache))
+			cache = nil
+		}
+		ret = append(ret, sym)
+		mark = append(mark, len(ret)-1)
+	}
 	data := []rune(str)
-	var ret []rune
-	var foundSym bool
+	foundSym := -1
 	for i := 0; i < len(data); {
 		b := data[i]
-		if !foundSym {
+		if foundSym == -1 {
 			if b == '%' {
 				if i < len(data)-1 && data[i+1] == '%' {
-					ret = append(ret, '%', '%')
+					addSymbol("%%")
 					i += 2
 				} else {
-					foundSym = true
+					foundSym = i
 					i++
 				}
 				continue
 			} else {
-				ret = append(ret, b)
+				cache = append(cache, b)
 				i++
 			}
 		} else {
 			if ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z') {
-				ret = append(ret, '%', 'v')
-				foundSym = false
+				addSymbol(string(data[foundSym : i+1]))
+				foundSym = -1
 			}
 			i++
 		}
 	}
-	return string(ret)
+	if len(cache) > 0 {
+		ret = append(ret, string(cache))
+		cache = nil
+	}
+	return ret, mark
+}
+
+func transformFmt(fmtstr string, args []glisp.Sexp) (string, []interface{}) {
+	if fmtstr != "" {
+		fmtStrs, mark := parseFmtStr(fmtstr)
+		var ret []interface{}
+		for i, item := range args {
+			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
+			fmtStrs[mark[i]] = f
+			ret = append(ret, v)
+		}
+		return strings.Join(fmtStrs, ""), ret
+	}
+	var ret []interface{}
+	for _, item := range args {
+		_, v := mapSexpToGoPrintableInterface("%v", item)
+		ret = append(ret, v)
+	}
+	return "", ret
 }
 
 func GetDocFunction(name string) glisp.UserFunction {

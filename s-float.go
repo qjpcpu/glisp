@@ -121,3 +121,10 @@ func (f SexpFloat) Floor() SexpInt {
 	leftInt, _ := f.intRange()
 	return SexpInt{v: leftInt}
 }
+
+func (f SexpFloat) Format(s string) string {
+	if s == "%f" && f.rawStr != "" {
+		return f.rawStr
+	}
+	return fmt.Sprintf(s, f.v)
+}

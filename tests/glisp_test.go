@@ -83,6 +83,8 @@ func TestPrintf(t *testing.T) {
 	testPrintf(t, `(printf "%v" [1 2 3])`, `[1 2 3]`)
 	testPrintf(t, `(printf "%v" {'a 1})`, `{a 1}`)
 	testPrintf(t, `(printf "%f%%" 3.14)`, `3.14%`)
+	testPrintf(t, `(printf "%.2f%%" 3.1415926)`, `3.14%`)
+	testPrintf(t, `(printf "%b" 100)`, `1100100`)
 }
 
 func TestMakeScriptFunction(t *testing.T) {
