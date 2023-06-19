@@ -171,7 +171,11 @@ func transformFmt(fmtstr string, args []glisp.Sexp) (string, []interface{}) {
 		fmtStrs, mark := parseFmtStr(fmtstr)
 		var ret []interface{}
 		for i, item := range args {
-			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
+			fs := "%v"
+			if i < len(mark) && mark[i] < len(fmtStrs) {
+				fs = fmtStrs[mark[i]]
+			}
+			f, v := mapSexpToGoPrintableInterface(fs, item)
 			fmtStrs[mark[i]] = f
 			ret = append(ret, v)
 		}
