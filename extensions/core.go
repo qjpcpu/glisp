@@ -121,7 +121,7 @@ func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, inte
 	}
 }
 
-func parseFmtStr(str string) ([]string, []int) {
+func parseFmtStr(str string, total int) ([]string, []int) {
 	var ret []string
 	var cache []rune
 	var mark []int
@@ -163,19 +163,21 @@ func parseFmtStr(str string) ([]string, []int) {
 		ret = append(ret, string(cache))
 		cache = nil
 	}
+	if total > len(mark) {
+		for i := 0; i < total-len(mark); i++ {
+			ret = append(ret, "%v")
+			mark = append(mark, len(ret)-1)
+		}
+	}
 	return ret, mark
 }
 
 func transformFmt(fmtstr string, args []glisp.Sexp) (string, []interface{}) {
 	if fmtstr != "" {
-		fmtStrs, mark := parseFmtStr(fmtstr)
+		fmtStrs, mark := parseFmtStr(fmtstr, len(args))
 		var ret []interface{}
 		for i, item := range args {
-			fs := "%v"
-			if i < len(mark) && mark[i] < len(fmtStrs) {
-				fs = fmtStrs[mark[i]]
-			}
-			f, v := mapSexpToGoPrintableInterface(fs, item)
+			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
 			fmtStrs[mark[i]] = f
 			ret = append(ret, v)
 		}
