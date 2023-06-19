@@ -121,7 +121,7 @@ func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, inte
 	}
 }
 
-func parseFmtStr(str string, total int) ([]string, []int) {
+func parseFmtStr(str string, args []glisp.Sexp) ([]string, []int) {
 	var ret []string
 	var cache []rune
 	var mark []int
@@ -140,7 +140,7 @@ func parseFmtStr(str string, total int) ([]string, []int) {
 		if foundSym == -1 {
 			if b == '%' {
 				if i < len(data)-1 && data[i+1] == '%' {
-					addSymbol("%%")
+					cache = append(cache, '%', '%')
 					i += 2
 				} else {
 					foundSym = i
@@ -163,18 +163,31 @@ func parseFmtStr(str string, total int) ([]string, []int) {
 		ret = append(ret, string(cache))
 		cache = nil
 	}
-	if total > len(mark) {
-		for i := 0; i < total-len(mark); i++ {
+	if extra := len(args) - len(mark); extra > 0 {
+		ret = append(ret, "%%!(EXTRA ")
+		for i := 0; i < extra; i++ {
+			ret = append(ret, glisp.InspectType(args[len(args)-extra+i]), "=")
 			ret = append(ret, "%v")
 			mark = append(mark, len(ret)-1)
+			if i < extra-1 {
+				ret = append(ret, ", ")
+			}
 		}
+		ret = append(ret, ")")
+	}
+	if missing := len(mark) - len(args); missing > 0 {
+		for i := 0; i < missing; i++ {
+			v := ret[mark[len(mark)-missing+i]]
+			ret[mark[len(mark)-missing+i]] = "%%!" + strings.TrimPrefix(v, "%") + "(MISSING)"
+		}
+		mark = mark[:len(mark)-missing]
 	}
 	return ret, mark
 }
 
 func transformFmt(fmtstr string, args []glisp.Sexp) (string, []interface{}) {
 	if fmtstr != "" {
-		fmtStrs, mark := parseFmtStr(fmtstr, len(args))
+		fmtStrs, mark := parseFmtStr(fmtstr, args)
 		var ret []interface{}
 		for i, item := range args {
 			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
