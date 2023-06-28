@@ -444,23 +444,39 @@ Usage: (randf)
 
 Generate random integer in [0,1).
 
-========== regexp-compile ==========
-Usage: (regexp-compile str)
+========== regexp/compile ==========
+Usage: (regexp/compile str)
 
 Generate a regexp expression.
 
-========== regexp-find-index ==========
-Usage: (regexp-find-index regexp str)
+========== regexp/find-index ==========
+Usage: (regexp/find-index regexp str)
+regexp should be regexp type or string type
 
 Returns location index array.
+regexp/find-index returns a two-element slice of integers defining the
+location of the leftmost match in s of the regular expression. The match
+itself is at str[loc[0]:loc[1]].
+A return value of empty slice indicates no match.
 
-========== regexp-find ==========
-Usage: (regexp-find regexp str)
+========== regexp/find ==========
+Usage: (regexp/find regexp str)
+regexp should be regexp type or string type
 
-Returns found string.
+regexp/find returns a string holding the text of the leftmost match in s of the regular
+expression. If there is no match, the return value is an empty string,
+but it will also be empty if the regular expression successfully matches
+an empty string.
 
-========== regexp-match ==========
-Usage: (regexp-match regexp str)
+========== regexp/replace ==========
+Usage: (regexp/replace regexp src repl)
+regexp should be regexp type or string type
+
+Returns a copy of src, replacing matches of the Regexp with the replacement string repl. Inside repl, $ signs are interpreted as in Expand, so for instance $1 represents the text of the first submatch.
+
+========== regexp/match ==========
+Usage: (regexp/match regexp str)
+regexp should be regexp type or string type
 
 Returns true if matched.
 
