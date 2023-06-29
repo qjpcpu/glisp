@@ -413,6 +413,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(/ 1 "")`)
 	ExpectScriptErr(t, `(/ "" 1)`)
 	ExpectScriptErr(t, `(/ #a "")`)
+	ExpectScriptErr(t, `(hset! {} "")`)
 	ExpectScriptErr(t, `(/ #a 0)`)
 	ExpectScriptErr(t, `(/ 1.0 "")`)
 	ExpectScriptErr(t, `(assert)`)

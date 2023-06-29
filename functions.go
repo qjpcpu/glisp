@@ -263,6 +263,9 @@ func GetHashAccessFunction(name string) UserFunction {
 			}
 			return hash.HashGet(args[1])
 		case "hset!":
+			if len(args) != 3 {
+				return WrongNumberArguments(name, len(args), 3)
+			}
 			err := hash.HashSet(args[1], args[2])
 			return hash, err
 		case "hdel!":
