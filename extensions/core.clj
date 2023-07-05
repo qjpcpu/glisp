@@ -261,16 +261,16 @@ Return coll which elements belongs to a and b."
 (defn core/__stream2hash [s]
   (foldl (fn [e acc] (hset! acc e true)) {} s))
 
-(defn uniq [a]
+(defn uniq [& a]
   "Usage: (uniq a)
+(uniq fn a)
 Drop duplicate elements of list/array/stream a."
-  (let* [h {} ret (foldl (fn [e acc] (cond (exist? h e) acc (begin (hset! h e 1) (concat acc (list e))))) '() a)]
-    (cond (list? a) ret
-          (array? a) (list-to-array ret)
-          (stream ret))))
+  (cond (= 1 (len a)) (core/__uniq-by core/id (car a))
+        (and (= 2 (len a)) (function? (car a))) (core/__uniq-by (car a) (cadr a))
+        (assert false (sprintf "bad pattern (uniq%v)" (foldl (fn [e acc] (concat acc " " (type e))) "" a)))))
 
-(defn uniq-by [f a]
-  "Usage: (uniq-by fn a)
+(defn core/__uniq-by [f a]
+  "Usage: (core/__uniq-by fn a)
 Drop duplicate elements of list/array/stream a."
   (let* [h {} ret (foldl (fn [e acc] (let [ex (f e)] (cond (exist? h ex) acc (begin (hset! h ex 1) (concat acc (list e)))))) '() a)]
     (cond (list? a) ret
