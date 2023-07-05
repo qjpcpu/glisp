@@ -269,6 +269,14 @@ Drop duplicate elements of list/array/stream a."
           (array? a) (list-to-array ret)
           (stream ret))))
 
+(defn uniq-by [f a]
+  "Usage: (uniq-by fn a)
+Drop duplicate elements of list/array/stream a."
+  (let* [h {} ret (foldl (fn [e acc] (let [ex (f e)] (cond (exist? h ex) acc (begin (hset! h ex 1) (concat acc (list e)))))) '() a)]
+    (cond (list? a) ret
+          (array? a) (list-to-array ret)
+          (stream ret))))
+
 (defn reject [pred coll]
   "Usage: (reject pred coll)
 Returns a sequence of the items in coll for which
