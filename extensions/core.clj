@@ -249,7 +249,7 @@ Result coll = a \\ b."
                       (and (>= length 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a] (list/complement a b)) (car args) (cdr args))
                       (and (>= length 2) (stream? (car args)) (stream? (car (cdr args))))
                         (foldl (fn [b a]
-                                 (let [h (core/__stream2hash b)] (drop #(exist? h %) a))) (car args) (cdr args))
+                                 (let [h (core/__stream2hash b)] (reject #(exist? h %) a))) (car args) (cdr args))
                       (apply - args)))))
 
 (defn list/intersect [a b]

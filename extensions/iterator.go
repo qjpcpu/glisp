@@ -247,6 +247,7 @@ func (iter *dropIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 			if bool(ret.(glisp.SexpBool)) {
 				continue
 			}
+			iter.f = nil
 			return elem, true, nil
 		}
 	}
