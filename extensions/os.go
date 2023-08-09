@@ -91,7 +91,13 @@ func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 				return glisp.SexpStr(chomp(buf.Bytes())), nil
 			}
 			if err != nil {
-				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBuf.Bytes()))), nil
+				var errBytes []byte
+				if errBuf.Len() > 0 {
+					errBytes = errBuf.Bytes()
+				} else {
+					errBytes = buf.Bytes()
+				}
+				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBytes))), nil
 			}
 			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 		}
