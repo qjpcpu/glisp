@@ -15,6 +15,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qjpcpu/qjson v0.0.0-20220324092201-b7ec17062f4b h1:7j1lLVm+IDnXQhGstKk2EzcdX3Vigkf3Zk1QYr221bk=
 github.com/qjpcpu/qjson v0.0.0-20220324092201-b7ec17062f4b/go.mod h1:u96wzeK9lMLiAVqPsLJ1XvNm4Y1+tkq+wWWeVy0G3DA=
+github.com/qjpcpu/qjson v0.0.0-20230817074036-63c9ccfe2a60 h1:SjHLIVIH7rj5LZZJKnFPlZtXo6aRjGj1ipjqmFtkUnk=
+github.com/qjpcpu/qjson v0.0.0-20230817074036-63c9ccfe2a60/go.mod h1:u96wzeK9lMLiAVqPsLJ1XvNm4Y1+tkq+wWWeVy0G3DA=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
