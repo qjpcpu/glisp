@@ -1,4 +1,5 @@
 /glisp
+.DS_Store
 *.prof
 *.mprof
 *.out
