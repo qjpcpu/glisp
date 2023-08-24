@@ -203,7 +203,7 @@ func (env *Environment) BindGlobal(name string, expr Sexp) error {
 	if env.scopestack.IsEmpty() {
 		return errors.New("no scope available")
 	}
-	env.scopestack.elements[env.extraGlobalCount].(Scope)[sym.number] = expr
+	env.scopestack.elements[env.extraGlobalCount].(*Scope).Bind(sym.number, expr)
 	return nil
 }
 
@@ -539,8 +539,8 @@ func (env *Environment) Run() (Sexp, error) {
 func (env *Environment) GlobalFunctions() []string {
 	var ret []string
 	for _, scope := range env.globalScopes() {
-		for _, v := range scope.(Scope) {
-			if fn, ok := v.(*SexpFunction); ok {
+		for _, v := range scope.(*Scope).vals {
+			if fn, ok := v.v.(*SexpFunction); ok {
 				ret = append(ret, fn.name)
 			}
 		}

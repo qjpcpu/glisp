@@ -10,10 +10,12 @@ type DataStackElem struct {
 	expr Sexp
 }
 
-func (d DataStackElem) IsStackElem() {}
+func (d *DataStackElem) IsStackElem() {}
 
 func (stack *Stack) PushExpr(expr Sexp) {
-	stack.Push(DataStackElem{expr})
+	elem := dataElemPool.Get().(*DataStackElem)
+	elem.expr = expr
+	stack.Push(elem)
 }
 
 func (stack *Stack) PopExpr() (Sexp, error) {
@@ -21,23 +23,34 @@ func (stack *Stack) PopExpr() (Sexp, error) {
 	if err != nil {
 		return nil, err
 	}
-	return elem.(DataStackElem).expr, nil
+	data := elem.(*DataStackElem)
+	expr := data.expr
+	recycleDataElem(data)
+	return expr, nil
 }
 
 func (stack *Stack) GetExpressions(n int) ([]Sexp, error) {
+	return stack.getExpressions(n, false)
+}
+
+func (stack *Stack) getExpressions(n int, recycle bool) ([]Sexp, error) {
 	stack_start := stack.tos - n + 1
 	if stack_start < 0 {
 		return nil, errors.New("not enough items on stack")
 	}
 	arr := make([]Sexp, n)
 	for i := 0; i < n; i++ {
-		arr[i] = stack.elements[stack_start+i].(DataStackElem).expr
+		elem := stack.elements[stack_start+i].(*DataStackElem)
+		arr[i] = elem.expr
+		if recycle {
+			recycleDataElem(elem)
+		}
 	}
 	return arr, nil
 }
 
 func (stack *Stack) PopExpressions(n int) ([]Sexp, error) {
-	expressions, err := stack.GetExpressions(n)
+	expressions, err := stack.getExpressions(n, true)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +63,13 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 	if err != nil {
 		return nil, err
 	}
-	return elem.(DataStackElem).expr, nil
+	return elem.(*DataStackElem).expr, nil
 }
 
 func (stack *Stack) PrintStack(w io.Writer) {
 	fmt.Fprintf(w, "\t%d elements\n", stack.tos+1)
 	for i := 0; i <= stack.tos; i++ {
-		expr := stack.elements[i].(DataStackElem).expr
+		expr := stack.elements[i].(*DataStackElem).expr
 		fmt.Fprintln(w, "\t"+expr.SexpString())
 	}
 }

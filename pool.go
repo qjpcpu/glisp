@@ -30,17 +30,28 @@ func recycleStack(stack *Stack) {
 
 var scopePool = sync.Pool{
 	New: func() interface{} {
-		return Scope(make(map[int]Sexp))
+		return &Scope{
+			vals: make([]*ScopeElem, 0, 8),
+		}
 	},
 }
 
-func getScopeFromPool() Scope {
-	return scopePool.Get().(Scope)
+func getScopeFromPool() *Scope {
+	return scopePool.Get().(*Scope)
 }
 
-func recycleScope(s Scope) {
-	for k := range s {
-		delete(s, k)
-	}
+func recycleScope(s *Scope) {
+	s.vals = s.vals[:0]
 	scopePool.Put(s)
+}
+
+var dataElemPool = sync.Pool{
+	New: func() interface{} {
+		return &DataStackElem{}
+	},
+}
+
+func recycleDataElem(e *DataStackElem) {
+	e.expr = nil
+	dataElemPool.Put(e)
 }
