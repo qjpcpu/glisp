@@ -9,3 +9,5 @@
 /repl/glisp/*.lisp
 /repl/glisp/glisp
 /*.dat
+.clj-kondo/
+.lsp/

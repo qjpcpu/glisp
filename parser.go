@@ -255,12 +255,13 @@ func makeLambda(env *Environment, expr Sexp) Sexp {
 		}
 	}
 
+	var_args, var_e, var_acc := env.GenSymbol(), env.GenSymbol(), env.GenSymbol()
 	foldfn := MakeList([]Sexp{
 		env.MakeSymbol("fn"),
-		SexpArray{env.MakeSymbol("e"), env.MakeSymbol("acc")},
+		SexpArray{var_e, var_acc},
 		MakeList([]Sexp{
 			env.MakeSymbol("append"),
-			env.MakeSymbol("acc"),
+			var_acc,
 			MakeList([]Sexp{
 				env.MakeSymbol("symbol"),
 				MakeList([]Sexp{
@@ -270,20 +271,20 @@ func makeLambda(env *Environment, expr Sexp) Sexp {
 						env.MakeSymbol("string"),
 						MakeList([]Sexp{
 							env.MakeSymbol("/"),
-							MakeList([]Sexp{env.MakeSymbol("len"), env.MakeSymbol("acc")}),
+							MakeList([]Sexp{env.MakeSymbol("len"), var_acc}),
 							NewSexpInt(2),
 						}),
 					}),
 				}),
 			}),
-			env.MakeSymbol("e"),
+			var_e,
 		}),
 	})
 	letArgs := MakeList([]Sexp{
 		env.MakeSymbol("foldl"),
 		foldfn,
-		SexpArray{MakeList([]Sexp{env.MakeSymbol("symbol"), SexpStr("%N")}), MakeList([]Sexp{env.MakeSymbol("len"), env.MakeSymbol("args")})},
-		env.MakeSymbol("args"),
+		SexpArray{MakeList([]Sexp{env.MakeSymbol("symbol"), SexpStr("%N")}), MakeList([]Sexp{env.MakeSymbol("len"), var_args})},
+		var_args,
 	})
 	/* set symbol % when only one argument */
 	/* (append letArgs (symbol "%") (cond (empty? args) nil (car args))) */
@@ -293,9 +294,9 @@ func makeLambda(env *Environment, expr Sexp) Sexp {
 		MakeList([]Sexp{env.MakeSymbol("symbol"), SexpStr("%")}),
 		MakeList([]Sexp{
 			env.MakeSymbol("cond"),
-			MakeList([]Sexp{env.MakeSymbol("empty?"), env.MakeSymbol("args")}),
+			MakeList([]Sexp{env.MakeSymbol("empty?"), var_args}),
 			SexpNull,
-			MakeList([]Sexp{env.MakeSymbol("car"), env.MakeSymbol("args")}),
+			MakeList([]Sexp{env.MakeSymbol("car"), var_args}),
 		}),
 	})
 	letExpr := MakeList([]Sexp{
@@ -305,7 +306,7 @@ func makeLambda(env *Environment, expr Sexp) Sexp {
 	})
 	lambda := MakeList([]Sexp{
 		env.MakeSymbol("fn"),
-		SexpArray{env.MakeSymbol("&"), env.MakeSymbol("args")},
+		SexpArray{env.MakeSymbol("&"), var_args},
 		letExpr,
 	})
 	return lambda

@@ -680,7 +680,7 @@ Usage: (filter pred coll)
 Returns a sequence of the items in coll for which
 (pred item) returns logical true. pred must be free of side-effects.
 
-When coll is hash, pred function should take 2 arguments, which are hash key-value pair.
+When coll is hash, pred function argument is a concell.
 
 ========== flatten ==========
 Usage: (flatten coll)
