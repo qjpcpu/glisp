@@ -473,6 +473,7 @@ func DefineRecord(name string) glisp.UserFunction {
 			class.fieldNames = append(class.fieldNames, fd.Name)
 		}
 		constructor := class.getConstructor()
+		var_args, var_a, var_e := env.GenSymbol(), env.GenSymbol(), env.GenSymbol()
 		return glisp.MakeList([]glisp.Sexp{
 			env.MakeSymbol("begin"),
 			/* define type */
@@ -492,12 +493,12 @@ func DefineRecord(name string) glisp.UserFunction {
 			glisp.MakeList([]glisp.Sexp{
 				env.MakeSymbol("defmac"),
 				env.MakeSymbol(constructor.Name()),
-				glisp.SexpArray{env.MakeSymbol("&"), env.MakeSymbol("args")},
+				glisp.SexpArray{env.MakeSymbol("&"), var_args},
 				/* let */
 				glisp.MakeList([]glisp.Sexp{
 					env.MakeSymbol("let"),
 					glisp.SexpArray{
-						env.MakeSymbol("a"),
+						var_a,
 						glisp.MakeList([]glisp.Sexp{
 							env.MakeSymbol("->>"),
 							glisp.MakeList([]glisp.Sexp{
@@ -505,14 +506,14 @@ func DefineRecord(name string) glisp.UserFunction {
 								glisp.NewSexpInt(2),
 								glisp.MakeList([]glisp.Sexp{
 									env.MakeSymbol("stream"),
-									env.MakeSymbol("args"),
+									var_args,
 								}),
 							}),
 							glisp.MakeList([]glisp.Sexp{
 								env.MakeSymbol("flatmap"),
 								glisp.MakeList([]glisp.Sexp{
 									env.MakeSymbol("fn"),
-									glisp.SexpArray{env.MakeSymbol("e")},
+									glisp.SexpArray{var_e},
 									glisp.MakeList([]glisp.Sexp{
 										env.MakeSymbol("cons"),
 										/* (list (quote quote) (car e)) */
@@ -524,13 +525,13 @@ func DefineRecord(name string) glisp.UserFunction {
 											}),
 											glisp.MakeList([]glisp.Sexp{
 												env.MakeSymbol("car"),
-												env.MakeSymbol("e"),
+												var_e,
 											}),
 										}),
 										/* (cdr e) */
 										glisp.MakeList([]glisp.Sexp{
 											env.MakeSymbol("cdr"),
-											env.MakeSymbol("e"),
+											var_e,
 										}),
 									}),
 								}),
@@ -544,7 +545,7 @@ func DefineRecord(name string) glisp.UserFunction {
 							constructor,
 							glisp.MakeList([]glisp.Sexp{
 								env.MakeSymbol("unquote-splicing"),
-								env.MakeSymbol("a"),
+								var_a,
 							}),
 						}),
 					}),
