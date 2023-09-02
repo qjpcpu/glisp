@@ -208,6 +208,12 @@ func WithHttpServer(fn func(string)) {
 	fn(url)
 }
 
+func WithHttpServer2(fn func(string, string)) {
+	server := NewMockServer()
+	defer server.ServeBackground()()
+	fn(server.Address, "/echo")
+}
+
 type Counter struct {
 	Len    int
 	cursor int

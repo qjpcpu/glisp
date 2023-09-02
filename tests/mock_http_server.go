@@ -11,6 +11,7 @@ type MockServer struct {
 	mux       *http.ServeMux
 	server    *ServerOnAnyPort
 	URLPrefix string
+	Address   string
 }
 
 func NewMockServer() *MockServer {
@@ -28,6 +29,7 @@ func (ms *MockServer) ServeBackground() func() {
 	ms.server = ListenOnAnyPort(ms.mux)
 	go ms.server.Serve()
 	ms.URLPrefix = "http://127.0.0.1" + ms.server.Addr()
+	ms.Address = "127.0.0.1" + ms.server.Addr()
 	return func() {
 		ms.server.Close()
 	}

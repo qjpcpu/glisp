@@ -2,10 +2,12 @@ package extensions
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -147,7 +149,17 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 			}
 
 			/* perform http request */
-			var cli HttpClient = &http.Client{Timeout: hreq.Timeout, Transport: httpTransport}
+			var cli HttpClient
+			if hreq.Proxy != nil {
+				cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+					DialContext:     hreq.Proxy,
+				}}
+			} else {
+				cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}}
+			}
 			if hreq.Verbose {
 				cli = newDebugHttpClient(cli, os.Stderr)
 			}
@@ -220,6 +232,7 @@ type request struct {
 	Method                string
 	Outfile               string
 	IgnoreErr             bool
+	Proxy                 SexpDialer
 }
 
 func newHttpReq() *request {
@@ -283,6 +296,17 @@ var availableHttpOptions = map[string]httpOption{
 				return nil, fmt.Errorf("-X Method need string but got %v", querySexpType(env, val))
 			}
 			req.Method = strings.ToUpper(string(val.(glisp.SexpStr)))
+			return req, nil
+		},
+	},
+	"-x": {
+		needValue: true,
+		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
+			if dialer, ok := val.(SexpDialer); !ok {
+				return nil, fmt.Errorf("-x need dialer but got %v", querySexpType(env, val))
+			} else {
+				req.Proxy = dialer
+			}
 			return req, nil
 		},
 	},
@@ -372,10 +396,6 @@ func _httpToFormValue(expr glisp.Sexp) string {
 	return expr.SexpString()
 }
 
-var httpTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
-}
-
 type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
@@ -428,4 +448,16 @@ func (c *httpDebugClient) Do(req *http.Request) (*http.Response, error) {
 	fmt.Fprintf(c.writer, "%s\n", string(respBytes))
 	res.Body = io.NopCloser(bytes.NewBuffer(respBytes))
 	return res, err
+}
+
+type SexpDialer func(ctx context.Context, network, addr string) (net.Conn, error)
+
+func (sd SexpDialer) SexpString() string { return sd.TypeName() }
+
+func (sd SexpDialer) TypeName() string {
+	return "func(ctx context.Context, network string, addr string) (net.Conn, error)"
+}
+
+func MakeDialer(dialer func(context.Context, string, string) (net.Conn, error)) SexpDialer {
+	return SexpDialer(dialer)
 }

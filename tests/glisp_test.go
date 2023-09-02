@@ -2,7 +2,9 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 
@@ -345,6 +347,21 @@ func TestHTTPIncludeHeaderInOutput(t *testing.T) {
 	WithHttpServer(func(url string) {
 		script := fmt.Sprintf(`(http/get -i "%s")`, url)
 		ExpectScriptSuccess(t, script, "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+	})
+}
+
+func TestHTTPProxy(t *testing.T) {
+	WithHttpServer2(func(addr, path string) {
+		env := newFullEnv()
+		env.AddFunction("proxy", func(_ *glisp.Environment, a []glisp.Sexp) (glisp.Sexp, error) {
+			return extensions.MakeDialer(func(_ context.Context, _ string, _ string) (net.Conn, error) {
+				return net.Dial("tcp", addr)
+			}), nil
+		})
+		script := fmt.Sprintf(`(http/get -i "http://www.any.com%s" -x (proxy))`, path)
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectContainsStr(t, glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes())), "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
 	})
 }
 
