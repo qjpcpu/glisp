@@ -362,6 +362,11 @@ func TestHTTPProxy(t *testing.T) {
 		ret, err := env.EvalString(script)
 		ExpectSuccess(t, err)
 		ExpectContainsStr(t, glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes())), "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+
+		script = fmt.Sprintf(`(def cli (http/get -i -x (proxy))) (cli "http://www.any.com%s")`, path)
+		ret, err = env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectContainsStr(t, glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes())), "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
 	})
 }
 

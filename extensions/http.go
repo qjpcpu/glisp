@@ -76,140 +76,7 @@ func DoHTTPMacro(withRespStatus bool) glisp.NamedUserFunction {
 func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) < 1 {
-				return glisp.WrongNumberArguments(name, len(args), 1, glisp.Many)
-			}
-
-			/* parse user options */
-			hreq := newHttpReq()
-			var functions []func(*request) (*request, error)
-			for i := 0; i < len(args); i++ {
-				arg := args[i]
-				if option, ok := _httpIsOption(arg); ok {
-					name, _ := readSymOrStr(arg)
-					if option.needValue {
-						if i+1 >= len(args) {
-							return glisp.SexpNull, fmt.Errorf("%s need an argument but got nothing", name)
-						}
-						val := args[i+1]
-						functions = append(functions, func(req *request) (*request, error) {
-							return option.decorator(env, req, val)
-						})
-						if name == `-H` {
-							functions[0], functions[len(functions)-1] = functions[len(functions)-1], functions[0]
-						}
-						i++
-					} else {
-						functions = append(functions, func(req *request) (*request, error) {
-							return option.decorator(env, req, nil)
-						})
-					}
-				} else {
-					if !glisp.IsString(arg) {
-						return glisp.SexpNull, fmt.Errorf("unknown option %v(%v)", arg.SexpString(), querySexpType(env, arg))
-					}
-					functions = append(functions, func(req *request) (*request, error) {
-						req.URL = string(arg.(glisp.SexpStr))
-						if !strings.HasPrefix(req.URL, "http") {
-							req.URL = "http://" + req.URL
-						}
-						return req, nil
-					})
-				}
-			}
-
-			/* decorate request by user options */
-			for _, fn := range functions {
-				var err error
-				if hreq, err = fn(hreq); err != nil {
-					return glisp.SexpNull, fmt.Errorf("%s build request fail %v", name, err)
-				}
-			}
-
-			/* pick method */
-			method := strings.ToUpper(strings.TrimPrefix(name, "http/"))
-			if name == `http/curl` {
-				method = `GET`
-				if hreq.Method != "" {
-					method = hreq.Method
-				}
-			}
-
-			/* build http request */
-			req, err := http.NewRequest(method, hreq.URL, hreq.Data)
-			if err != nil {
-				return glisp.SexpNull, fmt.Errorf("%s build request fail %v", name, err)
-			}
-
-			/* populate headers */
-			for k, vals := range hreq.Header {
-				for _, val := range vals {
-					req.Header.Add(k, val)
-				}
-			}
-
-			/* perform http request */
-			var cli HttpClient
-			if hreq.Proxy != nil {
-				cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					DialContext:     hreq.Proxy,
-				}}
-			} else {
-				cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-				}}
-			}
-			if hreq.Verbose {
-				cli = newDebugHttpClient(cli, os.Stderr)
-			}
-			resp, err := cli.Do(req)
-			if err != nil {
-				if hreq.IgnoreErr {
-					errBytes := []byte(fmt.Sprintf("[GLISP_HTTP_ERROR]%v", err.Error()))
-					if withRespStatus {
-						return glisp.Cons(glisp.NewSexpInt(http.StatusBadGateway), glisp.NewSexpBytes(errBytes)), nil
-					} else {
-						return glisp.NewSexpBytes(errBytes), nil
-					}
-				}
-				return glisp.SexpNull, fmt.Errorf("%s %v fail %v", req.Method, req.URL.String(), err)
-			}
-
-			/* parse response */
-			defer resp.Body.Close()
-			var bs []byte
-			if hreq.Outfile != "" {
-				os.MkdirAll(filepath.Dir(hreq.Outfile), 0755)
-				file, err := os.OpenFile(hreq.Outfile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-				if err != nil {
-					return glisp.SexpNull, err
-				}
-				defer file.Close()
-				io.Copy(file, resp.Body)
-			} else {
-				bs, err = ioutil.ReadAll(resp.Body)
-				if err != nil {
-					return glisp.SexpNull, err
-				}
-			}
-
-			if hreq.IncludeHeaderInOutput {
-				buf := new(bytes.Buffer)
-				buf.WriteString(fmt.Sprintf("%s %s\n", resp.Proto, resp.Status))
-				for key := range resp.Header {
-					buf.WriteString(fmt.Sprintf("%s: %s\n", key, resp.Header.Get(key)))
-				}
-				buf.WriteByte('\n')
-				buf.Write(bs)
-				bs = buf.Bytes()
-			}
-
-			/* return cons cell for curl */
-			if withRespStatus {
-				return glisp.Cons(glisp.NewSexpInt(resp.StatusCode), glisp.NewSexpBytes(bs)), nil
-			}
-			return glisp.NewSexpBytes(bs), nil
+			return processHTTP(name, withRespStatus, newHttpReq(), env, args)
 		}
 	}
 }
@@ -235,8 +102,17 @@ type request struct {
 	Proxy                 SexpDialer
 }
 
-func newHttpReq() *request {
-	return &request{Header: make(http.Header), Timeout: 15 * time.Second}
+func newHttpReq() request {
+	return request{Header: make(http.Header), Timeout: 15 * time.Second}
+}
+
+func (r request) copy() request {
+	r2 := r
+	r2.Header = make(http.Header)
+	for k := range r.Header {
+		r2.Header.Set(k, r.Header.Get(k))
+	}
+	return r2
 }
 
 type requestDecorator func(*glisp.Environment, *request, glisp.Sexp) (*request, error)
@@ -448,6 +324,156 @@ func (c *httpDebugClient) Do(req *http.Request) (*http.Response, error) {
 	fmt.Fprintf(c.writer, "%s\n", string(respBytes))
 	res.Body = io.NopCloser(bytes.NewBuffer(respBytes))
 	return res, err
+}
+
+func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args []glisp.Sexp) (bool, error) {
+	/* parse user options */
+	var functions []func(*request) (*request, error)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if option, ok := _httpIsOption(arg); ok {
+			name, _ := readSymOrStr(arg)
+			if option.needValue {
+				if i+1 >= len(args) {
+					return false, fmt.Errorf("%s need an argument but got nothing", name)
+				}
+				val := args[i+1]
+				functions = append(functions, func(req *request) (*request, error) {
+					return option.decorator(env, req, val)
+				})
+				if name == `-H` {
+					functions[0], functions[len(functions)-1] = functions[len(functions)-1], functions[0]
+				}
+				i++
+			} else {
+				functions = append(functions, func(req *request) (*request, error) {
+					return option.decorator(env, req, nil)
+				})
+			}
+		} else {
+			if !glisp.IsString(arg) {
+				return false, fmt.Errorf("unknown option %v(%v)", arg.SexpString(), querySexpType(env, arg))
+			}
+			functions = append(functions, func(req *request) (*request, error) {
+				req.URL = string(arg.(glisp.SexpStr))
+				if !strings.HasPrefix(req.URL, "http") {
+					req.URL = "http://" + req.URL
+				}
+				return req, nil
+			})
+		}
+	}
+
+	/* decorate request by user options */
+	for _, fn := range functions {
+		var err error
+		if hreq, err = fn(hreq); err != nil {
+			return false, fmt.Errorf("%s build request fail %v", name, err)
+		}
+	}
+
+	return hreq.URL != "", nil
+}
+
+func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus bool) (glisp.Sexp, error) {
+	/* pick method */
+	method := strings.ToUpper(strings.TrimPrefix(name, "http/"))
+	if name == `http/curl` {
+		method = `GET`
+		if hreq.Method != "" {
+			method = hreq.Method
+		}
+	}
+	/* build http request */
+	req, err := http.NewRequest(method, hreq.URL, hreq.Data)
+	if err != nil {
+		return glisp.SexpNull, fmt.Errorf("%s build request fail %v", name, err)
+	}
+
+	/* populate headers */
+	for k, vals := range hreq.Header {
+		for _, val := range vals {
+			req.Header.Add(k, val)
+		}
+	}
+
+	/* perform http request */
+	var cli HttpClient
+	if hreq.Proxy != nil {
+		cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			DialContext:     hreq.Proxy,
+		}}
+	} else {
+		cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}}
+	}
+	if hreq.Verbose {
+		cli = newDebugHttpClient(cli, os.Stderr)
+	}
+	resp, err := cli.Do(req)
+	if err != nil {
+		if hreq.IgnoreErr {
+			errBytes := []byte(fmt.Sprintf("[GLISP_HTTP_ERROR]%v", err.Error()))
+			if withRespStatus {
+				return glisp.Cons(glisp.NewSexpInt(http.StatusBadGateway), glisp.NewSexpBytes(errBytes)), nil
+			} else {
+				return glisp.NewSexpBytes(errBytes), nil
+			}
+		}
+		return glisp.SexpNull, fmt.Errorf("%s %v fail %v", req.Method, req.URL.String(), err)
+	}
+
+	/* parse response */
+	defer resp.Body.Close()
+	var bs []byte
+	if hreq.Outfile != "" {
+		os.MkdirAll(filepath.Dir(hreq.Outfile), 0755)
+		file, err := os.OpenFile(hreq.Outfile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		defer file.Close()
+		io.Copy(file, resp.Body)
+	} else {
+		bs, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+	}
+
+	if hreq.IncludeHeaderInOutput {
+		buf := new(bytes.Buffer)
+		buf.WriteString(fmt.Sprintf("%s %s\n", resp.Proto, resp.Status))
+		for key := range resp.Header {
+			buf.WriteString(fmt.Sprintf("%s: %s\n", key, resp.Header.Get(key)))
+		}
+		buf.WriteByte('\n')
+		buf.Write(bs)
+		bs = buf.Bytes()
+	}
+
+	/* return cons cell for curl */
+	if withRespStatus {
+		return glisp.Cons(glisp.NewSexpInt(resp.StatusCode), glisp.NewSexpBytes(bs)), nil
+	}
+	return glisp.NewSexpBytes(bs), nil
+
+}
+
+func processHTTP(name string, withRespStatus bool, req request, env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	if len(args) < 1 {
+		return glisp.WrongNumberArguments(name, len(args), 1, glisp.Many)
+	}
+	if evalNow, err := prepareHTTPReq(name, &req, env, args); err != nil {
+		return glisp.SexpNull, err
+	} else if !evalNow {
+		return glisp.MakeUserFunction(env.GenSymbol().Name(), func(env0 *glisp.Environment, args0 []glisp.Sexp) (glisp.Sexp, error) {
+			return processHTTP(name, withRespStatus, req.copy(), env0, args0)
+		}), nil
+	}
+	return evalHTTP(name, req, env, withRespStatus)
 }
 
 type SexpDialer func(ctx context.Context, network, addr string) (net.Conn, error)
