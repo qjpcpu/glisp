@@ -17,6 +17,8 @@ github.com/qjpcpu/qjson v0.0.0-20220324092201-b7ec17062f4b h1:7j1lLVm+IDnXQhGstK
 github.com/qjpcpu/qjson v0.0.0-20220324092201-b7ec17062f4b/go.mod h1:u96wzeK9lMLiAVqPsLJ1XvNm4Y1+tkq+wWWeVy0G3DA=
 github.com/qjpcpu/qjson v0.0.0-20230817074036-63c9ccfe2a60 h1:SjHLIVIH7rj5LZZJKnFPlZtXo6aRjGj1ipjqmFtkUnk=
 github.com/qjpcpu/qjson v0.0.0-20230817074036-63c9ccfe2a60/go.mod h1:u96wzeK9lMLiAVqPsLJ1XvNm4Y1+tkq+wWWeVy0G3DA=
+github.com/qjpcpu/qjson v0.0.0-20230906081909-c74df02cf505 h1:GCccsMEMWejGhgrF1oD9vXoIEqiULKCijcSbUo3FzCE=
+github.com/qjpcpu/qjson v0.0.0-20230906081909-c74df02cf505/go.mod h1:u96wzeK9lMLiAVqPsLJ1XvNm4Y1+tkq+wWWeVy0G3DA=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
