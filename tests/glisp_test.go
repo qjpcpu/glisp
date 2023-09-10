@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sort"
@@ -786,4 +787,35 @@ func TestOSCmd2(t *testing.T) {
 	_, err := vm.EvalString(`(os/exec! {"cmd" "echo -n aaa" "stdout" stdout "stderr" stderr})`)
 	ExpectSuccess(t, err)
 	ExpectEqString(t, buf.String(), "aaa")
+}
+
+func TestFileReader(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.SetFileReader(OnceFileReader(map[string]string{
+		"file1.lisp": `(set! g (+ g 1))`,
+	}))
+	vm.BindGlobal("g", glisp.NewSexpInt(0))
+	ret, err := vm.EvalString(`(include "file1.lisp") (include "file1.lisp") g`)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 1, ret)
+}
+
+type loadModuleOnce struct {
+	files map[string]string
+}
+
+func OnceFileReader(files map[string]string) glisp.FileReader {
+	return &loadModuleOnce{files: files}
+}
+func (f *loadModuleOnce) Open(file string) (io.ReadCloser, error) {
+	if str, ok := f.files[file]; ok {
+		delete(f.files, file)
+		return str2Stream(str), nil
+	}
+	return str2Stream("nil"), nil
+}
+
+func str2Stream(s string) io.ReadCloser {
+	buf := bytes.NewBufferString(s)
+	return ioutil.NopCloser(buf)
 }

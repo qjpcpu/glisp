@@ -25,6 +25,7 @@ type Environment struct {
 	pc               int
 	nextsymbol       *nextSymbol
 	extraGlobalCount int
+	fileReader       FileReader
 }
 
 const CallStackSize = 25
@@ -44,6 +45,7 @@ func New() *Environment {
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
+	env.fileReader = DefaultFileReader()
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
@@ -66,6 +68,7 @@ func (env *Environment) Clone() *Environment {
 	dupenv.stackstack = env.stackstack.Clone()
 	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
+	dupenv.fileReader = env.fileReader
 
 	dupenv.builtins = copyFuncMap(env.builtins)
 	dupenv.macros = env.macros.Clone()
@@ -105,6 +108,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
+	dupenv.fileReader = env.fileReader
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
 	dupenv.extraGlobalCount = env.extraGlobalCount
@@ -286,18 +290,21 @@ func (env *Environment) ParseStream(in io.Reader) ([]Sexp, error) {
 
 // ParseFile, used in the generator at read time to dynamiclly add more defs from other files
 func (env *Environment) ParseFile(file string) ([]Sexp, error) {
-	in, err := os.Open(file)
+	in, err := env.fileReader.Open(file)
 	if err != nil {
 		return nil, err
 	}
+	defer in.Close()
 
 	var exp []Sexp
 
 	exp, err = env.ParseStream(in)
 
-	in.Close()
-
 	return exp, err
+}
+
+func (env *Environment) SetFileReader(fr FileReader) {
+	env.fileReader = fr
 }
 
 func (env *Environment) SourceExpressions(expressions []Sexp) error {
