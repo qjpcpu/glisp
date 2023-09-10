@@ -5,9 +5,9 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
-	"os"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -637,15 +637,15 @@ func GetSourceFileFunction(name string) UserFunction {
 					expr = list.tail
 				}
 			case SexpStr:
-				var f *os.File
+				var f io.ReadCloser
 				var err error
 
-				if f, err = os.Open(string(t)); err != nil {
+				if f, err = env.fileReader.Open(string(t)); err != nil {
 					return err
 				}
 				defer f.Close()
 
-				if err = env.SourceFile(f); err != nil {
+				if err = env.SourceStream(f); err != nil {
 					return err
 				}
 			default:

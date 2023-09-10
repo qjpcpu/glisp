@@ -348,10 +348,6 @@ func (env *Environment) SourceStream(stream io.Reader) error {
 	return env.SourceExpressions(expressions)
 }
 
-func (env *Environment) SourceFile(file *os.File) error {
-	return env.SourceStream(bufio.NewReader(file))
-}
-
 func (env *Environment) LoadExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {

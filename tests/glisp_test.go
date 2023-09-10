@@ -800,6 +800,17 @@ func TestFileReader(t *testing.T) {
 	ExpectEqInteger(t, 1, ret)
 }
 
+func TestFileReader2(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.SetFileReader(OnceFileReader(map[string]string{
+		"file1.lisp": `(set! g (+ g 1))`,
+	}))
+	vm.BindGlobal("g", glisp.NewSexpInt(0))
+	ret, err := vm.EvalString(`(source-file "file1.lisp") (source-file "file1.lisp") g`)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 1, ret)
+}
+
 type loadModuleOnce struct {
 	files map[string]string
 }
