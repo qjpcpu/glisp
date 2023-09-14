@@ -18,6 +18,7 @@ import (
 func ImportOS(vm *glisp.Environment) error {
 	env := autoAddDoc(vm)
 	env.AddNamedFunction("os/read-file", GetReadFile)
+	env.AddNamedFunction("os/open-file", GetOpenFile)
 	env.AddNamedFunction("os/write-file", GetWriteFile)
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/read-dir", ReadDir)
@@ -214,6 +215,24 @@ func GetRemoveFile(name string) glisp.UserFunction {
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		return glisp.SexpNull, os.RemoveAll(filename)
+	}
+}
+
+func GetOpenFile(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		str, ok := args[0].(glisp.SexpStr)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		}
+		filename := replaceHomeDirSymbol(string(str))
+		file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		if err != nil {
+			return glisp.SexpNull, err
+		}
+		return NewWriter(file), nil
 	}
 }
 

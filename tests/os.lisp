@@ -23,3 +23,19 @@
 
 (assert (= "100" (os/exec! {"cmd" "echo $XY" "env" ["XY=100"] "cwd" "/"})))
 (assert (= "/" (os/exec! {"cmd" "pwd" "env" ["XY=100"] "cwd" "/"})))
+
+(def name ".tmp-glisp-file")
+(os/remove-file name)
+(def file (os/open-file name))
+
+(:println file "a")
+(:printf file "%s\n" "b")
+(:print file "c")
+(:write file "\nd")
+(:close file)
+(assert (= "a\nb\nc\nd" (string (os/read-file name))))
+
+(def file (os/open-file name))
+(:write file (bytes "a"))
+
+(os/remove-file name)
