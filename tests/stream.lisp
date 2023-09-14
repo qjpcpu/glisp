@@ -328,3 +328,12 @@
 
 (assert (= '(2 3) (->> (stream [1 2 3]) (drop #(!= 2 %)) (realize))))
 (assert (= '(1) (->> (stream [1 2 3]) (take #(!= 2 %)) (realize))))
+
+(assert (= [1 2 3] (take -1 [1 2 3])))
+(assert (= [] (take 0 [1 2 3])))
+
+(assert (= [] (drop -1 [1 2 3])))
+(assert (= [1 2 3] (drop 0 [1 2 3])))
+
+(assert (= [2 3] (->> [1 2 3] (drop #(!= 2 %)))))
+(assert (= [1] (->> [1 2 3] (take #(!= 2 %)))))

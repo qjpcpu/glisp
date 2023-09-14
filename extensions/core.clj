@@ -40,7 +40,7 @@ Set alias for function."
 ;; currying
 (defn core/__gen_curry [function arg_count iargs args]
   (cond (>= (+ (len iargs) (len args)) arg_count)
-          (apply function (concat iargs args))
+        (apply function (concat iargs args))
         (fn [& body]
           (core/__gen_curry function arg_count (concat iargs args) body))))
 
@@ -94,7 +94,7 @@ When expr is not nil, threads it into the first form (via ->),
 and when that result is not nil, through the next etc"
   (foldl (fn [expr acc]
            (let* [x (gensym) form (concat (list (car expr)) (list x) (cdr expr))]
-             `(let [~x ~acc] (cond (nil? ~x) nil ~form)))) init-value functions))
+                 `(let [~x ~acc] (cond (nil? ~x) nil ~form)))) init-value functions))
 
 (defmac ->> [init-value & functions]
   "Usage: (->> x & forms)
@@ -111,7 +111,7 @@ When expr is not nil, threads it into the first form (via ->>),
 and when that result is not nil, through the next etc"
   (foldl (fn [expr acc]
            (let* [x (gensym) form (concat expr (list x))]
-             `(let [~x ~acc] (cond (nil? ~x) nil ~form))))
+                 `(let [~x ~acc] (cond (nil? ~x) nil ~form))))
          init-value functions))
 
 (defmac inverse-> [arg & args]
@@ -124,7 +124,7 @@ Tranform a thread first form to a thread last form."
   "Usage: (inverse->> f & args)
 Tranform a thread last form to a thread first form."
   (let* [arr (list-to-array args) n (len arr) arg (aget arr (- n 1)) args2 (cons arg (array-to-list (slice arr 0 (- n 1))))]
-    `(~f ~@args2)))
+        `(~f ~@args2)))
 
 (defn array-to-list [arr]
   "Usage: (array-to-list arr)"
@@ -165,7 +165,7 @@ example:
                               (partition 2)
                               (flatmap (fn [pair] (cond (= 2 (len pair)) (list (list '= x (car pair)) (car (cdr pair))) pair)))
                               (realize))]
-    `(let [~x ~e] (cond ~@expr))))
+        `(let [~x ~e] (cond ~@expr))))
 
 (defn foreach [f coll]
   "Usage: (foreach f coll)
@@ -177,23 +177,23 @@ Apply f to each item of coll"
   "Usage: (when test & body)
 Evaluates test. If logical true, evaluates body in an implicit begin."
   `(cond ~predicate
-           (begin
-             ~@body) '()))
+         (begin
+          ~@body) '()))
 
 ;; well, maybe somebody likes if more than when
 (defmac if [predicate & body]
   "Usage: (if test & body)
 Evaluates test. If logical true, evaluates body in an implicit begin."
   `(cond ~predicate
-           (begin
-             ~@body) '()))
+         (begin
+          ~@body) '()))
 
 (defmac unless [predicate & body]
   "Usage: (unless test & body)
 Evaluates test. If logical false, evaluates body in an implicit begin."
   `(cond (not ~predicate)
-           (begin
-             ~@body) '()))
+         (begin
+          ~@body) '()))
 
 (defn index-of [f x]
   "Usage: (index-of f x)
@@ -248,8 +248,8 @@ Result coll = a \\ b."
                 (cond (and (>= length 2) (list? (car args)) (list? (car (cdr args)))) (foldl (fn [b a] (list/complement a b)) (car args) (cdr args))
                       (and (>= length 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a] (list/complement a b)) (car args) (cdr args))
                       (and (>= length 2) (stream? (car args)) (stream? (car (cdr args))))
-                        (foldl (fn [b a]
-                                 (let [h (core/__stream2hash b)] (reject #(exist? h %) a))) (car args) (cdr args))
+                      (foldl (fn [b a]
+                               (let [h (core/__stream2hash b)] (reject #(exist? h %) a))) (car args) (cdr args))
                       (apply - args)))))
 
 (defn list/intersect [a b]
@@ -273,9 +273,9 @@ Drop duplicate elements of list/array/stream a."
   "Usage: (core/__uniq-by fn a)
 Drop duplicate elements of list/array/stream a."
   (let* [h {} ret (foldl (fn [e acc] (let [ex (f e)] (cond (exist? h ex) acc (begin (hset! h ex 1) (concat acc (list e)))))) '() a)]
-    (cond (list? a) ret
-          (array? a) (list-to-array ret)
-          (stream ret))))
+        (cond (list? a) ret
+              (array? a) (list-to-array ret)
+              (stream ret))))
 
 (defn reject [pred coll]
   "Usage: (reject pred coll)
@@ -292,3 +292,15 @@ Takes any nested combination of sequential things (lists, vectors,
 etc.) and returns their contents as a single, flat foldable
 collection."
   (flatmap (fn [e] e) x))
+
+(override take (fn [f st]
+                 (case (type st)
+                   "list" (->> (stream st) (take f) (realize))
+                   "array" (->> (stream st) (take f) (realize) (list-to-array))
+                   (take f st))))
+
+(override drop (fn [f st]
+                 (case (type st)
+                   "list" (->> (stream st) (drop f) (realize))
+                   "array" (->> (stream st) (drop f) (realize) (list-to-array))
+                   (drop f st))))
