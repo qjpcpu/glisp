@@ -220,15 +220,22 @@ func GetRemoveFile(name string) glisp.UserFunction {
 
 func GetOpenFile(name string) glisp.UserFunction {
 	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		if len(args) > 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 0/1 argument but got %v`, name, len(args))
 		}
-		str, ok := args[0].(glisp.SexpStr)
-		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+		var file *os.File
+		var err error
+		if len(args) == 1 {
+			str, ok := args[0].(glisp.SexpStr)
+			if !ok {
+				return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			}
+			filename := replaceHomeDirSymbol(string(str))
+			file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+
+		} else {
+			file, err = os.CreateTemp(os.TempDir(), "glisp")
 		}
-		filename := replaceHomeDirSymbol(string(str))
-		file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 		if err != nil {
 			return glisp.SexpNull, err
 		}

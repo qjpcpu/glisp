@@ -7,6 +7,10 @@ import (
 	"github.com/qjpcpu/glisp"
 )
 
+type Namer interface {
+	Name() string
+}
+
 type SexpWriter struct {
 	w io.Writer
 }
@@ -32,6 +36,11 @@ func (w *SexpWriter) Explain(env *glisp.Environment, sym string, args []glisp.Se
 		return glisp.SexpNull, nil
 	case "println", "printf", "print":
 		return GetPrintFunction(w.w)(sym)(env, args)
+	case "name":
+		if n, ok := w.w.(Namer); ok {
+			return glisp.SexpStr(n.Name()), nil
+		}
+		return glisp.SexpStr("anonWriter"), nil
 	case "write":
 		if len(args) != 1 {
 			return glisp.WrongNumberArguments(":write", len(args), 1)
