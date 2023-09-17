@@ -379,6 +379,11 @@ Usage: (os/read-file file)
 
 Return file content as bytes.
 
+========== os/open-file ==========
+Usage: (os/open-file file)
+
+Open file for write. A temp file would be created if no file specified.
+
 ========== os/mkdir ==========
 Usage: (os/mkdir dirname)
 

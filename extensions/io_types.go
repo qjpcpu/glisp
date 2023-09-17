@@ -52,7 +52,7 @@ func (w *SexpWriter) Explain(env *glisp.Environment, sym string, args []glisp.Se
 		} else if glisp.IsString(args[0]) {
 			n, err = w.w.Write([]byte(string(args[0].(glisp.SexpStr))))
 		} else {
-			return glisp.SexpNull, fmt.Errorf("must write bytes to file but got %v", glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf("must write bytes/string to file but got %v", glisp.InspectType(args[0]))
 		}
 		return glisp.NewSexpInt(n), err
 	default:

@@ -830,3 +830,51 @@ func str2Stream(s string) io.ReadCloser {
 	buf := bytes.NewBufferString(s)
 	return ioutil.NopCloser(buf)
 }
+
+func TestWriter(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	buf := new(bytes.Buffer)
+	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	ret, err := vm.EvalString("(type buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io.Writer")
+
+	ret, err = vm.EvalString("(sexp-str buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io.Writer")
+
+	_, err = vm.EvalString("(:close buf)")
+	ExpectSuccess(t, err)
+
+	ret, err = vm.EvalString("(:name buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "anonWriter")
+
+	_, err = vm.EvalString("(:not-exist-method buf)")
+	ExpectError(t, err, "no support :not-exist-method")
+
+	vm = loadAllExtensions(glisp.New())
+	buf = new(bytes.Buffer)
+	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	_, err = vm.EvalString("(:write buf 1 2 3)")
+	ExpectError(t, err, ":write expect 1 argument(s) but got 3")
+
+	vm = loadAllExtensions(glisp.New())
+	buf = new(bytes.Buffer)
+	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	_, err = vm.EvalString("(:write buf 1)")
+	ExpectError(t, err, "must write bytes/string to file but got int")
+}
+
+func TestReader(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	buf := new(bytes.Buffer)
+	vm.BindGlobal("buf", extensions.NewReader(buf))
+	ret, err := vm.EvalString("(type buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io.Reader")
+
+	ret, err = vm.EvalString("(sexp-str buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io.Reader")
+}
