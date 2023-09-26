@@ -485,6 +485,8 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(str/join [] 2)`)
 	ExpectScriptErr(t, `(str/join [1] "")`)
 	ExpectScriptErr(t, `(str/join [] "" 2)`)
+	ExpectScriptErr(t, `(str/join [1 "2"] "")`)
+	ExpectScriptErr(t, `(str/join '(1 "2") "")`)
 	ExpectScriptErr(t, `(str/trim-prefix)`)
 	ExpectScriptErr(t, `(str/trim-prefix 1 2)`)
 	ExpectScriptErr(t, `(str/trim-prefix "" 2)`)

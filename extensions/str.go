@@ -137,20 +137,38 @@ func StringJoin(fn func([]string, string) string) glisp.NamedUserFunction {
 			if len(args) != 2 {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
-			list, ok := args[0].(glisp.SexpArray)
-			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be array`, name)
+			if args[0] == glisp.SexpNull {
+				return glisp.SexpStr(""), nil
+			}
+			var items []string
+			switch list := args[0].(type) {
+			case glisp.SexpArray:
+				for _, v := range list {
+					if !glisp.IsString(v) {
+						return glisp.SexpNull, fmt.Errorf(`%s first argument should be array of string`, name)
+					}
+					items = append(items, string(v.(glisp.SexpStr)))
+				}
+			case *glisp.SexpPair:
+				var err error
+				list.Foreach(func(v glisp.Sexp) bool {
+					if !glisp.IsString(v) {
+						err = fmt.Errorf(`%s first argument should be list of string`, name)
+						return false
+					}
+					items = append(items, string(v.(glisp.SexpStr)))
+					return true
+				})
+				if err != nil {
+					return glisp.SexpNull, err
+				}
+			default:
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be array/list`, name)
 			}
 			if !glisp.IsString(args[1]) {
 				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
 			}
-			var items []string
-			for _, v := range list {
-				if !glisp.IsString(v) {
-					return glisp.SexpNull, fmt.Errorf(`%s first argument should be array of string`, name)
-				}
-				items = append(items, string(v.(glisp.SexpStr)))
-			}
+
 			return glisp.SexpStr(fn(items, string(args[1].(glisp.SexpStr)))), nil
 		}
 	}
