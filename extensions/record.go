@@ -1,7 +1,6 @@
 package extensions
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -638,13 +637,13 @@ func (r *SexpGoRecord) GetHashField(name string) map[string]interface{} {
 	ret := make(map[string]interface{})
 	h, _ := glisp.MakeHash(nil)
 	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, h))
-	json.Unmarshal(bs, &ret)
+	stdUnmarshal(bs, &ret)
 	return ret
 }
 
 func (r *SexpGoRecord) GetListField(name string) (ret []interface{}) {
 	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, glisp.SexpArray{}))
-	json.Unmarshal(bs, &ret)
+	stdUnmarshal(bs, &ret)
 	return ret
 }
 
