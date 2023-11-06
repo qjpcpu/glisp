@@ -764,7 +764,7 @@ func GetAnyToInteger(name string) UserFunction {
 		case SexpStr:
 			return NewSexpIntStr(string(val))
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int`, name)
+		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int but got %v`, name, InspectType(args[0]))
 	}
 }
 
@@ -783,7 +783,7 @@ func GetAnyToChar(name string) UserFunction {
 			}
 			return SexpChar(rs[0]), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be integer`, name)
+		return SexpNull, fmt.Errorf(`%s argument should be integer but got %v`, name, InspectType(args[0]))
 	}
 }
 
@@ -798,7 +798,7 @@ func GetAnyToBool(name string) UserFunction {
 		case SexpStr:
 			return SexpBool(string(val) == `true`), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be string/bool`, name)
+		return SexpNull, fmt.Errorf(`%s argument should be string/bool but got %v`, name, InspectType(args[0]))
 	}
 }
 
@@ -809,7 +809,7 @@ func GetAnyToBytes(name string) UserFunction {
 		}
 		str, ok := args[0].(SexpStr)
 		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, InspectType(args[0]))
 		}
 		return NewSexpBytes([]byte(str)), nil
 	}
@@ -828,7 +828,7 @@ func GetAnyToFloat(name string) UserFunction {
 		case SexpInt:
 			return NewSexpFloatInt(val), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be string/int/float`, name)
+		return SexpNull, fmt.Errorf(`%s argument should be string/int/float but got %v`, name, InspectType(args[0]))
 	}
 }
 
@@ -853,7 +853,7 @@ func sexpToString(sb *strings.Builder, args []Sexp) error {
 	case SexpFloat:
 		if len(args) == 2 {
 			if !IsInt(args[1]) {
-				return errors.New("prec should be integer")
+				return fmt.Errorf("prec should be integer but got %v", InspectType(args[1]))
 			}
 			sb.WriteString(val.ToString(args[1].(SexpInt).ToInt()))
 			return nil

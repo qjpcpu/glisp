@@ -21,7 +21,7 @@ func Base64StringToBytes(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		bytes, err := base64.StdEncoding.DecodeString(string(str))
 		if err != nil {
@@ -38,7 +38,7 @@ func BytesToBase64String(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpBytes)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be bytes`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be bytes but got %v`, name, glisp.InspectType(args[0]))
 		}
 		bs := base64.StdEncoding.EncodeToString(str.Bytes())
 		return glisp.SexpStr(bs), nil

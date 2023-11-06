@@ -160,10 +160,10 @@ func GetLogicalShiftFunction(name string) glisp.UserFunction {
 		}
 
 		if !glisp.IsInt(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("first argument of %s must be integer", name)
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be integer but got %v", name, glisp.InspectType(args[0]))
 		}
 		if !glisp.IsInt(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("second argument of %s must be integer", name)
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be integer but got %v", name, glisp.InspectType(args[1]))
 		}
 		shift := uint(args[1].(glisp.SexpInt).ToUint64())
 		snum := args[0].(glisp.SexpInt)
@@ -249,7 +249,7 @@ func GetRoundFloat(name string) glisp.UserFunction {
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float`, name)
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
 	}
 }
 
@@ -264,7 +264,7 @@ func GetCeilFloat(name string) glisp.UserFunction {
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float`, name)
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
 	}
 }
 
@@ -279,7 +279,7 @@ func GetFloorFloat(name string) glisp.UserFunction {
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float`, name)
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
 	}
 }
 

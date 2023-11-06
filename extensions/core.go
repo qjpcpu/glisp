@@ -1,7 +1,6 @@
 package extensions
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -226,7 +225,7 @@ func GetDocFunction(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
 		if !glisp.IsSymbol(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol", name)
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol but got %v", name, glisp.InspectType(args[0]))
 		}
 		return glisp.MakeList([]glisp.Sexp{
 			env.MakeSymbol("println"),
@@ -277,7 +276,7 @@ func GetComposeFunction(name string) glisp.UserFunction {
 		}
 		for _, fn := range args {
 			if !glisp.IsFunction(fn) {
-				return glisp.SexpNull, errors.New("argument should be function")
+				return glisp.SexpNull, fmt.Errorf("argument should be function but got %v", glisp.InspectType(fn))
 			}
 		}
 		return glisp.MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *glisp.Environment, _args []glisp.Sexp) (glisp.Sexp, error) {

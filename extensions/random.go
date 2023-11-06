@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -17,7 +18,7 @@ func RandomIntegerFunction(name string) glisp.UserFunction {
 		}
 		if len(args) == 1 {
 			if !glisp.IsInt(args[0]) {
-				return glisp.SexpNull, errors.New("first argument should be integer")
+				return glisp.SexpNull, fmt.Errorf("first argument should be integer but got %v", glisp.InspectType(args[0]))
 			}
 			num := args[0].(glisp.SexpInt)
 			if num.Sign() <= 0 {

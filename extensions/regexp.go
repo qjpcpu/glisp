@@ -49,7 +49,7 @@ func RegexpFind(name string) glisp.UserFunction {
 			haystack = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("2nd argument of %v should be a string", name)
+				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args[1]))
 		}
 
 		var needle *regexp.Regexp
@@ -64,7 +64,7 @@ func RegexpFind(name string) glisp.UserFunction {
 			needle = reg.r
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
+				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args[0]))
 		}
 
 		switch name {
@@ -99,7 +99,7 @@ func RegexpReplace(name string) glisp.UserFunction {
 			needle = reg.r
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("1st argument of %v should be a compiled regular expression", name)
+				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args[0]))
 		}
 
 		var src string
@@ -108,7 +108,7 @@ func RegexpReplace(name string) glisp.UserFunction {
 			src = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("2nd argument of %v should be a string", name)
+				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args[1]))
 		}
 
 		var repl string
@@ -117,7 +117,7 @@ func RegexpReplace(name string) glisp.UserFunction {
 			repl = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("3nd argument of %v should be a string", name)
+				fmt.Errorf("3nd argument of %v should be a string but got %v", name, glisp.InspectType(args[2]))
 		}
 
 		return glisp.SexpStr(needle.ReplaceAllString(src, repl)), nil
@@ -139,7 +139,7 @@ func RegexpCompile(name string) glisp.UserFunction {
 			return re, nil
 		default:
 			return glisp.SexpNull,
-				errors.New("argument of regexp/compile should be a string")
+				fmt.Errorf("argument of regexp/compile should be a string but got %v", glisp.InspectType(args[0]))
 		}
 	}
 }

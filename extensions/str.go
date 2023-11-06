@@ -46,10 +46,10 @@ func StringPredict(fn func(string, string) bool) glisp.NamedUserFunction {
 				return glisp.WrongNumberArguments(name, len(args), 2, 3)
 			}
 			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 			}
 			s, substr := toStr(args[0]), toStr(args[1])
 			if len(args) == 3 && glisp.IsBool(args[2]) && bool(args[2].(glisp.SexpBool)) {
@@ -68,10 +68,10 @@ func StringSearch(fn func(string, string) int) glisp.NamedUserFunction {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 			}
 			return glisp.NewSexpInt((fn(toStr(args[0]), toStr(args[1])))), nil
 		}
@@ -84,10 +84,10 @@ func StringSplit(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2, 3)
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		if !glisp.IsString(args[1]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 		}
 		var list []string
 		if len(args) == 3 && glisp.IsInt(args[2]) {
@@ -110,7 +110,7 @@ func StringMap(fn func(string) string) glisp.NamedUserFunction {
 				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
 			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			return glisp.SexpStr((fn(toStr(args[0])))), nil
 		}
@@ -124,7 +124,7 @@ func StringBool(fn func(string) bool) glisp.NamedUserFunction {
 				return glisp.WrongNumberArguments(name, len(args), 1)
 			}
 			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			return glisp.SexpBool((fn(toStr(args[0])))), nil
 		}
@@ -145,7 +145,7 @@ func StringJoin(fn func([]string, string) string) glisp.NamedUserFunction {
 			case glisp.SexpArray:
 				for _, v := range list {
 					if !glisp.IsString(v) {
-						return glisp.SexpNull, fmt.Errorf(`%s first argument should be array of string`, name)
+						return glisp.SexpNull, fmt.Errorf(`%s first argument should be array of string but got %v`, name, glisp.InspectType(v))
 					}
 					items = append(items, string(v.(glisp.SexpStr)))
 				}
@@ -153,7 +153,7 @@ func StringJoin(fn func([]string, string) string) glisp.NamedUserFunction {
 				var err error
 				list.Foreach(func(v glisp.Sexp) bool {
 					if !glisp.IsString(v) {
-						err = fmt.Errorf(`%s first argument should be list of string`, name)
+						err = fmt.Errorf(`%s first argument should be list of string but got %v`, name, glisp.InspectType(v))
 						return false
 					}
 					items = append(items, string(v.(glisp.SexpStr)))
@@ -163,10 +163,10 @@ func StringJoin(fn func([]string, string) string) glisp.NamedUserFunction {
 					return glisp.SexpNull, err
 				}
 			default:
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be array/list`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be array/list but got %v`, name, glisp.InspectType(args[0]))
 			}
 			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 			}
 
 			return glisp.SexpStr(fn(items, string(args[1].(glisp.SexpStr)))), nil
@@ -181,10 +181,10 @@ func StringMap2(fn func(string, string) string) glisp.NamedUserFunction {
 				return glisp.WrongNumberArguments(name, len(args), 2)
 			}
 			if !glisp.IsString(args[0]) {
-				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			if !glisp.IsString(args[1]) {
-				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 			}
 			return glisp.SexpStr(fn(toStr(args[0]), toStr(args[1]))), nil
 		}
@@ -197,13 +197,13 @@ func StringReplace(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 3, 4)
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		if !glisp.IsString(args[1]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[1]))
 		}
 		if !glisp.IsString(args[2]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[2]))
 		}
 		if len(args) == 4 && glisp.IsInt(args[3]) {
 			return glisp.SexpStr(strings.Replace(toStr(args[0]), toStr(args[1]), toStr(args[2]), args[3].(glisp.SexpInt).ToInt())), nil
@@ -218,10 +218,10 @@ func StringRepeat(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 2)
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		if !glisp.IsInt(args[1]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be int`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be int but got %v`, name, glisp.InspectType(args[1]))
 		}
 		return glisp.SexpStr(strings.Repeat(toStr(args[0]), args[1].(glisp.SexpInt).ToInt())), nil
 	}
@@ -233,16 +233,16 @@ func strMask(name string) glisp.UserFunction {
 			return glisp.WrongNumberArguments(name, len(args), 4)
 		}
 		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s first argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		if !glisp.IsInt(args[1]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer but got %v`, name, glisp.InspectType(args[1]))
 		}
 		if !glisp.IsInt(args[2]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be integer but got %v`, name, glisp.InspectType(args[2]))
 		}
 		if !glisp.IsString(args[3]) {
-			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s second argument should be string but got %v`, name, glisp.InspectType(args[3]))
 		}
 		str := []rune(args[0].(glisp.SexpStr))
 		index := args[1].(glisp.SexpInt).ToInt()

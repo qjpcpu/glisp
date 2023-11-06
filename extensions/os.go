@@ -112,7 +112,7 @@ func GetReadFile(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		data, err := ioutil.ReadFile(filename)
@@ -130,7 +130,7 @@ func Mkdir(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		os.MkdirAll(filename, 0755)
@@ -145,7 +145,7 @@ func GetWriteFile(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		if _, err := os.Stat(filepath.Dir(filename)); err != nil && os.IsNotExist(err) {
@@ -169,7 +169,7 @@ func ReadDir(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		var listType int
 		if len(args) == 2 {
@@ -211,7 +211,7 @@ func GetRemoveFile(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		return glisp.SexpNull, os.RemoveAll(filename)
@@ -228,7 +228,7 @@ func GetOpenFile(name string) glisp.UserFunction {
 		if len(args) == 1 {
 			str, ok := args[0].(glisp.SexpStr)
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+				return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 			}
 			filename := replaceHomeDirSymbol(string(str))
 			file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
@@ -250,7 +250,7 @@ func GetExistFile(name string) glisp.UserFunction {
 		}
 		str, ok := args[0].(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string`, name)
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		if _, err := os.Stat(filename); err != nil && os.IsNotExist(err) {
