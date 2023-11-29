@@ -1,7 +1,9 @@
 package repl
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -127,14 +129,13 @@ func repl(liner LinerProducer, env *glisp.Environment) {
 }
 
 func runScript(env *Repl, fname string) {
-	file, err := os.Open(fname)
+	fileContent, err := ioutil.ReadFile(fname)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	defer file.Close()
 
-	err = env.LoadFile(file)
+	err = env.LoadStream(bytes.NewBuffer(dropSheBang(fileContent)))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -145,6 +146,19 @@ func runScript(env *Repl, fname string) {
 		fmt.Print(env.GetStackTrace(err))
 		os.Exit(-1)
 	}
+}
+
+func dropSheBang(data []byte) []byte {
+	var start int
+	if len(data) > 2 && data[0] == '#' && data[1] == '!' {
+		for ; start < len(data); start++ {
+			if data[start] == '\n' {
+				start++
+				break
+			}
+		}
+	}
+	return data[start:]
 }
 
 func NewRepl() *Repl {
