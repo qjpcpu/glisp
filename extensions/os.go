@@ -29,6 +29,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/env", Getenv)
 	env.AddNamedFunction("os/setenv", Setenv)
 	env.AddNamedFunction("os/mkdir", Mkdir)
+	env.AddNamedFunction("os/args", GetOSArgs)
 	//mustLoadScript(env.Environment, "os")
 	return nil
 }
@@ -386,4 +387,14 @@ func getHashStrList(hash *glisp.SexpHash, key string) []string {
 		}
 	}
 	return ret
+}
+
+func GetOSArgs(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		var ret glisp.SexpArray
+		for _, str := range os.Args {
+			ret = append(ret, glisp.SexpStr(str))
+		}
+		return ret, nil
+	}
 }

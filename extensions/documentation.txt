@@ -379,6 +379,11 @@ Usage: (os/read-file file)
 
 Return file content as bytes.
 
+========== os/args ==========
+Usage: (os/args)
+
+Return command args.
+
 ========== os/open-file ==========
 Usage: (os/open-file file)
 

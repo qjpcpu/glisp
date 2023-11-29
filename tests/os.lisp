@@ -39,3 +39,4 @@
 (:write file (bytes "a"))
 
 (os/remove-file name)
+(os/args)
