@@ -177,7 +177,7 @@ func (c *regexpCache) Get(k string) (*SexpRegexp, bool) {
 
 func (c *regexpCache) Set(k string, v *SexpRegexp) {
 	c.rw.Lock()
-	c.rw.Unlock()
+	defer c.rw.Unlock()
 	if len(c.rmap) > c.maxSize {
 		c.rmap = make(map[string]*SexpRegexp)
 	}
