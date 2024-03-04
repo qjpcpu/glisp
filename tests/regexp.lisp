@@ -26,3 +26,5 @@
 
 (assert (= (regexp/replace (regexp/compile "a(x*)b") "-ab-axxb-" "$1W") "---"))
 (assert (= (regexp/replace "a(x*)b" "-ab-axxb-" "$1W") "---"))
+
+(assert (= "regexp" (type (regexp/compile "[0-9]"))))

@@ -27,6 +27,10 @@ func (re *SexpRegexp) SexpString() string {
 	return fmt.Sprintf(`(regexp/compile %v)`, glisp.SexpStr(re.r.String()).SexpString())
 }
 
+func (re *SexpRegexp) TypeName() string {
+	return `regexp`
+}
+
 func regexpFindIndex(needle *regexp.Regexp, haystack string) (glisp.Sexp, error) {
 	loc := needle.FindStringIndex(haystack)
 
