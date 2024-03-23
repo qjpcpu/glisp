@@ -100,6 +100,7 @@ type request struct {
 	Outfile               string
 	IgnoreErr             bool
 	Proxy                 SexpDialer
+	ProxyURL              *url.URL
 }
 
 func newHttpReq() request {
@@ -178,10 +179,21 @@ var availableHttpOptions = map[string]httpOption{
 	"-x": {
 		needValue: true,
 		decorator: func(env *glisp.Environment, req *request, val glisp.Sexp) (*request, error) {
-			if dialer, ok := val.(SexpDialer); !ok {
-				return nil, fmt.Errorf("-x need dialer but got %v", querySexpType(env, val))
-			} else {
+			switch dialer := val.(type) {
+			case SexpDialer:
 				req.Proxy = dialer
+			case glisp.SexpStr:
+				urlstr := string(dialer)
+				if !strings.HasPrefix(urlstr, "http") {
+					urlstr = "http://" + urlstr
+				}
+				purl, err := url.Parse(urlstr)
+				if err != nil {
+					return nil, err
+				}
+				req.ProxyURL = purl
+			default:
+				return nil, fmt.Errorf("-x need dialer but got %v", querySexpType(env, val))
 			}
 			return req, nil
 		},
@@ -372,6 +384,19 @@ func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args []g
 		}
 	}
 
+	envProxy := os.Getenv("HTTP_PROXY")
+	if envProxy == "" {
+		envProxy = os.Getenv("http_proxy")
+	}
+	if envProxy != "" {
+		if !strings.HasPrefix(envProxy, "http") {
+			envProxy = "http://" + envProxy
+		}
+		if u, err := url.Parse(envProxy); err == nil {
+			hreq.ProxyURL = u
+		}
+	}
+
 	return hreq.URL != "", nil
 }
 
@@ -405,8 +430,13 @@ func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus 
 			DialContext:     hreq.Proxy,
 		}}
 	} else {
+		var proxy func(*http.Request) (*url.URL, error)
+		if hreq.ProxyURL != nil {
+			proxy = func(*http.Request) (*url.URL, error) { return hreq.ProxyURL, nil }
+		}
 		cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           proxy,
 		}}
 	}
 	if hreq.Verbose {
