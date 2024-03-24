@@ -451,20 +451,27 @@ func setSexp(root glisp.Sexp, tokens []stPath, val glisp.Sexp) (glisp.Sexp, erro
 
 func findArrayIndics(expr glisp.SexpArray, path stPath) ([]int, error) {
 	if path.isArrayElemSelector() {
-		paths, ok := makeStPath(path.Selector)
-		if !ok {
-			return nil, fmt.Errorf("bad json selector %s", path.Selector)
-		}
-		val := strings.TrimSuffix(strings.TrimPrefix(path.Val, `"`), `"`)
 		var idx []int
-		for i, n := range expr {
-			if out := findSexp(n, paths); out != nil {
-				if isElemMatched(out, path.Op, val) {
-					idx = append(idx, i)
+		if path.Op == "" {
+			idx = make([]int, len(expr))
+			for i := 0; i < len(expr); i++ {
+				idx[i] = len(expr) - i - 1
+			}
+		} else {
+			paths, ok := makeStPath(path.Selector)
+			if !ok {
+				return nil, fmt.Errorf("bad json selector %s", path.Selector)
+			}
+			val := strings.TrimSuffix(strings.TrimPrefix(path.Val, `"`), `"`)
+			for i, n := range expr {
+				if out := findSexp(n, paths); out != nil {
+					if isElemMatched(out, path.Op, val) {
+						idx = append(idx, i)
+					}
 				}
 			}
+			sort.SliceStable(idx, func(i, j int) bool { return idx[i] > idx[j] })
 		}
-		sort.SliceStable(idx, func(i, j int) bool { return idx[i] > idx[j] })
 		return idx, nil
 	} else {
 		idx, err := strconv.Atoi(path.Name)

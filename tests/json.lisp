@@ -82,3 +82,26 @@
 (assert (= "[null,1,2,null]" (json/stringify (list nil 1 2 nil))))
 (assert (= "[1,2,null]" (json/stringify '(1 2 ()))))
 (assert (= "[1,2]" (json/stringify (cons 1 2 ))))
+
+(def complex-json {"Result" {"Tasks" [{"ProgressSummary" {"Infos" [{"NameCN" "cn1" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"} {"ProgressSummary" {"Infos" [{"NameCN" "cn2" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"}] "Total" 1162}})
+(assert (= ["cn1" "cn2"]
+           (json/query complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN")))
+(json/set complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN" "CN")
+(assert (= ["CN" "CN"]
+           (json/query complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN")))
+
+(def complex-json {"Result" {"Tasks" [{"Number" 1 "ProgressSummary" {"Infos" [{"NameCN" "cn1" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"} {"ProgressSummary" {"Infos" [{"NameCN" "cn2" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"}] "Total" 1162}})
+(assert (= "cn1"
+           (json/query complex-json "Result.Tasks.#(Number==1).ProgressSummary.Infos.#(ProgressType==Incr).NameCN")))
+(json/set complex-json "Result.Tasks.#(Number==1).ProgressSummary.Infos.#(ProgressType==Incr).NameCN" "CN")
+(assert (= ["CN" "cn2"]
+           (json/query complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN")))
+
+(def complex-json {"Result" {"Tasks" [{"ProgressSummary" {"Infos" [{"NameCN" "cn1" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"} {"ProgressSummary" {"Infos" [{"NameCN" "cn2" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"}] "Total" 1162}})
+(json/del complex-json "Result.Tasks.#")
+(assert (= "{\"Result\":{\"Tasks\":[],\"Total\":1162}}" (json/stringify complex-json)))
+
+(def complex-json {"Result" {"Tasks" [{"ProgressSummary" {"Infos" [{"NameCN" "cn1" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"} {"ProgressSummary" {"Infos" [{"NameCN" "cn2" "ProgressType" "Incr" "Status" "Todo"}]} "TrafficSpec" "Standard"}] "Total" 1162}})
+(json/del complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN")
+(assert (= "{\"Result\":{\"Tasks\":[{\"ProgressSummary\":{\"Infos\":[{\"ProgressType\":\"Incr\",\"Status\":\"Todo\"}]},\"TrafficSpec\":\"Standard\"},{\"ProgressSummary\":{\"Infos\":[{\"ProgressType\":\"Incr\",\"Status\":\"Todo\"}]},\"TrafficSpec\":\"Standard\"}],\"Total\":1162}}"
+           (json/stringify complex-json)))
