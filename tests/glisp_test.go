@@ -186,7 +186,7 @@ func TestCustomType(t *testing.T) {
 }
 
 func testFile(t *testing.T, file string) {
-	bytes, err := ioutil.ReadFile(file)
+	bytes, err := os.ReadFile(file)
 	ExpectSuccess(t, err)
 	t.Logf("TESTing %s", file)
 	vm := loadAllExtensions(glisp.New())
@@ -198,7 +198,7 @@ func testFile(t *testing.T, file string) {
 }
 
 func listScripts(t *testing.T) []string {
-	files, err := ioutil.ReadDir(testDir)
+	files, err := os.ReadDir(testDir)
 	ExpectSuccess(t, err)
 
 	var scripts []string
@@ -457,7 +457,7 @@ func TestHTTPMethods(t *testing.T) {
 		file := fi.Name()
 		script = fmt.Sprintf(`(http/get -o "%s" "%s" -d [1 2 3])`, file, url)
 		ExpectScriptSuccess(t, script)
-		data, _ := ioutil.ReadFile(file)
+		data, _ := os.ReadFile(file)
 		ExpectEqString(t, string(data), `{"args":{},"body":"[1,2,3]","headers":{"Accept-Encoding":"gzip","Content-Length":"7","Content-Type":"application/json","User-Agent":"Go-http-client/1.1"},"method":"GET","url":"/echo"}`)
 		os.RemoveAll(file)
 

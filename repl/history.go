@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +68,7 @@ func (h *History) rotate() {
 	for _, item := range h.List {
 		buf.WriteString(h.encodeLine(item) + "\n")
 	}
-	ioutil.WriteFile(h.filename(), buf.Bytes(), 0755)
+	os.WriteFile(h.filename(), buf.Bytes(), 0755)
 }
 
 func (h *History) readAll() (ret []string) {
@@ -112,7 +111,7 @@ func exportHistory(name string) glisp.UserFunction {
 			home, _ := os.UserHomeDir()
 			file = filepath.Join(home, strings.TrimPrefix(file, "~"))
 		}
-		ioutil.WriteFile(file, buf.Bytes(), 0755)
+		os.WriteFile(file, buf.Bytes(), 0755)
 		fmt.Printf("save history to %s\n", args[0].(glisp.SexpStr))
 		return glisp.SexpNull, nil
 	}

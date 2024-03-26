@@ -3,7 +3,6 @@ package repl
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -129,7 +128,7 @@ func repl(liner LinerProducer, env *glisp.Environment) {
 }
 
 func runScript(env *Repl, fname string) {
-	fileContent, err := ioutil.ReadFile(fname)
+	fileContent, err := os.ReadFile(fname)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

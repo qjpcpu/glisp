@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -116,7 +115,7 @@ func GetReadFile(name string) glisp.UserFunction {
 			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
 		}
 		filename := replaceHomeDirSymbol(string(str))
-		data, err := ioutil.ReadFile(filename)
+		data, err := os.ReadFile(filename)
 		if err != nil {
 			return glisp.SexpNull, err
 		}
@@ -154,9 +153,9 @@ func GetWriteFile(name string) glisp.UserFunction {
 		}
 		switch data := args[1].(type) {
 		case glisp.SexpStr:
-			return glisp.SexpNull, ioutil.WriteFile(filename, []byte(data), 0644)
+			return glisp.SexpNull, os.WriteFile(filename, []byte(data), 0644)
 		case glisp.SexpBytes:
-			return glisp.SexpNull, ioutil.WriteFile(filename, data.Bytes(), 0644)
+			return glisp.SexpNull, os.WriteFile(filename, data.Bytes(), 0644)
 		default:
 			return glisp.SexpNull, fmt.Errorf("%s expect write string/bytes to file", name)
 		}
@@ -188,7 +187,7 @@ func ReadDir(name string) glisp.UserFunction {
 			}
 		}
 		dir := replaceHomeDirSymbol(string(str))
-		fs, err := ioutil.ReadDir(dir)
+		fs, err := os.ReadDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return glisp.SexpNull, nil
