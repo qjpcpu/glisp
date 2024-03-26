@@ -894,3 +894,14 @@ Return class object definition of record class x.
 Usage: (os/read-dir x)
 
 Return files in dir x.
+
+========== csv/read-file ==========
+Usage: (csv/read-file FILE) or (csv/read-file FILE 'hash)
+
+Return [][]string as file contennt. When 'hash flag set, the return would be []{header:value},
+first row of file would be parsed as header.
+
+========== csv/write-file ==========
+Usage: (csv/write-file FILE rows)
+
+Write csv rows to file, rows should be [][]string or []{header: value}.

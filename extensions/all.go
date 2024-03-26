@@ -17,6 +17,7 @@ func ImportAll(env *glisp.Environment) error {
 		ImportString,
 		ImportOS,
 		ImportHTTP,
+		ImportCSV,
 	}
 	for _, f := range modules {
 		if err := f(env); err != nil {

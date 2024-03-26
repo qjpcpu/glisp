@@ -746,4 +746,15 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptSuccess(t, `(os/remove-file "this-is-a-test-dir")`)
 	ExpectScriptSuccess(t, `(os/read-dir "." 'file)`)
 	ExpectScriptSuccess(t, `(os/read-dir "." 'dir)`)
+	WithTempFile(`a,b,c`, func(file string) {
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file "%s" 1 2)`, file), "csv/read-file expect 1,2 argument but got 3")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file 1 "%s")`, file), "csv/read-file 1st argument should be string but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file "xxxxxx")`), "no such file or directory")
+	})
+	WithTempFile(`a,b,c`, func(file string) {
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" 1 2)`, file), "csv/write-file expect 1,2 argument but got 3")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file 1 "%s")`, file), "csv/write-file 1st argument should be string but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" 1)`, file), "csv/write-file 2nd argument should be [][]string but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" [{"a" 1} 1])`, file), "csv row should be hash but got int")
+	})
 }
