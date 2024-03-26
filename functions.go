@@ -873,6 +873,8 @@ func sexpToString(sb *strings.Builder, args []Sexp) error {
 			err = sexpToString(sb, []Sexp{e})
 			return err == nil
 		})
+	case Stringer:
+		sb.WriteString(val.Stringify())
 	default:
 		sb.WriteString(args[0].SexpString())
 	}

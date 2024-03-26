@@ -747,14 +747,14 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptSuccess(t, `(os/read-dir "." 'file)`)
 	ExpectScriptSuccess(t, `(os/read-dir "." 'dir)`)
 	WithTempFile(`a,b,c`, func(file string) {
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file "%s" 1 2)`, file), "csv/read-file expect 1,2 argument but got 3")
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file 1 "%s")`, file), "csv/read-file 1st argument should be string but got int")
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/read-file "xxxxxx")`), "no such file or directory")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read "%s" 1 2)`, file), "csv/read expect 1,2 argument but got 3")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read 1 "%s")`, file), "csv/read 1st argument should be string/reader but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/read "xxxxxx")`), "no such file or directory")
 	})
 	WithTempFile(`a,b,c`, func(file string) {
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" 1 2)`, file), "csv/write-file expect 1,2 argument but got 3")
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file 1 "%s")`, file), "csv/write-file 1st argument should be string but got int")
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" 1)`, file), "csv/write-file 2nd argument should be [][]string but got int")
-		ExpectScriptErr(t, fmt.Sprintf(`(csv/write-file "%s" [{"a" 1} 1])`, file), "csv row should be hash but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write "%s" 1 2)`, file), "csv/write expect 1,2 argument but got 3")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write 1 "%s")`, file), "csv/write 1st argument should be string/writer but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write "%s" 1)`, file), "csv/write 2nd argument should be [][]string but got int")
+		ExpectScriptErr(t, fmt.Sprintf(`(csv/write "%s" [{"a" 1} 1])`, file), "csv row should be hash but got int")
 	})
 }

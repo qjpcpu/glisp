@@ -239,7 +239,7 @@ func GetOpenFile(name string) glisp.UserFunction {
 		if err != nil {
 			return glisp.SexpNull, err
 		}
-		return NewWriter(file), nil
+		return NewIO(file), nil
 	}
 }
 
@@ -342,11 +342,11 @@ func getHashWriter(hash *glisp.SexpHash, key string) io.Writer {
 	if err != nil {
 		return nil
 	}
-	v, ok := val.(*SexpWriter)
+	v, ok := val.(*SexpIO)
 	if !ok {
 		return nil
 	}
-	return v.w
+	return v
 }
 
 func mergeCurrentEnv(env []string) []string {

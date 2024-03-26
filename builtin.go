@@ -9,6 +9,10 @@ type ITypeName interface {
 	TypeName() string
 }
 
+type Stringer interface {
+	Stringify() string
+}
+
 func IsIType(s Sexp) bool {
 	_, ok := s.(ITypeName)
 	return ok

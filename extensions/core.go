@@ -57,6 +57,9 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("record-class-definition", ClassDefinition)
 	env.AddNamedFunction("record-of?", CheckIsRecordOf)
 	mustLoadScript(env.Environment, "core")
+
+	/* buffer */
+	env.AddNamedFunction("buffer", newBuffer)
 	return nil
 }
 

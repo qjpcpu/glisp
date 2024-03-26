@@ -781,12 +781,12 @@ func TestOSCmd(t *testing.T) {
 
 func TestOSCmd2(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	buf := new(bytes.Buffer)
-	vm.BindGlobal("stdout", extensions.NewWriter(buf))
-	vm.BindGlobal("stderr", extensions.NewWriter(buf))
+	buf := extensions.NewBuffer()
+	vm.BindGlobal("stdout", buf)
+	vm.BindGlobal("stderr", buf)
 	_, err := vm.EvalString(`(os/exec! {"cmd" "echo -n aaa" "stdout" stdout "stderr" stderr})`)
 	ExpectSuccess(t, err)
-	ExpectEqString(t, buf.String(), "aaa")
+	ExpectEqString(t, buf.Stringify(), "aaa")
 }
 
 func TestFileReader(t *testing.T) {
@@ -833,15 +833,14 @@ func str2Stream(s string) io.ReadCloser {
 
 func TestWriter(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	buf := new(bytes.Buffer)
-	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	vm.BindGlobal("buf", extensions.NewBuffer())
 	ret, err := vm.EvalString("(type buf)")
 	ExpectSuccess(t, err)
-	ExpectContainsStr(t, ret, "io.Writer")
+	ExpectContainsStr(t, ret, "*buffer*")
 
 	ret, err = vm.EvalString("(sexp-str buf)")
 	ExpectSuccess(t, err)
-	ExpectContainsStr(t, ret, "io.Writer")
+	ExpectContainsStr(t, ret, "*buffer*")
 
 	_, err = vm.EvalString("(:close buf)")
 	ExpectSuccess(t, err)
@@ -851,30 +850,71 @@ func TestWriter(t *testing.T) {
 	ExpectContainsStr(t, ret, "anonWriter")
 
 	_, err = vm.EvalString("(:not-exist-method buf)")
-	ExpectError(t, err, "no support :not-exist-method")
+	ExpectError(t, err, "not support :not-exist-method")
 
 	vm = loadAllExtensions(glisp.New())
-	buf = new(bytes.Buffer)
-	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	vm.BindGlobal("buf", extensions.NewBuffer())
 	_, err = vm.EvalString("(:write buf 1 2 3)")
 	ExpectError(t, err, ":write expect 1 argument(s) but got 3")
 
 	vm = loadAllExtensions(glisp.New())
-	buf = new(bytes.Buffer)
-	vm.BindGlobal("buf", extensions.NewWriter(buf))
+	vm.BindGlobal("buf", extensions.NewBuffer())
 	_, err = vm.EvalString("(:write buf 1)")
 	ExpectError(t, err, "must write bytes/string to file but got int")
 }
 
 func TestReader(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	buf := new(bytes.Buffer)
-	vm.BindGlobal("buf", extensions.NewReader(buf))
+	vm.BindGlobal("buf", extensions.NewBuffer())
 	ret, err := vm.EvalString("(type buf)")
 	ExpectSuccess(t, err)
-	ExpectContainsStr(t, ret, "io.Reader")
+	ExpectContainsStr(t, ret, "*buffer*")
 
 	ret, err = vm.EvalString("(sexp-str buf)")
 	ExpectSuccess(t, err)
-	ExpectContainsStr(t, ret, "io.Reader")
+	ExpectContainsStr(t, ret, "*buffer*")
+
+	vm.BindGlobal("buf", extensions.NewIO(1))
+	ret, err = vm.EvalString("(sexp-str buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io")
+	ret, err = vm.EvalString("(type buf)")
+	ExpectSuccess(t, err)
+	ExpectContainsStr(t, ret, "io")
 }
+
+func TestIO(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.BindGlobal("buf", extensions.NewIO(glisp.NewSexpInt(1)))
+	_, err := vm.EvalString("(:close buf)")
+	ExpectError(t, err, "is not IO object")
+
+	vm = loadAllExtensions(glisp.New())
+	vm.BindGlobal("buf", extensions.NewIO(glisp.NewSexpInt(1)))
+	_, err = vm.EvalString("(:readx buf 1)")
+	ExpectError(t, err, "not support :readx")
+
+	vm = loadAllExtensions(glisp.New())
+	vm.BindGlobal("buf", extensions.NewIO(glisp.NewSexpInt(1)))
+	_, err = vm.EvalString("(:write buf 1)")
+	ExpectError(t, err, "must write bytes/string to file but got")
+
+	vm = loadAllExtensions(glisp.New())
+	vm.BindGlobal("buf", extensions.NewIO(glisp.NewSexpInt(1)))
+	_, err = vm.EvalString("(:write buf \"x\")")
+	ExpectError(t, err, "is not IO object")
+
+	vm = loadAllExtensions(glisp.New())
+	vm.BindGlobal("buf", extensions.NewIO(rd(0)))
+	_, err = vm.EvalString("(:write buf \"x\")")
+	ExpectError(t, err, "io is not writable")
+
+}
+
+type rd int
+
+func (rd) Read(p []byte) (n int, err error) { return }
+
+type wt int
+
+func (wt) Write(p []byte) (int, error) { return 0, nil }
