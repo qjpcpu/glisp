@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -34,6 +35,7 @@ func ImportString(vm *glisp.Environment) error {
 	env.AddNamedFunction("str/float?", isFloat())
 	env.AddNamedFunction("str/bool?", isBool())
 	env.AddNamedFunction("str/md5", strMD5())
+	env.AddNamedFunction("str/sha256", strSHA256())
 	env.AddNamedFunction("str/mask", strMask)
 	mustLoadScript(env.Environment, "str")
 	return nil
@@ -331,6 +333,12 @@ func isTitle() glisp.NamedUserFunction {
 func strMD5() glisp.NamedUserFunction {
 	return StringMap(func(s string) string {
 		return fmt.Sprintf("%x", md5.Sum([]byte(s)))
+	})
+}
+
+func strSHA256() glisp.NamedUserFunction {
+	return StringMap(func(s string) string {
+		return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 	})
 }
 

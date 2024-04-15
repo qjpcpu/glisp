@@ -57,6 +57,7 @@
 (assert (= 1 (float "1")))
 
 (assert (= "51225783c75fde283cf746a2904c7920" (str/md5 "glisp")))
+(assert (= "79dbfd40645effa462193dd8fd4a4148156c3d9f351741c4b44fffc0e0314fa0" (str/sha256 "glisp")))
 
 (assert (= "语言*" (str/mask "语言学" 2 1 "*")))
 (assert (= "语言*" (str/mask "语言学" 2 100 "*")))

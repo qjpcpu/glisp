@@ -648,6 +648,11 @@ Usage: (str/md5 s)
 
 Returns md5 of s.
 
+========== str/sha256 ==========
+Usage: (str/sha256 s)
+
+Returns sha256 of s.
+
 ========== str/mask ==========
 Usage: (str/mask s start-idx length mask-str)
 
