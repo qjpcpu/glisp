@@ -16,3 +16,16 @@
 
 (assert (nil? (:not-exist-property nil)))
 (assert (nil? (:not-exist-property (car '()))))
+
+(def test-json {"mylist" ["A" "B" "C"]})
+
+(assert (= "B"
+           (->> test-json
+                (inverse->> json/query "mylist")
+                (cadr))))
+
+(assert (= "B"
+           (-> test-json
+               (json/query "mylist")
+               (inverse-> filter #(= "B" %))
+               (car))))
