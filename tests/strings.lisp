@@ -112,3 +112,7 @@
 (assert (= "atrueb1233.14BYTESd" (string ['("a" true "b") [1 2 3 3.14 (bytes "BYTES")] #d])))
 
 (assert (= "AAA" (str/repeat "A" 3)))
+
+(assert (= "" (str/first nil)))
+(assert (= "" (str/first)))
+(assert (= "A" (str/first nil "" "A")))
