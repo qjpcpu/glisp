@@ -116,13 +116,15 @@ and when that result is not nil, through the next etc"
 
 (defmac inverse-> [arg & args]
   "Usage: (inverse-> f & args)
-Tranform a thread first form to a thread last form."
+Transform a thread first form to a thread last form.
+e.g. transform (inverse-> arg1 fn arg2 arg3) to (fn arg2 arg3 arg1)"
   (let [a (concat args (list arg))]
     `(~@a)))
 
 (defmac inverse->> [f & args]
   "Usage: (inverse->> f & args)
-Tranform a thread last form to a thread first form."
+Transform a thread last form to a thread first form.
+e.g. transform (inverse->> fn arg1 arg2 arg3) to (fn arg3 arg1 arg2)"
   (let* [arr (list-to-array args) n (len arr) arg (aget arr (- n 1)) args2 (cons arg (array-to-list (slice arr 0 (- n 1))))]
         `(~f ~@args2)))
 
