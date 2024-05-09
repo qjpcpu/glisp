@@ -39,7 +39,7 @@
 (assert (= "a_b" (str/join ["a" "b"] "_")))
 (assert (= "a_b" (str/join '("a" "b") "_")))
 (assert (= "" (str/join '() "_")))
-(assert (= "a_b" (str/join2 "_" '("a" "b"))))
+(assert (= "a_b" (inverse->> str/join "_" '("a" "b"))))
 
 
 (assert (str/digit? "0234"))
