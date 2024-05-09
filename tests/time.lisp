@@ -71,3 +71,6 @@
 (assert (zero? (time/parse "0001-01-01 00:00:00" "2006-01-02 15:04:05" "UTC")))
 (assert (zero? (time/parse "0000-01-01 00:00:00" "2006-01-02 15:04:05" "UTC")))
 (assert (= "0001-01-01 00:00:00" (time/format  (time/zero) "2006-01-02 15:04:05")))
+
+(assert (> (time/add-date (time/now) 1 2 3) (time/now)))
+(assert (< (time/now) (time/add-date (time/now) 1 2 3) ))

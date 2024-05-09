@@ -757,4 +757,12 @@ func TestWrongArgumentNumber(t *testing.T) {
 		ExpectScriptErr(t, fmt.Sprintf(`(csv/write "%s" 1)`, file), "csv/write 2nd argument should be [][]string but got int")
 		ExpectScriptErr(t, fmt.Sprintf(`(csv/write "%s" [{"a" 1} 1])`, file), "csv row should be hash but got int")
 	})
+	ExpectScriptErr(t, `(> (time/now) 1)`, `cannot compare time to int`)
+	ExpectScriptErr(t, `(time/format (time/now) "2006-01-02 15:04:05" 1)`, `time/format: third argument of function time/format must be string but got int`)
+	ExpectScriptErr(t, `(time/parse 1 2)`, `time/parse with unsupported argument 2`)
+	ExpectScriptErr(t, `(time/parse "2014-Feb-04" 1)`, `time/parse with unsupported argument`)
+	ExpectScriptErr(t, `(time/parse "2014-Feb-04" "abc")`, `parse time 2014-Feb-04 with layout abc fail`)
+	ExpectScriptErr(t, `(time/parse 1 "abc")`, `time/parse with unsupported argument`)
+	ExpectScriptErr(t, `(time/parse "2014-Feb-04" "2006-Jan-02" 1)`, `time/parse with unsupported argument`)
+	ExpectScriptErr(t, `(time/parse "2014-Feb-04" "2006-Jan-02" "ak")`, `time/parse: unknown time zone`)
 }

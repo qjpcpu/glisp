@@ -28,3 +28,6 @@
 (assert (= (regexp/replace "a(x*)b" "-ab-axxb-" "$1W") "---"))
 
 (assert (= "regexp" (type (regexp/compile "[0-9]"))))
+
+;; test cache
+(->> (range 200) (map #(regexp/compile (string %))) (realize))
