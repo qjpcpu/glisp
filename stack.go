@@ -25,7 +25,7 @@ func NewStack(size int) *Stack {
 func (stack *Stack) Clone() *Stack {
 	ret := getStackFromPool(len(stack.elements))
 	ret.tos = stack.tos
-	for i := range stack.elements {
+	for i := 0; i <= stack.tos; i++ {
 		if cb, ok := stack.elements[i].(Clonable); ok {
 			ret.elements[i] = cb.Clone()
 		} else {

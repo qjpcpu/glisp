@@ -5,17 +5,23 @@ type Address struct {
 	position int
 }
 
-func (a Address) IsStackElem() {}
+func (a *Address) IsStackElem() {}
 
 func (stack *Stack) PushAddr(function *SexpFunction, pc int) {
-	stack.Push(Address{function, pc})
+	addr := getAddressFromPool()
+	addr.function = function
+	addr.position = pc
+	stack.Push(addr)
 }
 
-func (stack *Stack) PopAddr() (*SexpFunction, int, error) {
+func (stack *Stack) PopAddr() (fn *SexpFunction, pos int, err error) {
 	elem, err := stack.Pop()
 	if err != nil {
 		return MissingFunction, 0, err
 	}
-	addr := elem.(Address)
-	return addr.function, addr.position, nil
+	addr := elem.(*Address)
+	fn = addr.function
+	pos = addr.position
+	recycleAddress(addr)
+	return
 }

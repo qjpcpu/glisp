@@ -1,6 +1,8 @@
 package glisp
 
-import "sync"
+import (
+	"sync"
+)
 
 var stackPool = sync.Pool{
 	New: func() interface{} {
@@ -13,11 +15,11 @@ var stackPool = sync.Pool{
 func getStackFromPool(size int) *Stack {
 	stack := stackPool.Get().(*Stack)
 	stack.tos = -1
-	if cap(stack.elements) < size {
-		stack.elements = make([]StackElem, size)
+	if count := size - cap(stack.elements); count > 0 {
+		stack.elements = append(stack.elements, make([]StackElem, count)...)
 	}
-	for i := len(stack.elements); i < size; i++ {
-		stack.elements = append(stack.elements, nil)
+	if count := size - len(stack.elements); count > 0 {
+		stack.elements = stack.elements[:cap(stack.elements)]
 	}
 	return stack
 }
@@ -26,23 +28,6 @@ func recycleStack(stack *Stack) {
 	stack.tos = -1
 	stack.elements = stack.elements[:0]
 	stackPool.Put(stack)
-}
-
-var scopePool = sync.Pool{
-	New: func() interface{} {
-		return &Scope{
-			vals: make([]*ScopeElem, 0, 8),
-		}
-	},
-}
-
-func getScopeFromPool() *Scope {
-	return scopePool.Get().(*Scope)
-}
-
-func recycleScope(s *Scope) {
-	s.vals = s.vals[:0]
-	scopePool.Put(s)
 }
 
 var dataElemPool = sync.Pool{
@@ -54,4 +39,20 @@ var dataElemPool = sync.Pool{
 func recycleDataElem(e *DataStackElem) {
 	e.expr = nil
 	dataElemPool.Put(e)
+}
+
+var addressPool = sync.Pool{
+	New: func() interface{} {
+		return &Address{}
+	},
+}
+
+func getAddressFromPool() *Address {
+	addr := addressPool.Get().(*Address)
+	return addr
+}
+
+func recycleAddress(addr *Address) {
+	addr.function = nil
+	addressPool.Put(addr)
 }
