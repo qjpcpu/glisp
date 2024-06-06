@@ -439,8 +439,8 @@ func (env *Environment) DumpFunctionByName(w io.Writer, name string) error {
 }
 
 func DumpFunction(w io.Writer, fun Function) {
-	for _, instr := range fun {
-		fmt.Fprintln(w, "\t"+instr.InstrString())
+	for i, instr := range fun {
+		fmt.Fprintf(w, "[%02d]\t%s\n", i, instr.InstrString())
 	}
 }
 
