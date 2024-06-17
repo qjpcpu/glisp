@@ -51,6 +51,19 @@ func ExpectEqStr(t *testing.T, expect string, expr glisp.Sexp) {
 	}
 }
 
+func ExpectEqHashKV(t *testing.T, hash glisp.Sexp, key string, expectVal string) {
+	if !glisp.IsHash(hash) {
+		t.Log(getTestStack())
+		t.Fatalf("should get hash but got %#T", hash)
+	}
+	h := hash.(*glisp.SexpHash)
+	value, _ := h.HashGetDefault(glisp.SexpStr(key), glisp.SexpNull)
+	if v := string(value.(glisp.SexpStr)); v != expectVal {
+		t.Log(getTestStack())
+		t.Fatalf("should get %v but got %v", expectVal, v)
+	}
+}
+
 func ExpectContainsStr(t *testing.T, expr glisp.Sexp, keywords ...string) {
 	if !glisp.IsString(expr) {
 		t.Log(getTestStack())

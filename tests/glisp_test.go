@@ -346,8 +346,12 @@ func TestSourceFile(t *testing.T) {
 
 func TestHTTPIncludeHeaderInOutput(t *testing.T) {
 	WithHttpServer(func(url string) {
-		script := fmt.Sprintf(`(http/get -i "%s")`, url)
-		ExpectScriptSuccess(t, script, "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+		script := fmt.Sprintf(`(car (http/get -i "%s"))`, url)
+		env := newFullEnv()
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqHashKV(t, ret, "StatusCode", "200")
+		ExpectEqHashKV(t, ret, "Status", "200 OK")
 	})
 }
 
@@ -359,15 +363,22 @@ func TestHTTPProxy(t *testing.T) {
 				return net.Dial("tcp", addr)
 			}), nil
 		})
-		script := fmt.Sprintf(`(http/get -i "http://www.any.com%s" -x (proxy))`, path)
+		script := fmt.Sprintf(`(car (http/get -i "http://www.any.com%s" -x (proxy)))`, path)
 		ret, err := env.EvalString(script)
 		ExpectSuccess(t, err)
-		ExpectContainsStr(t, glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes())), "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+		ExpectEqHashKV(t, ret, "StatusCode", "200")
+		ExpectEqHashKV(t, ret, "Status", "200 OK")
+		ExpectEqHashKV(t, ret, "Content-Type", "text/plain; charset=utf-8")
 
 		script = fmt.Sprintf(`(def cli (http/get -i -x (proxy))) (cli "http://www.any.com%s")`, path)
 		ret, err = env.EvalString(script)
 		ExpectSuccess(t, err)
-		ExpectContainsStr(t, glisp.SexpStr(string(ret.(glisp.SexpBytes).Bytes())), "HTTP/1.1 200 OK", `Content-Type: text/plain; charset=utf-8`, `"url":"/echo"`)
+		header := ret.(*glisp.SexpPair).Head()
+		body := ret.(*glisp.SexpPair).Tail()
+		ExpectEqHashKV(t, header, "StatusCode", "200")
+		ExpectEqHashKV(t, header, "Status", "200 OK")
+		ExpectEqHashKV(t, header, "Content-Type", "text/plain; charset=utf-8")
+		ExpectContainsStr(t, glisp.SexpStr(string(body.(glisp.SexpBytes).Bytes())), `"url":"/echo"`)
 	})
 }
 
@@ -436,7 +447,11 @@ func TestHTTPWithJSON(t *testing.T) {
 func TestHTTPWith404(t *testing.T) {
 	WithHttpServer(func(url string) {
 		script := fmt.Sprintf(`(http/post -i "%s" '-d [1 2 3])`, url+"/xxx")
-		ExpectScriptSuccess(t, script, `HTTP/1.1 404 Not Found`)
+		env := newFullEnv()
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		header := ret.(*glisp.SexpPair).Head()
+		ExpectEqHashKV(t, header, "StatusCode", "404")
 	})
 }
 

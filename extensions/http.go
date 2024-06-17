@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -473,22 +474,23 @@ func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus 
 		}
 	}
 
+	var responseBody glisp.Sexp = glisp.NewSexpBytes(bs)
 	if hreq.IncludeHeaderInOutput {
-		buf := new(bytes.Buffer)
-		buf.WriteString(fmt.Sprintf("%s %s\n", resp.Proto, resp.Status))
+		var kvs []glisp.Sexp
+		kvs = append(kvs, glisp.SexpStr("Status"), glisp.SexpStr(resp.Status))
+		kvs = append(kvs, glisp.SexpStr("StatusCode"), glisp.SexpStr(strconv.FormatInt(int64(resp.StatusCode), 10)))
 		for key := range resp.Header {
-			buf.WriteString(fmt.Sprintf("%s: %s\n", key, resp.Header.Get(key)))
+			kvs = append(kvs, glisp.SexpStr(key), glisp.SexpStr(resp.Header.Get(key)))
 		}
-		buf.WriteByte('\n')
-		buf.Write(bs)
-		bs = buf.Bytes()
+		header, _ := glisp.MakeHash(kvs)
+		responseBody = glisp.Cons(header, responseBody)
 	}
 
 	/* return cons cell for curl */
 	if withRespStatus {
-		return glisp.Cons(glisp.NewSexpInt(resp.StatusCode), glisp.NewSexpBytes(bs)), nil
+		return glisp.Cons(glisp.NewSexpInt(resp.StatusCode), responseBody), nil
 	}
-	return glisp.NewSexpBytes(bs), nil
+	return responseBody, nil
 
 }
 
