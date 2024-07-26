@@ -763,8 +763,10 @@ func GetAnyToInteger(name string) UserFunction {
 			return val, nil
 		case SexpStr:
 			return NewSexpIntStr(string(val))
+		case SexpBytes:
+			return NewSexpIntBytes(val.Bytes()), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int but got %v`, name, InspectType(args[0]))
+		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int/bytes but got %v`, name, InspectType(args[0]))
 	}
 }
 
@@ -807,11 +809,14 @@ func GetAnyToBytes(name string) UserFunction {
 		if len(args) != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
 		}
-		str, ok := args[0].(SexpStr)
-		if !ok {
-			return SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, InspectType(args[0]))
+		switch v := args[0].(type) {
+		case SexpStr:
+			return NewSexpBytes([]byte(string(v))), nil
+		case SexpInt:
+			return NewSexpBytes(v.ToBytes()), nil
+		default:
+			return SexpNull, fmt.Errorf(`%s argument should be string/int but got %v`, name, InspectType(args[0]))
 		}
-		return NewSexpBytes([]byte(str)), nil
 	}
 }
 

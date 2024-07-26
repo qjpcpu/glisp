@@ -29,6 +29,11 @@ func NewSexpIntStr(str string) (SexpInt, error) {
 	return SexpInt{v: v}, nil
 }
 
+func NewSexpIntBytes(bs []byte) SexpInt {
+	v := new(big.Int).SetBytes(bs)
+	return SexpInt{v: v}
+}
+
 func NewSexpIntStrWithBase(str string, base int) (SexpInt, error) {
 	switch base {
 	case 10:
@@ -122,6 +127,10 @@ func (i SexpInt) ToInt() int {
 
 func (i SexpInt) ToUint64() uint64 {
 	return i.v.Uint64()
+}
+
+func (i SexpInt) ToBytes() []byte {
+	return i.v.Bytes()
 }
 
 func (i SexpInt) Sign() int {

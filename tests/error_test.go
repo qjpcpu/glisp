@@ -390,7 +390,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(int)`)
 	ExpectScriptErr(t, `(int '())`)
 	ExpectScriptErr(t, `(string)`)
-	ExpectScriptErr(t, `(bytes 1)`)
+	ExpectScriptSuccess(t, `(bytes 1)`)
 	ExpectScriptErr(t, `(bytes)`)
 	ExpectScriptErr(t, `(float)`)
 	ExpectScriptErr(t, `(float '())`)
