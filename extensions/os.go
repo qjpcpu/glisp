@@ -22,6 +22,7 @@ func ImportOS(vm *glisp.Environment) error {
 	env.AddNamedFunction("os/file-exist?", GetExistFile)
 	env.AddNamedFunction("os/read-dir", ReadDir)
 	env.AddNamedFunction("os/remove-file", GetRemoveFile)
+	env.AddNamedFunction("os/which", LookupPath)
 	env.AddNamedFunction("os/exec", ExecCommand(&CommandOptions{AssertSuccess: false}))
 	env.AddNamedFunction("os/exec!", ExecCommand(&CommandOptions{AssertSuccess: true}))
 	env.AddNamedFunction("os/run", RunCommand)
@@ -395,5 +396,23 @@ func GetOSArgs(name string) glisp.UserFunction {
 			ret = append(ret, glisp.SexpStr(str))
 		}
 		return ret, nil
+	}
+}
+
+func LookupPath(name string) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		}
+		str, ok := args[0].(glisp.SexpStr)
+		if !ok {
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+		}
+		name := replaceHomeDirSymbol(string(str))
+		p, err := exec.LookPath(name)
+		if err != nil || p == "" {
+			return glisp.SexpNull, nil
+		}
+		return glisp.SexpStr(p), nil
 	}
 }

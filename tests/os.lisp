@@ -40,3 +40,6 @@
 
 (os/remove-file name)
 (os/args)
+
+(assert (not (nil? (os/which "go"))))
+(assert (nil? (os/which "not-exist-binary")))

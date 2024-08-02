@@ -379,6 +379,11 @@ Usage: (os/read-file file)
 
 Return file content as bytes.
 
+========== os/which ==========
+Usage: (os/which file)
+
+Searches for an executable named file in the directories named by the PATH environment variable. If file contains a slash, it is tried directly and the PATH is not consulted. Otherwise, on success, the result is an absolute path.
+
 ========== os/args ==========
 Usage: (os/args)
 
