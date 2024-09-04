@@ -131,6 +131,7 @@ e.g. transform (inverse->> fn arg1 arg2 arg3) to (fn arg3 arg1 arg2)"
 (defn array-to-list [arr]
   "Usage: (array-to-list arr)"
   (cond (empty? arr) nil
+        (list? arr) arr
         (cons (aget arr 0) (array-to-list (slice arr 1)))))
 
 (defn list-to-array [x]

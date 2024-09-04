@@ -29,3 +29,6 @@
                (json/query "mylist")
                (inverse-> filter #(= "B" %))
                (car))))
+
+(assert (= '(1) (array-to-list '(1))))
+(assert (= [1] (list-to-array [1])))
