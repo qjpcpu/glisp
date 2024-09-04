@@ -142,7 +142,7 @@ func GetArrayAccessFunction(name string) UserFunction {
 		case SexpArray:
 			arr = t
 		default:
-			return SexpNull, fmt.Errorf("first argument of aget must be array but got <%v:%v>", InspectType(args[0]), args[0])
+			return SexpNull, fmt.Errorf("first argument of aget must be array but got <%v:%v>", InspectType(args[0]), args[0].SexpString())
 		}
 
 		var i int
@@ -152,7 +152,7 @@ func GetArrayAccessFunction(name string) UserFunction {
 		case SexpChar:
 			i = int(t)
 		default:
-			return SexpNull, fmt.Errorf("second argument of aget must be integer but got <%v:%v>", InspectType(args[1]), args[1])
+			return SexpNull, fmt.Errorf("second argument of aget must be integer but got <%v:%v>", InspectType(args[1]), args[1].SexpString())
 		}
 
 		if i < 0 || i >= len(arr) {
