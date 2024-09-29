@@ -28,6 +28,7 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("/", GetNumericFunction)
 	env.AddNamedFunction("mod", GetBinaryIntFunction)
 	env.AddNamedMacro("doc", GetDocFunction)
+	env.AddNamedMacro("defined?", SymbolDefinedFunction)
 	env.AddFuzzyMacro(`^:[^:]+$`, ExplainColonMacro)
 	env.AddNamedFunction("sort", GetSortFunction)
 	env.AddNamedFunction("compose", GetComposeFunction)
@@ -238,6 +239,35 @@ func GetDocFunction(name string) glisp.UserFunction {
 					env.MakeSymbol("quote"),
 					args[0].(glisp.SexpSymbol),
 				}),
+			}),
+		}), nil
+	}
+}
+
+func SymbolDefinedFunction(name string) glisp.UserFunction {
+	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		name := args[0].(glisp.SexpSymbol).Name()
+		if _, ok := env.FindObject(name); ok {
+			return glisp.SexpBool(true), nil
+		} else if _, ok = env.FindMacro(name); ok {
+			return glisp.SexpBool(true), nil
+		} else {
+			return glisp.SexpBool(false), nil
+		}
+	}
+	sexpfn := glisp.MakeUserFunction(name, userfn)
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) != 1 {
+			return glisp.WrongNumberArguments(name, len(args), 1)
+		}
+		if !glisp.IsSymbol(args[0]) {
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol but got %v", name, glisp.InspectType(args[0]))
+		}
+		return glisp.MakeList([]glisp.Sexp{
+			sexpfn,
+			glisp.MakeList([]glisp.Sexp{
+				env.MakeSymbol("quote"),
+				args[0].(glisp.SexpSymbol),
 			}),
 		}), nil
 	}

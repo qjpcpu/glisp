@@ -32,3 +32,6 @@
 
 (assert (= '(1) (array-to-list '(1))))
 (assert (= [1] (list-to-array [1])))
+
+(assert (defined? len))
+(assert (not (defined? length_xxx)))
