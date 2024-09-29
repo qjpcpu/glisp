@@ -12,8 +12,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/qjpcpu/glisp"
@@ -426,19 +428,20 @@ func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus 
 	/* perform http request */
 	var cli HttpClient
 	if hreq.Proxy != nil {
-		cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			DialContext:     hreq.Proxy,
-		}}
+		key := fmt.Sprintf("transport-with-proxy:%p", hreq.Proxy)
+		cli = &http.Client{Timeout: hreq.Timeout, Transport: getTransport(key, func(tr *http.Transport) {
+			tr.DialContext = hreq.Proxy
+		})}
 	} else {
+		key := "transport:default"
 		var proxy func(*http.Request) (*url.URL, error)
 		if hreq.ProxyURL != nil {
+			key = fmt.Sprintf("transport:%s", hreq.ProxyURL)
 			proxy = func(*http.Request) (*url.URL, error) { return hreq.ProxyURL, nil }
 		}
-		cli = &http.Client{Timeout: hreq.Timeout, Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			Proxy:           proxy,
-		}}
+		cli = &http.Client{Timeout: hreq.Timeout, Transport: getTransport(key, func(tr *http.Transport) {
+			tr.Proxy = proxy
+		})}
 	}
 	if hreq.Verbose {
 		cli = newDebugHttpClient(cli, os.Stderr)
@@ -518,4 +521,33 @@ func (sd SexpDialer) TypeName() string {
 
 func MakeDialer(dialer func(context.Context, string, string) (net.Conn, error)) SexpDialer {
 	return SexpDialer(dialer)
+}
+
+var (
+	transportPool sync.Map
+)
+
+func getTransport(key string, mws ...func(*http.Transport)) *http.Transport {
+	if val, ok := transportPool.Load(key); ok {
+		return val.(*http.Transport)
+	}
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConnsPerHost:   runtime.GOMAXPROCS(0) + 1,
+	}
+	for _, fn := range mws {
+		fn(tr)
+	}
+	transportPool.Store(key, tr)
+	return tr
 }
