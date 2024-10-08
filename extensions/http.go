@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/qjpcpu/glisp"
@@ -473,10 +474,10 @@ func evalSingleHTTP(name string, hreq request, urlstr string, env *glisp.Environ
 
 	/* perform http request */
 	var cli HttpClient
-	if hreq.Proxy != nil {
-		key := fmt.Sprintf("transport-with-proxy:%p", hreq.Proxy)
+	if hreq.Proxy.fn != nil {
+		key := fmt.Sprintf("transport-with-proxy:%v", hreq.Proxy.ID())
 		cli = &http.Client{Timeout: hreq.Timeout, Transport: getTransport(key, func(tr *http.Transport) {
-			tr.DialContext = hreq.Proxy
+			tr.DialContext = hreq.Proxy.fn
 		})}
 	} else {
 		key := "transport:default"
@@ -557,7 +558,10 @@ func processHTTP(name string, withRespStatus bool, req request, env *glisp.Envir
 	return evalHTTP(name, req, env, withRespStatus)
 }
 
-type SexpDialer func(ctx context.Context, network, addr string) (net.Conn, error)
+type SexpDialer struct {
+	fn func(ctx context.Context, network, addr string) (net.Conn, error)
+	id uint64
+}
 
 func (sd SexpDialer) SexpString() string { return sd.TypeName() }
 
@@ -565,8 +569,17 @@ func (sd SexpDialer) TypeName() string {
 	return "func(ctx context.Context, network string, addr string) (net.Conn, error)"
 }
 
+func (sd SexpDialer) ID() string {
+	return strconv.FormatUint(sd.id, 10)
+}
+
+var fnNextID uint64
+
 func MakeDialer(dialer func(context.Context, string, string) (net.Conn, error)) SexpDialer {
-	return SexpDialer(dialer)
+	return SexpDialer{
+		fn: dialer,
+		id: atomic.AddUint64(&fnNextID, 1),
+	}
 }
 
 var (
