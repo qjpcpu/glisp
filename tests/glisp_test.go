@@ -355,6 +355,17 @@ func TestHTTPIncludeHeaderInOutput(t *testing.T) {
 	})
 }
 
+func TestMultiHTTP(t *testing.T) {
+	WithHttpServer(func(url string) {
+		script := fmt.Sprintf(`(->> (http/get ["%s" "%s"]) (map json/parse) (list-to-array))`, url, url)
+		env := newFullEnv()
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		arr := ret.(glisp.SexpArray)
+		ExpectEqInteger(t, int64(2), glisp.NewSexpInt(len(arr)))
+	})
+}
+
 func TestHTTPProxy(t *testing.T) {
 	WithHttpServer2(func(addr, path string) {
 		env := newFullEnv()

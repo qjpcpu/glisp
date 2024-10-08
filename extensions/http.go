@@ -94,7 +94,8 @@ func _httpIsOption(expr glisp.Sexp) (httpOption, bool) {
 
 type request struct {
 	Verbose               bool
-	URL                   string
+	URLs                  []string
+	MultiURL              bool
 	Header                http.Header
 	Data                  io.Reader
 	Timeout               time.Duration
@@ -366,16 +367,31 @@ func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args []g
 				})
 			}
 		} else {
-			if !glisp.IsString(arg) {
+			fmtURL := func(a glisp.Sexp) string {
+				str := string(a.(glisp.SexpStr))
+				if !strings.HasPrefix(str, "http") {
+					str = "http://" + str
+				}
+				return str
+			}
+			switch val := arg.(type) {
+			case glisp.SexpStr:
+				functions = append(functions, func(req *request) (*request, error) {
+					req.URLs = []string{fmtURL(arg)}
+					return req, nil
+				})
+			case glisp.SexpArray:
+				functions = append(functions, func(req *request) (*request, error) {
+					for _, item := range val {
+						req.URLs = append(req.URLs, fmtURL(item))
+					}
+					req.MultiURL = true
+					return req, nil
+				})
+			default:
 				return false, fmt.Errorf("unknown option %v(%v)", arg.SexpString(), querySexpType(env, arg))
 			}
-			functions = append(functions, func(req *request) (*request, error) {
-				req.URL = string(arg.(glisp.SexpStr))
-				if !strings.HasPrefix(req.URL, "http") {
-					req.URL = "http://" + req.URL
-				}
-				return req, nil
-			})
+
 		}
 	}
 
@@ -400,10 +416,40 @@ func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args []g
 		}
 	}
 
-	return hreq.URL != "", nil
+	return len(hreq.URLs) != 0, nil
 }
 
 func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus bool) (glisp.Sexp, error) {
+	if !hreq.MultiURL {
+		return evalSingleHTTP(name, hreq, hreq.URLs[0], env, withRespStatus)
+	}
+	ret := make([]glisp.Sexp, len(hreq.URLs))
+	var ferr error
+	wg := new(sync.WaitGroup)
+	for i := range hreq.URLs {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			res, err := evalSingleHTTP(name, hreq, hreq.URLs[idx], env, withRespStatus)
+			if err != nil {
+				ferr = err
+			} else {
+				ret[idx] = res
+			}
+		}(i)
+	}
+	wg.Wait()
+	if ferr != nil {
+		return glisp.SexpNull, ferr
+	}
+	lb := glisp.NewListBuilder()
+	for _, item := range ret {
+		lb.Add(item)
+	}
+	return lb.Get(), nil
+}
+
+func evalSingleHTTP(name string, hreq request, urlstr string, env *glisp.Environment, withRespStatus bool) (glisp.Sexp, error) {
 	/* pick method */
 	method := strings.ToUpper(strings.TrimPrefix(name, "http/"))
 	if name == `http/curl` {
@@ -413,7 +459,7 @@ func evalHTTP(name string, hreq request, env *glisp.Environment, withRespStatus 
 		}
 	}
 	/* build http request */
-	req, err := http.NewRequest(method, hreq.URL, hreq.Data)
+	req, err := http.NewRequest(method, urlstr, hreq.Data)
 	if err != nil {
 		return glisp.SexpNull, fmt.Errorf("%s build request fail %v", name, err)
 	}
@@ -524,12 +570,21 @@ func MakeDialer(dialer func(context.Context, string, string) (net.Conn, error)) 
 }
 
 var (
-	transportPool sync.Map
+	transportPool = make(map[string]*http.Transport)
+	transportMu   sync.RWMutex
 )
 
 func getTransport(key string, mws ...func(*http.Transport)) *http.Transport {
-	if val, ok := transportPool.Load(key); ok {
-		return val.(*http.Transport)
+	transportMu.RLock()
+	if val, ok := transportPool[key]; ok {
+		transportMu.RUnlock()
+		return val
+	}
+	transportMu.RUnlock()
+	transportMu.Lock()
+	defer transportMu.Unlock()
+	if val, ok := transportPool[key]; ok {
+		return val
 	}
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -548,6 +603,6 @@ func getTransport(key string, mws ...func(*http.Transport)) *http.Transport {
 	for _, fn := range mws {
 		fn(tr)
 	}
-	transportPool.Store(key, tr)
+	transportPool[key] = tr
 	return tr
 }
