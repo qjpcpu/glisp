@@ -35,3 +35,6 @@
 
 (assert (defined? len))
 (assert (not (defined? length_xxx)))
+
+(assert (= (cons "a" 1) (car {"a" 1})))
+(assert (nil? (car {})))

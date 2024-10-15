@@ -101,6 +101,13 @@ func GetFirstFunction(name string) UserFunction {
 				return SexpNull, errors.New(`access an empty array`)
 			}
 			return expr[0], nil
+		case *SexpHash:
+			var ret Sexp = SexpNull
+			expr.Foreach(func(k Sexp, v Sexp) bool {
+				ret = Cons(k, v)
+				return false
+			})
+			return ret, nil
 		}
 
 		return SexpNull, WrongType
