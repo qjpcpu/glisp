@@ -29,12 +29,12 @@
 (assert (= [] (filter (fn [a] false) [1 2 3 4])))
 (assert (= '() (filter (fn [a] false) '(1 2 3 4))))
 
-(defn max [a b]
-  (cond (> a b) a b))
-
 
 (assert (= 4 (foldl max 0 '(1 2 3 4) )))
 (assert (= 4 (foldl max 0 '[1 2 3 4] )))
+
+(assert (= 1 (foldl min 1000 '(1 2 3 4) )))
+(assert (= 1 (foldl min 1000 '[1 2 3 4] )))
 
 (assert (= ["101!" "201!" "301!" "401!"] (map
           (compose

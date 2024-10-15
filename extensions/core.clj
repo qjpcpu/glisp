@@ -307,3 +307,15 @@ collection."
                    "list" (->> (stream st) (drop f) (realize))
                    "array" (->> (stream st) (drop f) (realize) (list-to-array))
                    (drop f st))))
+
+(defn max [& numbers]
+  "Usage: (max a b c)
+Return maximun value."
+  (cond (= 0 (len numbers)) 0
+        (foldl (fn [e acc] (cond (> e acc) e acc)) (car numbers) numbers)))
+
+(defn min [& numbers]
+  "Usage: (min a b c)
+Return minimun value."
+  (cond (= 0 (len numbers)) 0
+        (foldl (fn [e acc] (cond (< e acc) e acc)) (car numbers) numbers)))
