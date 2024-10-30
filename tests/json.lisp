@@ -105,3 +105,10 @@
 (json/del complex-json "Result.Tasks.#.ProgressSummary.Infos.#(ProgressType==Incr).NameCN")
 (assert (= "{\"Result\":{\"Tasks\":[{\"ProgressSummary\":{\"Infos\":[{\"ProgressType\":\"Incr\",\"Status\":\"Todo\"}]},\"TrafficSpec\":\"Standard\"},{\"ProgressSummary\":{\"Infos\":[{\"ProgressType\":\"Incr\",\"Status\":\"Todo\"}]},\"TrafficSpec\":\"Standard\"}],\"Total\":1162}}"
            (json/stringify complex-json)))
+
+(defn hash-eq [j1 j2] (assert (= (json/stringify j1) (json/stringify j2))))
+(def js (json/sadd (json/sadd {"a" 1} "b" 1) "b" 1))
+(hash-eq {"a" 1 "b" [1]} js)
+
+(def js (json/add (json/add {"a" 1} "b" 1) "b" 1))
+(hash-eq {"a" 1 "b" [1 1]} js)
