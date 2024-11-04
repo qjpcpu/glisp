@@ -338,6 +338,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(car 1)`)
 	ExpectScriptErr(t, `(cdr 1)`)
 	ExpectScriptErr(t, `(aget)`)
+	ExpectScriptErr(t, `(aindex)`)
 	ExpectScriptErr(t, `(aget 1)`)
 	ExpectScriptErr(t, `(aget 1 1)`)
 	ExpectScriptErr(t, `(list?)`)

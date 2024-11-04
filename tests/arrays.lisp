@@ -36,3 +36,8 @@
 
 (assert (= "" (slice "a" 1)))
 (assert (= [] (slice [1] 1)))
+
+(assert (= -1 (aindex [] "a")))
+(assert (= -1 (aindex ["b"] "a")))
+(assert (= -1 (aindex nil "a")))
+(assert (= 1 (aindex ["b" "a"] "a")))

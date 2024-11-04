@@ -48,6 +48,7 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"make-array": GetMakeArrayFunction,
 	"aget":       GetArrayAccessFunction,
 	"aset!":      GetArrayAccessFunction,
+	"aindex":     GetArrayElementIndex,
 	"sget":       GetSgetFunction,
 	"hget":       GetHashAccessFunction,
 	"hset!":      GetHashAccessFunction,
@@ -132,6 +133,30 @@ func GetRestFunction(name string) UserFunction {
 			if expr == SexpNull {
 				return SexpNull, nil
 			}
+		}
+
+		return SexpNull, WrongType
+	}
+}
+
+func GetArrayElementIndex(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return WrongNumberArguments(name, len(args), 2)
+		}
+
+		switch expr := args[0].(type) {
+		case SexpArray:
+			for i, item := range expr {
+				if v, err := Compare(item, args[1]); err != nil {
+					return SexpNull, err
+				} else if v == 0 {
+					return NewSexpInt(i), nil
+				}
+			}
+			return NewSexpInt(-1), nil
+		case SexpSentinel:
+			return NewSexpInt(-1), nil
 		}
 
 		return SexpNull, WrongType
