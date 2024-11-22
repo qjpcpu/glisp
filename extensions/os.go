@@ -78,28 +78,28 @@ func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 				cmd.Stdout = &buf
 			}
 			/* stderr */
-			if stderr := getHashWriter(hash, "stderr"); stderr != nil {
-				cmd.Stderr = stderr
-			} else if opts.Stderr != nil {
-				cmd.Stderr = opts.Stderr
-			} else {
-				cmd.Stderr = &errBuf
+			cmd.Stderr = &errBuf
+			combineErr := func(err0 error) error {
+				if err0 == nil {
+					return nil
+				}
+				err0 = fmt.Errorf("%w %s", err0, string(chomp(errBuf.Bytes())))
+				if stderr := getHashWriter(hash, "stderr"); stderr != nil {
+					stderr.Write(chomp(errBuf.Bytes()))
+				} else if opts.Stderr != nil {
+					opts.Stderr.Write(chomp(errBuf.Bytes()))
+				}
+				return err0
 			}
 			err := cmd.Run()
 			if opts.AssertSuccess {
 				if err != nil {
-					return glisp.SexpNull, err
+					return glisp.SexpNull, combineErr(err)
 				}
 				return glisp.SexpStr(chomp(buf.Bytes())), nil
 			}
 			if err != nil {
-				var errBytes []byte
-				if errBuf.Len() > 0 {
-					errBytes = errBuf.Bytes()
-				} else {
-					errBytes = buf.Bytes()
-				}
-				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(errBytes))), nil
+				return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(combineErr(err).Error())), nil
 			}
 			return glisp.Cons(glisp.NewSexpInt(cmd.ProcessState.ExitCode()), glisp.SexpStr(chomp(buf.Bytes()))), nil
 		}
