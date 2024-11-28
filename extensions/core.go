@@ -246,7 +246,17 @@ func GetDocFunction(name string) glisp.UserFunction {
 
 func SymbolDefinedFunction(name string) glisp.UserFunction {
 	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := args[0].(glisp.SexpSymbol).Name()
+		var name string
+		switch args[0].(type) {
+		case *glisp.SexpFunction:
+			return glisp.SexpBool(true), nil
+		case glisp.SexpSymbol:
+			name = args[0].(glisp.SexpSymbol).Name()
+		case glisp.SexpStr:
+			name = string(args[0].(glisp.SexpStr))
+		default:
+			return glisp.SexpNull, fmt.Errorf("can't guess %v definition", glisp.InspectType(args[0]))
+		}
 		if _, ok := env.FindObject(name); ok {
 			return glisp.SexpBool(true), nil
 		} else if _, ok = env.FindMacro(name); ok {
@@ -260,16 +270,8 @@ func SymbolDefinedFunction(name string) glisp.UserFunction {
 		if len(args) != 1 {
 			return glisp.WrongNumberArguments(name, len(args), 1)
 		}
-		if !glisp.IsSymbol(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol but got %v", name, glisp.InspectType(args[0]))
-		}
-		return glisp.MakeList([]glisp.Sexp{
-			sexpfn,
-			glisp.MakeList([]glisp.Sexp{
-				env.MakeSymbol("quote"),
-				args[0].(glisp.SexpSymbol),
-			}),
-		}), nil
+		newArgs := append([]glisp.Sexp{sexpfn}, args...)
+		return glisp.MakeList(newArgs), nil
 	}
 }
 

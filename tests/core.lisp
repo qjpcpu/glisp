@@ -34,7 +34,9 @@
 (assert (= [1] (list-to-array [1])))
 
 (assert (defined? len))
-(assert (not (defined? length_xxx)))
+(assert (defined? (symbol (concat "l" "e" "n"))))
+(assert (not (defined? (symbol (concat "l" "e" "ndxxx")))))
+(assert (not (defined? "length_xxx")))
 
 (assert (= (cons "a" 1) (car {"a" 1})))
 (assert (nil? (car {})))
