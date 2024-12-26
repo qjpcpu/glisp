@@ -47,6 +47,8 @@ func ImportHTTP(vm *glisp.Environment) error {
 
 	env.AddNamedMacro("http/curl", DoHTTPMacro(true))
 	env.AddNamedFunction("http/curl", DoHTTP(true))
+
+	env.AddNamedFunction("http/unix-dialer", UnixDialer())
 	return nil
 }
 
@@ -81,6 +83,23 @@ func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 			return processHTTP(name, withRespStatus, newHttpReq(), env, args)
+		}
+	}
+}
+
+func UnixDialer() glisp.NamedUserFunction {
+	return func(name string) glisp.UserFunction {
+		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+			if len(args) != 1 {
+				return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+			}
+			if !glisp.IsString(args[0]) {
+				return glisp.SexpNull, fmt.Errorf(`%s expect file path but got %v`, name, glisp.InspectType(args[0]))
+			}
+			sock := replaceHomeDirSymbol(string(args[0].(glisp.SexpStr)))
+			return MakeDialer(func(context.Context, string, string) (net.Conn, error) {
+				return net.Dial("unix", sock)
+			}), nil
 		}
 	}
 }

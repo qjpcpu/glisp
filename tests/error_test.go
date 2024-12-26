@@ -766,4 +766,6 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(time/parse 1 "abc")`, `time/parse with unsupported argument`)
 	ExpectScriptErr(t, `(time/parse "2014-Feb-04" "2006-Jan-02" 1)`, `time/parse with unsupported argument`)
 	ExpectScriptErr(t, `(time/parse "2014-Feb-04" "2006-Jan-02" "ak")`, `time/parse: unknown time zone`)
+	ExpectScriptErr(t, `(http/curl '-x (http/unix-dialer 1) "http://test.com/api")`, `http/unix-dialer expect file path but got int`)
+	ExpectScriptErr(t, `(http/curl '-x (http/unix-dialer) "http://test.com/api")`, `http/unix-dialer expect 1 argument but got 0`)
 }

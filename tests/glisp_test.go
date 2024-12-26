@@ -393,6 +393,25 @@ func TestHTTPProxy(t *testing.T) {
 	})
 }
 
+func TestHTTPUnixProxy(t *testing.T) {
+	WithUnixHttpServer(func(sock, path string) {
+		env := newFullEnv()
+		script := fmt.Sprintf(`(car (http/get -i "http://www.any.com%s" -x (http/unix-dialer "%s")))`, path, sock)
+		ret, err := env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqHashKV(t, ret, "StatusCode", "200")
+		ExpectEqHashKV(t, ret, "Status", "200 OK")
+		ExpectEqHashKV(t, ret, "Content-Type", "text/plain; charset=utf-8")
+
+		script = fmt.Sprintf(`(car (http/get '-i "http://www.any.com%s" '-x (http/unix-dialer "%s")))`, path, sock)
+		ret, err = env.EvalString(script)
+		ExpectSuccess(t, err)
+		ExpectEqHashKV(t, ret, "StatusCode", "200")
+		ExpectEqHashKV(t, ret, "Status", "200 OK")
+		ExpectEqHashKV(t, ret, "Content-Type", "text/plain; charset=utf-8")
+	})
+}
+
 func TestHTTPBadURL(t *testing.T) {
 	WithHttpServer(func(url string) {
 		script := fmt.Sprintf(`(http/get -i "%s")`, "httptx://aa:db:4k")
