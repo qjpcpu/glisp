@@ -3,9 +3,11 @@ package extensions
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/tls"
 	"fmt"
 	"io"
+
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -97,7 +99,11 @@ func UnixDialer() glisp.NamedUserFunction {
 				return glisp.SexpNull, fmt.Errorf(`%s expect file path but got %v`, name, glisp.InspectType(args[0]))
 			}
 			sock := replaceHomeDirSymbol(string(args[0].(glisp.SexpStr)))
-			return MakeDialer(func(context.Context, string, string) (net.Conn, error) {
+			if abs, err := filepath.Abs(sock); err == nil {
+				sock = abs
+			}
+			hashid := fmt.Sprintf("%x", md5.Sum([]byte("unix:"+sock)))
+			return MakeDialer(hashid, func(context.Context, string, string) (net.Conn, error) {
 				return net.Dial("unix", sock)
 			}), nil
 		}
@@ -494,15 +500,15 @@ func evalSingleHTTP(name string, hreq request, urlstr string, env *glisp.Environ
 	/* perform http request */
 	var cli HttpClient
 	if hreq.Proxy.fn != nil {
-		key := fmt.Sprintf("transport-with-proxy:%v", hreq.Proxy.ID())
+		key := fmt.Sprintf("trp:%v", hreq.Proxy.Hash())
 		cli = &http.Client{Timeout: hreq.Timeout, Transport: getTransport(key, func(tr *http.Transport) {
 			tr.DialContext = hreq.Proxy.fn
 		})}
 	} else {
-		key := "transport:default"
+		key := "tr:default"
 		var proxy func(*http.Request) (*url.URL, error)
 		if hreq.ProxyURL != nil {
-			key = fmt.Sprintf("transport:%s", hreq.ProxyURL)
+			key = fmt.Sprintf("trurl:%s", hreq.ProxyURL)
 			proxy = func(*http.Request) (*url.URL, error) { return hreq.ProxyURL, nil }
 		}
 		cli = &http.Client{Timeout: hreq.Timeout, Transport: getTransport(key, func(tr *http.Transport) {
@@ -578,8 +584,8 @@ func processHTTP(name string, withRespStatus bool, req request, env *glisp.Envir
 }
 
 type SexpDialer struct {
-	fn func(ctx context.Context, network, addr string) (net.Conn, error)
-	id uint64
+	fn     func(ctx context.Context, network, addr string) (net.Conn, error)
+	hashid string
 }
 
 func (sd SexpDialer) SexpString() string { return sd.TypeName() }
@@ -588,16 +594,19 @@ func (sd SexpDialer) TypeName() string {
 	return "func(ctx context.Context, network string, addr string) (net.Conn, error)"
 }
 
-func (sd SexpDialer) ID() string {
-	return strconv.FormatUint(sd.id, 10)
+func (sd SexpDialer) Hash() string {
+	return sd.hashid
 }
 
 var fnNextID uint64
 
-func MakeDialer(dialer func(context.Context, string, string) (net.Conn, error)) SexpDialer {
+func MakeDialer(setHash string, dialer func(context.Context, string, string) (net.Conn, error)) SexpDialer {
+	if setHash == "" {
+		setHash = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("auto:%v", atomic.AddUint64(&fnNextID, 1)))))
+	}
 	return SexpDialer{
-		fn: dialer,
-		id: atomic.AddUint64(&fnNextID, 1),
+		fn:     dialer,
+		hashid: setHash,
 	}
 }
 
