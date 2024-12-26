@@ -3,11 +3,8 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"os"
 )
 
 type MockServer struct {
@@ -35,20 +32,6 @@ func (ms *MockServer) ServeBackground() func() {
 	ms.Address = "127.0.0.1" + ms.server.Addr()
 	return func() {
 		ms.server.Close()
-	}
-}
-
-func (ms *MockServer) ServeUnixBackground() (string, func()) {
-	sock := fmt.Sprintf("%s/%s", os.TempDir(), "sock")
-	unixAddr, _ := net.ResolveUnixAddr("unix", sock)
-	ln, _ := net.ListenUnix("unix", unixAddr)
-
-	server := http.Server{Handler: ms.mux}
-	go server.Serve(ln)
-	return sock, func() {
-		os.RemoveAll(sock)
-		ln.Close()
-		server.Close()
 	}
 }
 

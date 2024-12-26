@@ -227,13 +227,6 @@ func WithHttpServer2(fn func(string, string)) {
 	fn(server.Address, "/echo")
 }
 
-func WithUnixHttpServer(fn func(string, string)) {
-	server := NewMockServer()
-	sock, close := server.ServeUnixBackground()
-	defer close()
-	fn(sock, "/echo")
-}
-
 type Counter struct {
 	Len    int
 	cursor int
