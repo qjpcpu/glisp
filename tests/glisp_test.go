@@ -370,7 +370,7 @@ func TestHTTPProxy(t *testing.T) {
 	WithHttpServer2(func(addr, path string) {
 		env := newFullEnv()
 		env.AddFunction("proxy", func(_ *glisp.Environment, a []glisp.Sexp) (glisp.Sexp, error) {
-			return extensions.MakeDialer(addr, func(_ context.Context, _ string, _ string) (net.Conn, error) {
+			return extensions.MakeDialer(func(_ context.Context, _ string, _ string) (net.Conn, error) {
 				return net.Dial("tcp", addr)
 			}), nil
 		})
