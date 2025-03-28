@@ -2,7 +2,7 @@
 Usage: (defmac name [args] body)
 
 Theres two format macro in glisp:
-1. normal macro matched by name extractly
+1. normal macro matched by name exactly
 e.g. (defmac my-m1 [] (println "my-m1"))
 (my-m1) would hit the macro
 (my-m2) or (my-mx) would not hit.
