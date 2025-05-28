@@ -3,6 +3,8 @@ package repl
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -128,7 +130,13 @@ func repl(liner LinerProducer, env *glisp.Environment) {
 }
 
 func runScript(env *Repl, fname string) {
-	fileContent, err := os.ReadFile(fname)
+	var fileContent []byte
+	var err error
+	if strings.HasPrefix(fname, "http://") || strings.HasPrefix(fname, "https://") {
+		fileContent, err = getRemoteFile(fname)
+	} else {
+		fileContent, err = os.ReadFile(fname)
+	}
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -205,4 +213,13 @@ func Run(opts ...ReplOption) {
 		fn(env)
 	}
 	repl(env.liner, env.Environment)
+}
+
+func getRemoteFile(url string) ([]byte, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	return io.ReadAll(res.Body)
 }
