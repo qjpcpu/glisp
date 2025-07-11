@@ -56,3 +56,19 @@ func recycleAddress(addr *Address) {
 	addr.function = nil
 	addressPool.Put(addr)
 }
+
+var fpElemPool = sync.Pool{
+	New: func() interface{} {
+		return &FpStackElem{}
+	},
+}
+
+func getFpElemFromPool(fp int) *FpStackElem {
+	elem := fpElemPool.Get().(*FpStackElem)
+	elem.fp = fp
+	return elem
+}
+
+func recycleFpElem(e *FpStackElem) {
+	fpElemPool.Put(e)
+}

@@ -14,8 +14,8 @@ import (
 type Environment struct {
 	datastack        *Stack
 	scopestack       *Stack
-	addrstack        *Stack
-	stackstack       *Stack
+	addrstack        *Stack // a.k.a call stack
+	fpstack          *Stack // frame pointer stack
 	symtable         map[string]int
 	revsymtable      map[int]string
 	builtins         map[int]*SexpFunction
@@ -23,6 +23,7 @@ type Environment struct {
 	curfunc          *SexpFunction
 	mainfunc         *SexpFunction
 	pc               int
+	fp               int // frame pointer
 	nextsymbol       *nextSymbol
 	extraGlobalCount int
 	fileReader       FileReader
@@ -31,14 +32,15 @@ type Environment struct {
 const CallStackSize = 25
 const ScopeStackSize = 50
 const DataStackSize = 100
-const StackStackSize = 5
+const FpStackSize = 25
 
 func New() *Environment {
 	env := new(Environment)
 	env.datastack = NewStack(DataStackSize)
 	env.scopestack = NewStack(ScopeStackSize)
 	env.scopestack.PushScope()
-	env.stackstack = NewStack(StackStackSize)
+	env.fpstack = NewStack(FpStackSize)
+	env.fp = 0
 	env.addrstack = NewStack(CallStackSize)
 	env.builtins = make(map[int]*SexpFunction)
 	env.macros = NewFuncMap()
@@ -65,8 +67,8 @@ func (env *Environment) Clone() *Environment {
 	dupenv := new(Environment)
 
 	dupenv.datastack = env.datastack.Clone()
-	dupenv.stackstack = env.stackstack.Clone()
 	dupenv.scopestack = env.scopestack.Clone()
+	dupenv.fpstack = env.fpstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 	dupenv.fileReader = env.fileReader
 
@@ -94,6 +96,7 @@ func (env *Environment) Clone() *Environment {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.fp = env.fp
 	return dupenv
 }
 
@@ -101,7 +104,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv := new(Environment)
 	dupenv.datastack = NewStack(DataStackSize)
 	dupenv.scopestack = NewStack(ScopeStackSize)
-	dupenv.stackstack = NewStack(StackStackSize)
+	dupenv.fpstack = NewStack(FpStackSize)
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros.Clone()
@@ -116,6 +119,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.fp = 0
 	return dupenv
 }
 
@@ -177,20 +181,24 @@ func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 				function.name, function.nargs, nargs))
 	}
 
-	if env.scopestack.IsEmpty() {
-		return errors.New("where's the global scope?")
-	}
-	globalScopes := env.globalScopes()
-	env.stackstack.Push(env.scopestack)
-	env.scopestack = NewStack(ScopeStackSize)
-	env.scopestack.PushMulti(globalScopes...)
+	// 1. Save caller's state
+	// Push the return address (current function and next instruction position) to the call stack
+	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
+	// Push the current frame pointer to the frame pointer stack
+	env.fpstack.Push(getFpElemFromPool(env.fp))
 
+	// 2. Set up callee's stack frame on the same scopestack
+	// The new frame pointer points to the top of the current scopestack, which is the start of the new frame
+	env.fp = env.scopestack.tos + 1
+
+	// If it's a closure, push its definition scope onto the stack
 	if function.closeScope != nil {
 		function.closeScope.PushAllTo(env.scopestack)
 	}
 
-	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
+	// Push a new local scope for the callee
 	env.scopestack.PushScope()
+	// 3. Switch to the new function for execution
 	env.curfunc = function
 	env.pc = 0
 
@@ -240,16 +248,25 @@ func (env *Environment) globalScopes() []StackElem {
 
 func (env *Environment) ReturnFromFunction() error {
 	var err error
+	// 1. Clean up the callee's stack frame
+	// Pop scopes from the top of scopestack until we reach the current frame pointer
+	for env.scopestack.tos >= env.fp {
+		if err := env.scopestack.PopScope(); err != nil {
+			return fmt.Errorf("error popping scope during function return: %w", err)
+		}
+	}
+
+	// 2. Restore the caller's state
+	// Pop the caller's function and program counter from the call stack
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
 	if err != nil {
 		return err
 	}
-	scopestack, err := env.stackstack.Pop()
-	if err != nil {
-		return err
-	}
-	recycleStack(env.scopestack)
-	env.scopestack = scopestack.(*Stack)
+
+	// Pop the caller's frame pointer from the frame pointer stack
+	fpElem, _ := env.fpstack.Pop()
+	env.fp = fpElem.(*FpStackElem).fp
+	recycleFpElem(fpElem.(*FpStackElem))
 
 	return nil
 }
