@@ -38,7 +38,7 @@ func (stack *Stack) getExpressions(n int, recycle bool) ([]Sexp, error) {
 	if stack_start < 0 {
 		return nil, errors.New("not enough items on stack")
 	}
-	arr := make([]Sexp, n)
+	arr := GetSlice(n)
 	for i := 0; i < n; i++ {
 		elem := stack.elements[stack_start+i].(*DataStackElem)
 		arr[i] = elem.expr

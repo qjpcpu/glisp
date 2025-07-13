@@ -163,6 +163,7 @@ func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 			return err
 		}
 		env.datastack.PushExpr(MakeList(optargs))
+		PutSlice(optargs)
 	} else {
 		env.datastack.PushExpr(SexpNull)
 	}
@@ -282,6 +283,7 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 	env.pc = -1
 
 	res, err := function.userfun(env, args)
+	PutSlice(args)
 	if err != nil {
 		return fmt.Errorf("Error calling %s: %v", name, err)
 	}

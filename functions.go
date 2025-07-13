@@ -619,7 +619,9 @@ func GetConstructorFunction(name string) UserFunction {
 	return func(env *Environment, args []Sexp) (Sexp, error) {
 		switch name {
 		case "array":
-			return SexpArray(args), nil
+			arr := GetSlice(len(args))
+			copy(arr, args)
+			return SexpArray(arr), nil
 		case "list":
 			return MakeList(args), nil
 		case "hash":

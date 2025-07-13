@@ -314,6 +314,9 @@ func GetComposeFunction(name string) glisp.UserFunction {
 				return glisp.SexpNull, fmt.Errorf("argument should be function but got %v", glisp.InspectType(fn))
 			}
 		}
+		args2 := glisp.GetSlice(len(args))
+		copy(args2, args)
+		args = args2
 		return glisp.MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *glisp.Environment, _args []glisp.Sexp) (glisp.Sexp, error) {
 			for i := len(args) - 1; i >= 0; i-- {
 				fn := args[i].(*glisp.SexpFunction)
