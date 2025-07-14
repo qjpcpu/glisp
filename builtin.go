@@ -80,6 +80,8 @@ func GetTypeFunction(name string) UserFunction {
 			}
 		case SexpBytes:
 			present = `bytes`
+		case SexpError:
+			present = `error`
 		case ITypeName:
 			present = expr.TypeName()
 		default:

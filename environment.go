@@ -19,6 +19,7 @@ type Environment struct {
 	symtable         map[string]int
 	revsymtable      map[int]string
 	builtins         map[int]*SexpFunction
+	userInstr        map[string]UserInstruction
 	macros           *FuncMap
 	curfunc          *SexpFunction
 	mainfunc         *SexpFunction
@@ -48,6 +49,7 @@ func New() *Environment {
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
 	env.fileReader = DefaultFileReader()
+	env.userInstr = make(map[string]UserInstruction)
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
@@ -83,6 +85,10 @@ func (env *Environment) Clone() *Environment {
 		dupenv.revsymtable[k] = v
 	}
 	dupenv.nextsymbol = env.nextsymbol.Clone()
+	dupenv.userInstr = make(map[string]UserInstruction)
+	for k, v := range env.userInstr {
+		dupenv.userInstr[k] = v
+	}
 
 	for _, scp := range env.globalScopes() {
 		if cb, ok := scp.(Clonable); ok {
@@ -112,6 +118,7 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.fileReader = env.fileReader
+	dupenv.userInstr = env.userInstr
 
 	dupenv.scopestack.PushMulti(env.globalScopes()...)
 	dupenv.extraGlobalCount = env.extraGlobalCount
@@ -417,6 +424,10 @@ func (env *Environment) AddFunction(name string, function UserFunction, opts ...
 
 func (env *Environment) AddNamedFunction(name string, function NamedUserFunction, opts ...FuntionOption) {
 	env.BindGlobal(name, MakeUserFunction(name, function(name), opts...))
+}
+
+func (env *Environment) AddInstruction(name string, instr UserInstruction) {
+	env.userInstr[name] = instr
 }
 
 func (env *Environment) AddMacro(name string, function UserFunction, opts ...FuntionOption) {

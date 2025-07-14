@@ -944,3 +944,19 @@ func (rd) Read(p []byte) (n int, err error) { return }
 type wt int
 
 func (wt) Write(p []byte) (int, error) { return 0, nil }
+
+func TestUserInstruction(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	vm.AddInstruction("user_minus", func(env *glisp.UserInstrContext) (glisp.Sexp, error) {
+		b, a := env.PopExpr().(glisp.SexpInt), env.PopExpr().(glisp.SexpInt)
+		return a.Sub(b), nil
+	})
+	ret, err := vm.EvalString(`
+(defn test-user-function [a b]
+   (user_minus a b)
+)
+(test-user-function 3 2)
+`)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 1, ret)
+}

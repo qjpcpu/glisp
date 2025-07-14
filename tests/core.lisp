@@ -40,3 +40,6 @@
 
 (assert (= (cons "a" 1) (car {"a" 1})))
 (assert (nil? (car {})))
+
+(assert (= "error" (type (error "test-error"))))
+(assert (error? (error "test-error")))

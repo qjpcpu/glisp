@@ -43,9 +43,11 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"empty?":     GetTypeQueryFunction,
 	"bytes?":     GetTypeQueryFunction,
 	"function?":  GetTypeQueryFunction,
+	"error?":     GetTypeQueryFunction,
 	"not":        GetNotFunction,
 	"apply":      GetApplyFunction,
 	"make-array": GetMakeArrayFunction,
+	"error":      GetMakeErrorFunction,
 	"aget":       GetArrayAccessFunction,
 	"aset!":      GetArrayAccessFunction,
 	"aindex":     GetArrayElementIndex,
@@ -525,6 +527,8 @@ func GetTypeQueryFunction(name string) UserFunction {
 			result = IsBool(args[0])
 		case "function?":
 			result = IsFunction(args[0])
+		case "error?":
+			result = IsError(args[0])
 		}
 
 		return SexpBool(result), nil
@@ -628,6 +632,18 @@ func GetConstructorFunction(name string) UserFunction {
 			return MakeHash(args)
 		}
 		return SexpNull, errors.New("invalid constructor")
+	}
+}
+
+func GetMakeErrorFunction(name string) UserFunction {
+	return func(env *Environment, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return WrongNumberArguments(name, len(args), 1)
+		}
+		if !IsString(args[0]) {
+			return SexpNull, errors.New("error argument must be string")
+		}
+		return NewError(string(args[0].(SexpStr))), nil
 	}
 }
 
