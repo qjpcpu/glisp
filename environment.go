@@ -12,21 +12,20 @@ import (
 )
 
 type Environment struct {
-	datastack        *Stack
-	scopestack       *Stack
-	addrstack        *Stack
-	stackstack       *Stack
-	symtable         map[string]int
-	revsymtable      map[int]string
-	builtins         map[int]*SexpFunction
-	userInstr        map[string]UserInstruction
-	macros           *FuncMap
-	curfunc          *SexpFunction
-	mainfunc         *SexpFunction
-	pc               int
-	nextsymbol       *nextSymbol
-	extraGlobalCount int
-	fileReader       FileReader
+	datastack   *Stack
+	scopestack  *ScopeStack
+	addrstack   *Stack
+	stackstack  *Stack
+	symtable    map[string]int
+	revsymtable map[int]string
+	builtins    map[int]*SexpFunction
+	userInstr   map[string]UserInstruction
+	macros      *FuncMap
+	curfunc     *SexpFunction
+	mainfunc    *SexpFunction
+	pc          int
+	nextsymbol  *nextSymbol
+	fileReader  FileReader
 }
 
 const CallStackSize = 25
@@ -37,7 +36,7 @@ const StackStackSize = 5
 func New() *Environment {
 	env := new(Environment)
 	env.datastack = NewStack(DataStackSize)
-	env.scopestack = NewStack(ScopeStackSize)
+	env.scopestack = NewScopeStack()
 	env.scopestack.PushScope()
 	env.stackstack = NewStack(StackStackSize)
 	env.addrstack = NewStack(CallStackSize)
@@ -88,15 +87,6 @@ func (env *Environment) Clone() *Environment {
 		dupenv.userInstr[k] = v
 	}
 
-	for _, scp := range env.globalScopes() {
-		if cb, ok := scp.(Clonable); ok {
-			dupenv.scopestack.Push(cb.Clone())
-		} else {
-			dupenv.scopestack.Push(scp)
-		}
-	}
-	dupenv.extraGlobalCount = env.extraGlobalCount
-
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
@@ -106,19 +96,26 @@ func (env *Environment) Clone() *Environment {
 func (env *Environment) Duplicate() *Environment {
 	dupenv := new(Environment)
 	dupenv.datastack = NewStack(DataStackSize)
-	dupenv.scopestack = NewStack(ScopeStackSize)
+	dupenv.scopestack = env.scopestack.ForkBottom()
 	dupenv.stackstack = NewStack(StackStackSize)
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros.Clone()
-	dupenv.symtable = env.symtable
-	dupenv.revsymtable = env.revsymtable
+	// Create copies of the symbol tables and the symbol generator
+	// to prevent race conditions if multiple duplicated environments are used
+	// concurrently. This makes each duplicated environment safe for defining
+	// new symbols in its own context.
+	dupenv.symtable = make(map[string]int)
+	for k, v := range env.symtable {
+		dupenv.symtable[k] = v
+	}
+	dupenv.revsymtable = make(map[int]string)
+	for k, v := range env.revsymtable {
+		dupenv.revsymtable[k] = v
+	}
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.fileReader = env.fileReader
 	dupenv.userInstr = env.userInstr
-
-	dupenv.scopestack.PushMulti(env.globalScopes()...)
-	dupenv.extraGlobalCount = env.extraGlobalCount
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -188,13 +185,12 @@ func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 	if env.scopestack.IsEmpty() {
 		return errors.New("where's the global scope?")
 	}
-	globalScopes := env.globalScopes()
 	env.stackstack.Push(env.scopestack)
-	env.scopestack = NewStack(ScopeStackSize)
-	env.scopestack.PushMulti(globalScopes...)
 
 	if function.closeScope != nil {
-		function.closeScope.PushAllTo(env.scopestack)
+		env.scopestack = function.closeScope.Fork()
+	} else {
+		env.scopestack = env.scopestack.ForkBottom()
 	}
 
 	env.addrstack.PushAddr(env.curfunc, min(env.pc+1, len(env.curfunc.fun)))
@@ -215,35 +211,17 @@ func (env *Environment) BindGlobal(name string, expr Sexp) error {
 	if env.scopestack.IsEmpty() {
 		return errors.New("no scope available")
 	}
-	env.scopestack.elements[env.extraGlobalCount].(Scope).Bind(sym.number, expr)
+	env.scopestack.BindSymbol(sym, expr, BIND_GLOBAL)
 	return nil
 }
 
-func (env *Environment) PushGlobalScope() error {
-	if env.scopestack.Top() != env.extraGlobalCount {
-		return errors.New("not in global scope")
-	}
+func (env *Environment) PushScope() error {
 	env.scopestack.PushScope()
-	env.extraGlobalCount++
 	return nil
 }
 
-func (env *Environment) PopGlobalScope() error {
-	if env.scopestack.Top() != env.extraGlobalCount {
-		return errors.New("not in global scope")
-	}
-	if env.extraGlobalCount <= 0 {
-		return errors.New("no extra global scope")
-	}
-	if err := env.scopestack.PopScope(); err != nil {
-		return err
-	}
-	env.extraGlobalCount--
-	return nil
-}
-
-func (env *Environment) globalScopes() []StackElem {
-	return env.scopestack.elements[0 : env.extraGlobalCount+1]
+func (env *Environment) PopScope() error {
+	return env.scopestack.PopScope()
 }
 
 func (env *Environment) ReturnFromFunction() error {
@@ -256,8 +234,10 @@ func (env *Environment) ReturnFromFunction() error {
 	if err != nil {
 		return err
 	}
-	recycleStack(env.scopestack)
-	env.scopestack = scopestack.(*Stack)
+	// The current scopestack is about to be replaced. We must clear it
+	// to decrement the reference counts of any layers it was sharing.
+	env.scopestack.Clear()
+	env.scopestack = scopestack.(*ScopeStack)
 
 	return nil
 }
@@ -483,9 +463,8 @@ func (env *Environment) GetStackTrace(err error) string {
 
 func (env *Environment) Clear() {
 	env.datastack.tos = -1
-	env.scopestack.tos = 0
+	env.scopestack.Clear()
 	env.addrstack.tos = -1
-	env.extraGlobalCount = 0
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
 	env.pc = 0
@@ -553,14 +532,7 @@ func (env *Environment) Run() (Sexp, error) {
 }
 
 func (env *Environment) GlobalFunctions() []string {
-	var ret []string
-	for _, scope := range env.globalScopes() {
-		for _, v := range scope.(Scope) {
-			if fn, ok := v.(*SexpFunction); ok {
-				ret = append(ret, fn.name)
-			}
-		}
-	}
+	ret := env.scopestack.GlobalFuntions()
 	ret = append(ret, env.macros.Names()...)
 	ret = append(ret,
 		"and", "or", "cond",

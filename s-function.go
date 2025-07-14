@@ -9,7 +9,7 @@ type SexpFunction struct {
 	varargs    bool
 	fun        Function
 	userfun    UserFunction
-	closeScope *Stack
+	closeScope *ScopeStack
 	doc        string
 	nameRegexp *regexp.Regexp
 }

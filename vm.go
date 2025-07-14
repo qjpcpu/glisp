@@ -82,7 +82,7 @@ func (p PushInstrClosure) InstrString() string {
 
 func (p PushInstrClosure) Execute(env *Environment) error {
 	fn := p.expr.Clone()
-	fn.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
+	fn.closeScope = env.scopestack.Fork() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
 	env.datastack.PushExpr(fn)
 	env.pc++
 	return nil

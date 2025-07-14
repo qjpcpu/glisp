@@ -261,7 +261,7 @@ func TestDefensiveCornor(t *testing.T) {
 
 func TestRecover(t *testing.T) {
 	env := newFullEnv()
-	env.PushGlobalScope()
+	env.PushScope()
 	_, err := env.EvalString(`(def g_var 1023) (/ 1 0)`)
 	ExpectError(t, err, "division by zero")
 

@@ -212,7 +212,7 @@ func listScripts(t *testing.T) []string {
 
 func TestSandBox(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	vm.PushGlobalScope()
+	vm.PushScope()
 	_, err := vm.EvalString(`(defn sb [a b ] (+ a b))`)
 	ExpectSuccess(t, err)
 
@@ -220,7 +220,7 @@ func TestSandBox(t *testing.T) {
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, ret)
 
-	vm.PopGlobalScope()
+	vm.PopScope()
 	_, err = vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
 	ExpectError(t, err, "function sb not found")
 }

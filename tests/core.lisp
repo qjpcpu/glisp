@@ -43,3 +43,28 @@
 
 (assert (= "error" (type (error "test-error"))))
 (assert (error? (error "test-error")))
+
+(defn outter-function[a b]
+    (def outter-var "outter")
+    (inner-function a b)
+)
+
+(defn inner-function [a b]
+   (sprintf "inner-%v-%v-%v" a b (defined? "outter-var")))
+(assert (= "inner-1-2-false" (outter-function 1 2)))
+
+
+(defn test-closure[]
+    ;; should not capture b
+    (def f (fn [] (defined? "b")))
+    (def b 2)
+  f)
+
+(defn test-closure2[]
+    (def b 2)
+    ;; should capture b
+    (def f (fn [] (defined? "b")))
+  f)
+
+(assert (not ((test-closure))))
+(assert ((test-closure2)))
