@@ -5,12 +5,6 @@ type Address struct {
 	position int
 }
 
-type FpStackElem struct {
-	fp int
-}
-
-func (f *FpStackElem) IsStackElem() {}
-
 func (a *Address) IsStackElem() {}
 
 func (stack *Stack) PushAddr(function *SexpFunction, pc int) {
