@@ -66,5 +66,21 @@
     (def f (fn [] (defined? "b")))
   f)
 
+(defn test-closure3[]
+    (def b 2)
+    ;; should capture b = 2, this is different with golang
+    (def f (fn [] b))
+    (def b 3)
+  f)
+
+(defn test-closure4[]
+    (def b 2)
+    ;; should capture b = 3, this is same with golang
+    (def f (fn [] b))
+    (set! b 3)
+  f)
+
 (assert (not ((test-closure))))
 (assert ((test-closure2)))
+(assert (= 2 ((test-closure3))))
+(assert (= 3 ((test-closure4))))
