@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/peterh/liner v1.2.2
-	github.com/qjpcpu/qjson v0.0.0-20231101024241-da921549ae45
+	github.com/qjpcpu/qjson v0.0.0-20250818075036-660bd82ecdbe
 )
 
 require (
