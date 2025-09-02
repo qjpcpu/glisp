@@ -267,7 +267,7 @@ func ParseTime(name string) glisp.UserFunction {
 		`2006-01-02`,
 		`15:04:05`,
 	}
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	return timeWithDefault(func(_ *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
 		switch len(args) {
 		case 1:
 			arg := args[0]
@@ -336,6 +336,22 @@ func ParseTime(name string) glisp.UserFunction {
 			return SexpTime(tm), nil
 		}
 		return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	})
+}
+
+func timeWithDefault(f glisp.UserFunction) glisp.UserFunction {
+	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		if len(args) > 0 {
+			switch tm := args[len(args)-1].(type) {
+			case SexpTime:
+				if ret, err := f(env, args[:len(args)-1]); err != nil {
+					return tm, nil
+				} else {
+					return ret, nil
+				}
+			}
+		}
+		return f(env, args)
 	}
 }
 
