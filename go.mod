@@ -12,6 +12,6 @@ require (
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/qjpcpu/http v0.0.0-20250930032931-4ebbd0eb4c95 // indirect
+	github.com/qjpcpu/http v0.0.0-20250930070619-83992a11c55b // indirect
 	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
 )
