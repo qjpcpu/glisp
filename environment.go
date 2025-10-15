@@ -153,9 +153,8 @@ func (env *Environment) CurrentFunctionSize() int {
 
 func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 	if nargs < fnargs {
-		return errors.New(
-			fmt.Sprintf("Expected >%d arguments, got %d",
-				fnargs, nargs))
+		return fmt.Errorf("Expected >%d arguments, got %d",
+			fnargs, nargs)
 	}
 	if nargs > fnargs {
 		optargs, err := env.datastack.PopExpressions(nargs - fnargs)
@@ -177,9 +176,8 @@ func (env *Environment) CallFunction(function *SexpFunction, nargs int) error {
 			return err
 		}
 	} else if nargs != function.nargs {
-		return errors.New(
-			fmt.Sprintf("%s expected %d arguments, got %d",
-				function.name, function.nargs, nargs))
+		return fmt.Errorf("%s expected %d arguments, got %d",
+			function.name, function.nargs, nargs)
 	}
 
 	if env.scopestack.IsEmpty() {
@@ -299,7 +297,7 @@ func (env *Environment) SetFileReader(fr FileReader) {
 func (env *Environment) SourceExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
-		gen.AddInstruction(PopInstr(0))
+		gen.AddInstruction(Instruction{Op: OpPop})
 	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
@@ -340,7 +338,7 @@ func (env *Environment) SourceStream(stream io.Reader) error {
 func (env *Environment) LoadExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
-		gen.AddInstruction(PopInstr(0))
+		gen.AddInstruction(Instruction{Op: OpPop})
 	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
@@ -516,9 +514,219 @@ func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 func (env *Environment) Run() (Sexp, error) {
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
-		err := instr.Execute(env)
-		if err != nil {
-			return SexpNull, err
+		switch instr.Op {
+		case OpPush:
+			env.datastack.PushExpr(instr.Expr)
+			env.pc++
+		case OpPushClosure:
+			fn := instr.ClosedFunc.Clone()
+			fn.closeScope = env.scopestack.Fork()
+			env.datastack.PushExpr(fn)
+			env.pc++
+		case OpPop:
+			_, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.pc++
+		case OpDup:
+			expr, err := env.datastack.GetExpr(0)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(expr)
+			env.pc++
+		case OpGet:
+			expr, err := env.scopestack.LookupSymbol(instr.Sym)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(expr)
+			env.pc++
+		case OpPut:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.pc++
+			if instr.IsSet {
+				if err := env.scopestack.SetSymbol(instr.Sym, expr); err != nil {
+					return SexpNull, err
+				}
+			} else {
+				if err := env.scopestack.BindSymbol(instr.Sym, expr); err != nil {
+					return SexpNull, err
+				}
+			}
+		case OpBindDynFun:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			if !IsFunction(expr) {
+				return SexpNull, fmt.Errorf("%s is not a function", expr.SexpString())
+			}
+			name, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			if !IsSymbol(name) {
+				return SexpNull, fmt.Errorf("bad function name %s", name.SexpString())
+			}
+			env.pc++
+			if err := env.scopestack.BindSymbol(name.(SexpSymbol), expr); err != nil {
+				return SexpNull, err
+			}
+		case OpJump:
+			newpc := env.pc + instr.Loc
+			if newpc < 0 || newpc > env.CurrentFunctionSize() {
+				return SexpNull, OutOfBounds
+			}
+			env.pc = newpc
+		case OpGoto:
+			if instr.Loc < 0 || instr.Loc > env.CurrentFunctionSize() {
+				return SexpNull, OutOfBounds
+			}
+			env.pc = instr.Loc
+		case OpBranch:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			if instr.Direction == IsTruthy(expr) {
+				newpc := env.pc + instr.Loc
+				if newpc < 0 || newpc > env.CurrentFunctionSize() {
+					return SexpNull, OutOfBounds
+				}
+				env.pc = newpc
+			} else {
+				env.pc++
+			}
+		case OpReturn:
+			if instr.Err != nil {
+				return SexpNull, instr.Err
+			}
+			if instr.DynamicErr {
+				elem, err := env.datastack.PopExpr()
+				if err != nil {
+					return SexpNull, err
+				}
+				if IsString(elem) {
+					return SexpNull, errors.New(string(elem.(SexpStr)))
+				}
+				return SexpNull, errors.New(elem.SexpString())
+			}
+			if err := env.ReturnFromFunction(); err != nil {
+				return SexpNull, err
+			}
+		case OpCall:
+			if err := env.callInstruction(instr.Sym, instr.Nargs); err != nil {
+				return SexpNull, err
+			}
+		case OpPrepare:
+			if err := env.execPrepareInstr(instr.Sym, instr.Nargs); err != nil {
+				return SexpNull, err
+			}
+			env.pc++
+		case OpDispatch:
+			if err := env.dispatchInstruction(instr.Nargs); err != nil {
+				return SexpNull, err
+			}
+		case OpAddScope:
+			env.scopestack.PushScope()
+			env.pc++
+		case OpRemoveScope:
+			env.pc++
+			if err := env.scopestack.PopScope(); err != nil {
+				return SexpNull, err
+			}
+		case OpUserInstr:
+			expr, err := instr.UserInstr.userinstr(newUserInstrCtx(instr.UserInstr.name, env, instr.UserInstr.nargs))
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(expr)
+			env.pc++
+		case OpExplode:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			arr, err := ListToArray(expr)
+			if err != nil {
+				return SexpNull, err
+			}
+			for _, val := range arr {
+				env.datastack.PushExpr(val)
+			}
+			env.pc++
+		case OpSquash:
+			var list Sexp = SexpNull
+			for {
+				expr, err := env.datastack.PopExpr()
+				if err != nil {
+					return SexpNull, err
+				}
+				if expr == SexpMarker {
+					break
+				}
+				list = Cons(expr, list)
+			}
+			env.datastack.PushExpr(list)
+			env.pc++
+		case OpVectorize:
+			vec := make([]Sexp, 0)
+			for {
+				expr, err := env.datastack.PopExpr()
+				if err != nil {
+					return SexpNull, err
+				}
+				if expr == SexpMarker {
+					break
+				}
+				vec = append([]Sexp{expr}, vec...)
+			}
+			env.datastack.PushExpr(SexpArray(vec))
+			env.pc++
+		case OpHashize:
+			a := make([]Sexp, 0)
+			for {
+				expr, err := env.datastack.PopExpr()
+				if err != nil {
+					return SexpNull, err
+				}
+				if expr == SexpMarker {
+					break
+				}
+				a = append(a, expr)
+			}
+			hash, err := MakeHash(a)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(hash)
+			env.pc++
+		case OpBindlist:
+			if err := env.bindListInstruction(); err != nil {
+				return SexpNull, err
+			}
+			env.pc++
+		case OpRefSym:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			if !IsSymbol(expr) {
+				return SexpNull, fmt.Errorf("%s is not a symbol", expr.SexpString())
+			}
+			if t, ok := env.FindObject(expr.(SexpSymbol).Name()); ok {
+				env.datastack.PushExpr(t)
+			} else {
+				env.datastack.PushExpr(SexpNull)
+			}
+			env.pc++
+		default:
+			return SexpNull, fmt.Errorf("unknown opcode: %v", instr.Op)
 		}
 	}
 
@@ -529,6 +737,93 @@ func (env *Environment) Run() (Sexp, error) {
 	}
 
 	return env.datastack.PopExpr()
+}
+
+func (env *Environment) bindListInstruction() error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	switch arr := expr.(type) {
+	case SexpArray:
+		if len(arr)%2 != 0 {
+			return errors.New("bind list length must be even")
+		}
+
+		for i := 0; i*2+1 < len(arr); i++ {
+			if !IsSymbol(arr[i*2]) {
+				return errors.New("odd argument of bind list must be symbol but got " + InspectType(arr[i*2]))
+			}
+			env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
+		}
+	case *SexpHash:
+		arr.Foreach(func(k Sexp, v Sexp) bool {
+			if IsSymbol(k) {
+				env.scopestack.BindSymbol(k.(SexpSymbol), v)
+				return true
+			}
+			err = errors.New("hash key must be symbol but got " + InspectType(k))
+			return false
+		})
+	default:
+		return fmt.Errorf(`bad let binding type %v`, InspectType(expr))
+	}
+	return err
+}
+
+func (env *Environment) callInstruction(sym SexpSymbol, nargs int) error {
+	funcobj, err := env.scopestack.LookupSymbol(sym)
+	if err != nil {
+		f, ok := env.builtins[sym.number]
+		if ok {
+			return env.CallUserFunction(f, sym.name, nargs)
+		}
+		return err
+	}
+	switch f := funcobj.(type) {
+	case *SexpFunction:
+		if !f.user {
+			return env.CallFunction(f, nargs)
+		}
+		return env.CallUserFunction(f, sym.name, nargs)
+	}
+	return fmt.Errorf("%s is not a function", sym.name)
+}
+
+func (env *Environment) dispatchInstruction(nargs int) error {
+	funcobj, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	switch f := funcobj.(type) {
+	case *SexpFunction:
+		if !f.user {
+			return env.CallFunction(f, nargs)
+		}
+		return env.CallUserFunction(f, f.name, nargs)
+	}
+	return fmt.Errorf("%s not a function", funcobj.SexpString())
+}
+
+func (env *Environment) execPrepareInstr(sym SexpSymbol, nargs int) error {
+	funcobj, err := env.scopestack.LookupSymbol(sym)
+	if err != nil {
+		_, ok := env.builtins[sym.number]
+		if ok {
+			return nil
+		}
+		return err
+	}
+	switch f := funcobj.(type) {
+	case *SexpFunction:
+		if !f.user && f.varargs {
+			return env.wrangleOptargs(f.nargs, nargs)
+		}
+		return nil
+	}
+	return nil
 }
 
 func (env *Environment) GlobalFunctions() []string {

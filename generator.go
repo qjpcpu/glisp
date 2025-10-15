@@ -57,7 +57,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 		}
 		// insert pops after all but the last instruction
 		// that way the stack remains clean
-		gen.AddInstruction(PopInstr(0))
+		gen.AddInstruction(Instruction{Op: OpPop})
 	}
 	gen.tail = oldtail
 	return gen.Generate(expressions[size-1])
@@ -97,7 +97,7 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	}
 
 	for i := len(argsyms) - 1; i >= 0; i-- {
-		gen.AddInstruction(PutInstr{sym: argsyms[i]})
+		gen.AddInstruction(Instruction{Op: OpPut, Sym: argsyms[i]})
 	}
 
 	var doc string
@@ -110,7 +110,7 @@ func buildSexpFun(env *Environment, name string, funcargs SexpArray,
 	if err != nil {
 		return MissingFunction, err
 	}
-	gen.AddInstruction(ReturnInstr{})
+	gen.AddInstruction(Instruction{Op: OpReturn})
 
 	newfunc := Function(gen.instructions)
 	return MakeFunction(gen.funcname, nargs, varargs, newfunc, WithDoc(doc)), nil
@@ -135,7 +135,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstrClosure{sfun})
+	gen.AddInstruction(Instruction{Op: OpPushClosure, ClosedFunc: sfun})
 
 	return nil
 }
@@ -158,8 +158,8 @@ func (gen *Generator) GenerateDef(args []Sexp, isSet bool) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PutInstr{sym: sym, isSet: isSet})
-	gen.AddInstruction(PushInstr{SexpNull})
+	gen.AddInstruction(Instruction{Op: OpPut, Sym: sym, IsSet: isSet})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 	return nil
 }
 
@@ -200,13 +200,13 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 	}
 
 	if !dynName {
-		gen.AddInstruction(PushInstr{sfun})
-		gen.AddInstruction(PutInstr{sym: sym})
-		gen.AddInstruction(PushInstr{SexpNull})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: sfun})
+		gen.AddInstruction(Instruction{Op: OpPut, Sym: sym})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 	} else {
-		gen.AddInstruction(PushInstr{sfun})
-		gen.AddInstruction(BindDynFunInstr{})
-		gen.AddInstruction(PushInstr{SexpNull})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: sfun})
+		gen.AddInstruction(Instruction{Op: OpBindDynFun})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 	}
 
 	return nil
@@ -250,7 +250,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 	}
 
 	gen.env.macros.Add(sym, sfun)
-	gen.AddInstruction(PushInstr{SexpNull})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 
 	return nil
 }
@@ -285,7 +285,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	}
 
 	if !ismacrocall {
-		gen.AddInstruction(PushInstr{args[0]})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: args[0]})
 		return nil
 	}
 
@@ -299,7 +299,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstr{expr})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: expr})
 	return nil
 }
 
@@ -316,9 +316,9 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	for i := size - 2; i >= 0; i-- {
 		subgen = NewGenerator(gen.env)
 		subgen.Generate(args[i])
-		subgen.AddInstruction(DupInstr(0))
-		subgen.AddInstruction(BranchInstr{or, len(instructions) + 2})
-		subgen.AddInstruction(PopInstr(0))
+		subgen.AddInstruction(Instruction{Op: OpDup})
+		subgen.AddInstruction(Instruction{Op: OpBranch, Direction: or, Loc: len(instructions) + 2})
+		subgen.AddInstruction(Instruction{Op: OpPop})
 		instructions = append(subgen.instructions, instructions...)
 	}
 	gen.AddInstructions(instructions)
@@ -361,9 +361,9 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 
 		subgen.Reset()
 		subgen.AddInstructions(pred_code)
-		subgen.AddInstruction(BranchInstr{false, len(body_code) + 2})
+		subgen.AddInstruction(Instruction{Op: OpBranch, Direction: false, Loc: len(body_code) + 2})
 		subgen.AddInstructions(body_code)
-		subgen.AddInstruction(JumpInstr{len(instructions) + 1})
+		subgen.AddInstruction(Instruction{Op: OpJump, Loc: len(instructions) + 1})
 		subgen.AddInstructions(instructions)
 		instructions = subgen.instructions
 	}
@@ -374,7 +374,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 
 func (gen *Generator) GenerateQuote(args []Sexp) error {
 	for _, expr := range args {
-		gen.AddInstruction(PushInstr{expr})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: expr})
 	}
 	return nil
 }
@@ -412,7 +412,7 @@ func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []S
 		rstatements = append(rstatements, bindings[2*i+1])
 	}
 
-	gen.AddInstruction(AddScopeInstr(0))
+	gen.AddInstruction(Instruction{Op: OpAddScope})
 	gen.scopes++
 
 	if name == "let*" {
@@ -421,7 +421,7 @@ func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []S
 			if err != nil {
 				return err
 			}
-			gen.AddInstruction(PutInstr{sym: lstatements[i]})
+			gen.AddInstruction(Instruction{Op: OpPut, Sym: lstatements[i]})
 		}
 	} else if name == "let" {
 		for _, rs := range rstatements {
@@ -431,33 +431,33 @@ func (gen *Generator) generateLetArray(name string, bindings SexpArray, args []S
 			}
 		}
 		for i := len(lstatements) - 1; i >= 0; i-- {
-			gen.AddInstruction(PutInstr{sym: lstatements[i]})
+			gen.AddInstruction(Instruction{Op: OpPut, Sym: lstatements[i]})
 		}
 	}
 	err := gen.GenerateBegin(args)
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.AddInstruction(Instruction{Op: OpRemoveScope})
 	gen.scopes--
 
 	return nil
 }
 
 func (gen *Generator) generateLetList(name string, bindings *SexpPair, args []Sexp) error {
-	gen.AddInstruction(AddScopeInstr(0))
+	gen.AddInstruction(Instruction{Op: OpAddScope})
 	gen.scopes++
 
 	if err := gen.Generate(bindings); err != nil {
 		return err
 	}
-	gen.AddInstruction(BindlistInstr{})
+	gen.AddInstruction(Instruction{Op: OpBindlist})
 
 	err := gen.GenerateBegin(args)
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.AddInstruction(Instruction{Op: OpRemoveScope})
 	gen.scopes--
 
 	return nil
@@ -475,9 +475,9 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	if len(args) == 1 {
 		reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
 			args[0].SexpString())
-		gen.AddInstruction(BranchInstr{true, 2})
-		gen.AddInstruction(ReturnInstr{err: errors.New(reterrmsg)})
-		gen.AddInstruction(PushInstr{SexpNull})
+		gen.AddInstruction(Instruction{Op: OpBranch, Direction: true, Loc: 2})
+		gen.AddInstruction(Instruction{Op: OpReturn, Err: errors.New(reterrmsg)})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 		return nil
 	}
 
@@ -488,10 +488,10 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	subgen.Generate(args[1])
 	instructions := subgen.instructions
 
-	gen.AddInstruction(BranchInstr{true, 2 + len(instructions)})
+	gen.AddInstruction(Instruction{Op: OpBranch, Direction: true, Loc: 2 + len(instructions)})
 	gen.AddInstructions(instructions)
-	gen.AddInstruction(ReturnInstr{dynamicErr: true})
-	gen.AddInstruction(PushInstr{SexpNull})
+	gen.AddInstruction(Instruction{Op: OpReturn, DynamicErr: true})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpNull})
 	return nil
 }
 
@@ -596,7 +596,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		if err != nil {
 			return err
 		}
-		gen.AddInstruction(userInstr{name: sym.name, nargs: len(args), userinstr: instr})
+		gen.AddInstruction(Instruction{Op: OpUserInstr, UserInstr: userInstrData{name: sym.name, nargs: len(args), userinstr: instr}})
 		// We've handled this call, so we return to prevent
 		// the generic CallInstr from being generated.
 		return nil
@@ -625,12 +625,12 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		// pop off all the extra scopes
 		// then jump to beginning of function
 		for i := 0; i < gen.scopes; i++ {
-			gen.AddInstruction(RemoveScopeInstr(0))
+			gen.AddInstruction(Instruction{Op: OpRemoveScope})
 		}
-		gen.AddInstruction(PrepareCallInstr{sym, len(args)})
-		gen.AddInstruction(GotoInstr{0})
+		gen.AddInstruction(Instruction{Op: OpPrepare, Sym: sym, Nargs: len(args)})
+		gen.AddInstruction(Instruction{Op: OpGoto})
 	} else {
-		gen.AddInstruction(CallInstr{sym, len(args)})
+		gen.AddInstruction(Instruction{Op: OpCall, Sym: sym, Nargs: len(args)})
 	}
 	gen.tail = oldtail
 	return nil
@@ -639,7 +639,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	gen.GenerateAll(args)
 	gen.Generate(fun)
-	gen.AddInstruction(DispatchInstr{len(args)})
+	gen.AddInstruction(Instruction{Op: OpDispatch, Nargs: len(args)})
 	return nil
 }
 
@@ -657,14 +657,14 @@ func (gen *Generator) GenerateArray(arr SexpArray) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(CallInstr{gen.env.MakeSymbol("array"), len(arr)})
+	gen.AddInstruction(Instruction{Op: OpCall, Sym: gen.env.MakeSymbol("array"), Nargs: len(arr)})
 	return nil
 }
 
 func (gen *Generator) Generate(expr Sexp) error {
 	switch e := expr.(type) {
 	case SexpSymbol:
-		gen.AddInstruction(GetInstr{e})
+		gen.AddInstruction(Instruction{Op: OpGet, Sym: e})
 		return nil
 	case *SexpPair:
 		if IsList(e) {
@@ -675,12 +675,12 @@ func (gen *Generator) Generate(expr Sexp) error {
 			}
 			return nil
 		} else {
-			gen.AddInstruction(PushInstr{expr})
+			gen.AddInstruction(Instruction{Op: OpPush, Expr: expr})
 		}
 	case SexpArray:
 		return gen.GenerateArray(e)
 	default:
-		gen.AddInstruction(PushInstr{expr})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: expr})
 		return nil
 	}
 	return nil
@@ -727,7 +727,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 		gen.generateSyntaxQuoteHash(arg)
 		return nil
 	}
-	gen.AddInstruction(PushInstr{arg})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: arg})
 	return nil
 }
 
@@ -764,19 +764,19 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 				return nil
 			} else if sym.name == "unquote-splicing" {
 				gen.Generate(quotebody[1])
-				gen.AddInstruction(ExplodeInstr(0))
+				gen.AddInstruction(Instruction{Op: OpExplode})
 				return nil
 			}
 		}
 	}
 
-	gen.AddInstruction(PushInstr{SexpMarker})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 
 	for _, expr := range quotebody {
 		gen.GenerateSyntaxQuote([]Sexp{expr})
 	}
 
-	gen.AddInstruction(SquashInstr(0))
+	gen.AddInstruction(Instruction{Op: OpSquash})
 
 	return nil
 }
@@ -792,14 +792,14 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 		return fmt.Errorf("arg to generateSyntaxQuoteArray() must be an array; got %v", InspectType(a))
 	}
 
-	gen.AddInstruction(PushInstr{SexpMarker})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 	for _, expr := range arr {
-		gen.AddInstruction(PushInstr{SexpMarker})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 		gen.GenerateSyntaxQuote([]Sexp{expr})
-		gen.AddInstruction(SquashInstr(0))
-		gen.AddInstruction(ExplodeInstr(0))
+		gen.AddInstruction(Instruction{Op: OpSquash})
+		gen.AddInstruction(Instruction{Op: OpExplode})
 	}
-	gen.AddInstruction(VectorizeInstr(0))
+	gen.AddInstruction(Instruction{Op: OpVectorize})
 	return nil
 }
 
@@ -817,7 +817,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstr{SexpMarker})
+	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 	for i := 0; i < n; i++ {
 		// must reverse order here to preserve order on rebuild
 		key := hash.KeyOrder[(n-i)-1]
@@ -826,19 +826,17 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 			return err
 		}
 		// value first, since value comes second on rebuild
-		gen.AddInstruction(PushInstr{SexpMarker})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 		gen.GenerateSyntaxQuote([]Sexp{val})
-		gen.AddInstruction(SquashInstr(0))
-		gen.AddInstruction(ExplodeInstr(0))
+		gen.AddInstruction(Instruction{Op: OpSquash})
+		gen.AddInstruction(Instruction{Op: OpExplode})
 
-		gen.AddInstruction(PushInstr{SexpMarker})
+		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 		gen.GenerateSyntaxQuote([]Sexp{key})
-		gen.AddInstruction(SquashInstr(0))
-		gen.AddInstruction(ExplodeInstr(0))
+		gen.AddInstruction(Instruction{Op: OpSquash})
+		gen.AddInstruction(Instruction{Op: OpExplode})
 	}
-	gen.AddInstruction(HashizeInstr{
-		HashLen: n,
-	})
+	gen.AddInstruction(Instruction{Op: OpHashize})
 	return nil
 }
 
@@ -850,13 +848,13 @@ func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
 
 	switch expr := arg.(type) {
 	case SexpSymbol:
-		gen.AddInstruction(GetInstr{sym: expr})
+		gen.AddInstruction(Instruction{Op: OpGet, Sym: expr})
 		return nil
 	case *SexpPair:
 		if err := gen.Generate(arg); err != nil {
 			return err
 		}
-		gen.AddInstruction(RefSymInstr{})
+		gen.AddInstruction(Instruction{Op: OpRefSym})
 		return nil
 	default:
 		return fmt.Errorf("sharp-quote resolve fail, unexpected s-expr %s", arg.SexpString())
