@@ -22,15 +22,15 @@ func ImportJSON(vm *glisp.Environment) error {
 }
 
 func jsonMarshal(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 && args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1, 2)
 		}
-		bs, err := glisp.Marshal(args[0])
+		bs, err := glisp.Marshal(args.Get(0))
 		if err != nil {
 			return glisp.SexpNull, err
 		}
-		if len(args) == 2 && glisp.IsBool(args[1]) && bool(args[1].(glisp.SexpBool)) {
+		if args.Len() == 2 && glisp.IsBool(args.Get(1)) && bool(args.Get(1).(glisp.SexpBool)) {
 			buf := new(bytes.Buffer)
 			json.Indent(buf, bs, "", "  ")
 			return glisp.SexpStr(buf.String()), nil
@@ -40,17 +40,17 @@ func jsonMarshal(name string) glisp.UserFunction {
 }
 
 func jsonUnmarshal(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 && args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1, 2)
 		}
 		makeRes := func(s glisp.Sexp, err error) (glisp.Sexp, error) {
-			if len(args) == 2 && err != nil {
-				return args[1], nil
+			if args.Len() == 2 && err != nil {
+				return args.Get(1), nil
 			}
 			return s, err
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpStr:
 			rawBytes := []byte(string(val))
 			return makeRes(ParseJSON(rawBytes))
@@ -63,10 +63,10 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 		case glisp.SexpFloat:
 			return val, nil
 		default:
-			if len(args) == 2 {
-				return args[1], nil
+			if args.Len() == 2 {
+				return args.Get(1), nil
 			}
-			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes/int/bool/float but got %v", name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf("the first argument of %s must be string/bytes/int/bool/float but got %v", name, glisp.InspectType(args.Get(0)))
 		}
 	}
 }

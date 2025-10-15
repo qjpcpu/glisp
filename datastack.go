@@ -49,6 +49,29 @@ func (stack *Stack) getExpressions(n int, recycle bool) ([]Sexp, error) {
 	return arr, nil
 }
 
+func (stack *Stack) PeekArgs(n int) (Args, error) {
+	stack_start := stack.tos - n + 1
+	if stack_start < 0 {
+		return Args{}, errors.New("not enough items on stack")
+	}
+	return Args{
+		len:      n,
+		argsList: stack.elements[stack_start : stack_start+n],
+	}, nil
+}
+
+func (stack *Stack) DropArgs(n int) {
+	stack_start := stack.tos - n + 1
+	if stack_start < 0 {
+		return
+	}
+	for i := 0; i < n; i++ {
+		elem := stack.elements[stack_start+i].(*DataStackElem)
+		recycleDataElem(elem)
+	}
+	stack.tos -= n
+}
+
 func (stack *Stack) PopExpressions(n int) ([]Sexp, error) {
 	expressions, err := stack.getExpressions(n, true)
 	if err != nil {

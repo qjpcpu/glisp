@@ -18,12 +18,12 @@ func ImportCSV(vm *glisp.Environment) error {
 }
 
 func ReadCSVFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1,2 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 && args.Len() != 2 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1,2 argument but got %v`, name, args.Len())
 		}
 		var r io.Reader
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpStr:
 			filename := replaceHomeDirSymbol(string(val))
 			fd, err := os.Open(filename)
@@ -35,7 +35,7 @@ func ReadCSVFile(name string) glisp.UserFunction {
 		case *SexpIO:
 			r = val
 		default:
-			return glisp.SexpNull, fmt.Errorf(`%s 1st argument should be string/reader but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s 1st argument should be string/reader but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 
 		reader := csv.NewReader(r)
@@ -44,7 +44,7 @@ func ReadCSVFile(name string) glisp.UserFunction {
 			return glisp.SexpNull, err
 		}
 		var rows glisp.SexpArray
-		if len(args) == 2 && glisp.IsSymbol(args[1]) && args[1].SexpString() == "hash" {
+		if args.Len() == 2 && glisp.IsSymbol(args.Get(1)) && args.Get(1).SexpString() == "hash" {
 			var header glisp.SexpArray
 			for i, row := range records {
 				if i == 0 {
@@ -77,12 +77,12 @@ func ReadCSVFile(name string) glisp.UserFunction {
 }
 
 func WriteCSVFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1,2 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1,2 argument but got %v`, name, args.Len())
 		}
 		var w io.Writer
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpStr:
 			filename := replaceHomeDirSymbol(string(val))
 			fd, err := os.OpenFile(filename, os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0755)
@@ -94,17 +94,17 @@ func WriteCSVFile(name string) glisp.UserFunction {
 		case *SexpIO:
 			w = val
 		default:
-			return glisp.SexpNull, fmt.Errorf(`%s 1st argument should be string/writer but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s 1st argument should be string/writer but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		var records [][]string
-		if recs, ok := args[1].(glisp.SexpArray); ok {
+		if recs, ok := args.Get(1).(glisp.SexpArray); ok {
 			var err error
 			if records, err = extractCSVRows(recs); err != nil {
 				return glisp.SexpNull, err
 			}
-		} else if args[1] == glisp.SexpNull {
+		} else if args.Get(1) == glisp.SexpNull {
 		} else {
-			return glisp.SexpNull, fmt.Errorf(`%s 2nd argument should be [][]string but got %v`, name, glisp.InspectType(args[1]))
+			return glisp.SexpNull, fmt.Errorf(`%s 2nd argument should be [][]string but got %v`, name, glisp.InspectType(args.Get(1)))
 		}
 
 		writer := csv.NewWriter(w)

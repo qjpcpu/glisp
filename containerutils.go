@@ -6,16 +6,21 @@ import (
 	"strings"
 )
 
-func ConcatStr(str SexpStr, exprs ...Sexp) (SexpStr, error) {
+func ConcatStr(str SexpStr, exprs Args) (SexpStr, error) {
 	var sb strings.Builder
 	sb.WriteString(string(str))
-	for _, expr := range exprs {
+	var err error
+	exprs.Foreach(func(expr Sexp) bool {
 		switch t := expr.(type) {
 		case SexpStr:
 			sb.WriteString(string(t))
 		default:
-			return SexpStr(""), errors.New("second argument is not a string")
+			err = errors.New("second argument is not a string")
 		}
+		return true
+	})
+	if err != nil {
+		return SexpStr(""), err
 	}
 
 	return SexpStr(sb.String()), nil
@@ -36,16 +41,21 @@ func AppendStr(str SexpStr, exprs ...Sexp) (SexpStr, error) {
 	return SexpStr(sb.String()), nil
 }
 
-func ConcatBytes(str SexpBytes, exprs ...Sexp) (SexpBytes, error) {
+func ConcatBytes(str SexpBytes, exprs Args) (SexpBytes, error) {
 	var sb bytes.Buffer
 	sb.Write(str.Bytes())
-	for _, expr := range exprs {
+	var err error
+	exprs.Foreach(func(expr Sexp) bool {
 		switch t := expr.(type) {
 		case SexpBytes:
 			sb.Write(t.Bytes())
 		default:
-			return NewSexpBytes(nil), errors.New("second argument is not bytes")
+			err = errors.New("second argument is not bytes")
 		}
+		return err == nil
+	})
+	if err != nil {
+		return NewSexpBytes(nil), err
 	}
 	return NewSexpBytes(sb.Bytes()), nil
 }

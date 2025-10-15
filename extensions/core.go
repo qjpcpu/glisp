@@ -66,15 +66,15 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 
 func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) == 0 {
+		return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+			if args.Len() == 0 {
 				return glisp.SexpNull, fmt.Errorf("%s need at least one argument", name)
 			}
 			if name == `printf` || name == `sprintf` {
-				if len(args) <= 1 {
+				if args.Len() <= 1 {
 					return glisp.SexpNull, fmt.Errorf("%s need at least two argument", name)
 				}
-				if !glisp.IsString(args[0]) {
+				if !glisp.IsString(args.Get(0)) {
 					return glisp.SexpNull, fmt.Errorf("first argument of %s must be string", name)
 				}
 			}
@@ -87,10 +87,10 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 				_, items := transformFmt("", args)
 				fmt.Fprint(w, items...)
 			case "printf":
-				fmtstr, vargs := transformFmt(string(args[0].(glisp.SexpStr)), args[1:])
+				fmtstr, vargs := transformFmt(string(args.Get(0).(glisp.SexpStr)), args.SliceStart(1))
 				fmt.Fprintf(w, fmtstr, vargs...)
 			case "sprintf":
-				fmtstr, vargs := transformFmt(string(args[0].(glisp.SexpStr)), args[1:])
+				fmtstr, vargs := transformFmt(string(args.Get(0).(glisp.SexpStr)), args.SliceStart(1))
 				return glisp.SexpStr(fmt.Sprintf(fmtstr, vargs...)), nil
 			}
 
@@ -124,7 +124,7 @@ func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, inte
 	}
 }
 
-func parseFmtStr(str string, args []glisp.Sexp) ([]string, []int) {
+func parseFmtStr(str string, args glisp.Args) ([]string, []int) {
 	var ret []string
 	var cache []rune
 	var mark []int
@@ -166,10 +166,10 @@ func parseFmtStr(str string, args []glisp.Sexp) ([]string, []int) {
 		ret = append(ret, string(cache))
 		cache = nil
 	}
-	if extra := len(args) - len(mark); extra > 0 {
+	if extra := args.Len() - len(mark); extra > 0 {
 		ret = append(ret, "%%!(EXTRA ")
 		for i := 0; i < extra; i++ {
-			ret = append(ret, glisp.InspectType(args[len(args)-extra+i]), "=")
+			ret = append(ret, glisp.InspectType(args.Get(args.Len()-extra+i)), "=")
 			ret = append(ret, "%v")
 			mark = append(mark, len(ret)-1)
 			if i < extra-1 {
@@ -178,7 +178,7 @@ func parseFmtStr(str string, args []glisp.Sexp) ([]string, []int) {
 		}
 		ret = append(ret, ")")
 	}
-	if missing := len(mark) - len(args); missing > 0 {
+	if missing := len(mark) - args.Len(); missing > 0 {
 		for i := 0; i < missing; i++ {
 			v := ret[mark[len(mark)-missing+i]]
 			ret[mark[len(mark)-missing+i]] = "%%!" + strings.TrimPrefix(v, "%") + "(MISSING)"
@@ -188,28 +188,32 @@ func parseFmtStr(str string, args []glisp.Sexp) ([]string, []int) {
 	return ret, mark
 }
 
-func transformFmt(fmtstr string, args []glisp.Sexp) (string, []interface{}) {
+func transformFmt(fmtstr string, args glisp.Args) (string, []interface{}) {
 	if fmtstr != "" {
 		fmtStrs, mark := parseFmtStr(fmtstr, args)
 		var ret []interface{}
-		for i, item := range args {
+		var i int
+		args.Foreach(func(item glisp.Sexp) bool {
 			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
 			fmtStrs[mark[i]] = f
 			ret = append(ret, v)
-		}
+			i++
+			return true
+		})
 		return strings.Join(fmtStrs, ""), ret
 	}
 	var ret []interface{}
-	for _, item := range args {
+	args.Foreach(func(item glisp.Sexp) bool {
 		_, v := mapSexpToGoPrintableInterface("%v", item)
 		ret = append(ret, v)
-	}
+		return true
+	})
 	return "", ret
 }
 
 func GetDocFunction(name string) glisp.UserFunction {
-	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		name := args[0].(glisp.SexpSymbol).Name()
+	userfn := func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		name := args.Get(0).(glisp.SexpSymbol).Name()
 		var doc string
 		if expr, ok := env.FindObject(name); ok && glisp.IsFunction(expr) {
 			doc = expr.(*glisp.SexpFunction).Doc()
@@ -224,12 +228,12 @@ func GetDocFunction(name string) glisp.UserFunction {
 		return glisp.SexpStr(doc), nil
 	}
 	sexpfn := glisp.MakeUserFunction(name, userfn)
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		if !glisp.IsSymbol(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol but got %v", name, glisp.InspectType(args[0]))
+		if !glisp.IsSymbol(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("argument of %s should be symbol but got %v", name, glisp.InspectType(args.Get(0)))
 		}
 		return glisp.MakeList([]glisp.Sexp{
 			env.MakeSymbol("println"),
@@ -237,7 +241,7 @@ func GetDocFunction(name string) glisp.UserFunction {
 				sexpfn,
 				glisp.MakeList([]glisp.Sexp{
 					env.MakeSymbol("quote"),
-					args[0].(glisp.SexpSymbol),
+					args.Get(0).(glisp.SexpSymbol),
 				}),
 			}),
 		}), nil
@@ -245,17 +249,17 @@ func GetDocFunction(name string) glisp.UserFunction {
 }
 
 func SymbolDefinedFunction(name string) glisp.UserFunction {
-	userfn := func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	userfn := func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		var name string
-		switch args[0].(type) {
+		switch args.Get(0).(type) {
 		case *glisp.SexpFunction:
 			return glisp.SexpBool(true), nil
 		case glisp.SexpSymbol:
-			name = args[0].(glisp.SexpSymbol).Name()
+			name = args.Get(0).(glisp.SexpSymbol).Name()
 		case glisp.SexpStr:
-			name = string(args[0].(glisp.SexpStr))
+			name = string(args.Get(0).(glisp.SexpStr))
 		default:
-			return glisp.SexpNull, fmt.Errorf("can't guess %v definition", glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf("can't guess %v definition", glisp.InspectType(args.Get(0)))
 		}
 		if _, ok := env.FindObject(name); ok {
 			return glisp.SexpBool(true), nil
@@ -266,68 +270,72 @@ func SymbolDefinedFunction(name string) glisp.UserFunction {
 		}
 	}
 	sexpfn := glisp.MakeUserFunction(name, userfn)
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		newArgs := append([]glisp.Sexp{sexpfn}, args...)
+		newArgs := append([]glisp.Sexp{sexpfn}, args.GetAll()...)
 		return glisp.MakeList(newArgs), nil
 	}
 }
 
 type ExplainSexp interface {
-	Explain(*glisp.Environment, string, []glisp.Sexp) (glisp.Sexp, error)
+	Explain(*glisp.Environment, string, glisp.Args) (glisp.Sexp, error)
 }
 
 func ExplainColonMacro(name string) glisp.UserFunction {
-	sexpfn := glisp.MakeUserFunction(name, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if ex, ok := args[1].(ExplainSexp); ok {
-			return ex.Explain(env, string(args[0].(glisp.SexpStr)), args[2:])
+	sexpfn := glisp.MakeUserFunction(name, func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if ex, ok := args.Get(1).(ExplainSexp); ok {
+			return ex.Explain(env, string(args.Get(0).(glisp.SexpStr)), args.SliceStart(2))
 		}
 		/* nil explain anything as nil */
-		if args[1] == glisp.SexpNull {
+		if args.Get(1) == glisp.SexpNull {
 			return glisp.SexpNull, nil
 		}
-		return glisp.SexpNull, fmt.Errorf("type `%s` can't explain `%s`", glisp.InspectType(args[1]), args[0].SexpString())
+		return glisp.SexpNull, fmt.Errorf("type `%s` can't explain `%s`", glisp.InspectType(args.Get(1)), args.Get(0).SexpString())
 	})
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() < 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2, glisp.Many)
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("%s first argument must be string but got %s", name, glisp.InspectType(args[0]))
+		if !glisp.IsString(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("%s first argument must be string but got %s", name, glisp.InspectType(args.Get(0)))
 		}
-		colon := string(args[0].(glisp.SexpStr))
+		colon := string(args.Get(0).(glisp.SexpStr))
 		vargs := []glisp.Sexp{sexpfn, glisp.SexpStr(colon[1:])}
-		vargs = append(vargs, args[1:]...)
+		vargs = append(vargs, args.GetAll()[1:]...)
 		return glisp.MakeList(vargs), nil
 	}
 }
 
 func GetComposeFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() < 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2, glisp.Many)
 		}
-		for _, fn := range args {
-			if !glisp.IsFunction(fn) {
-				return glisp.SexpNull, fmt.Errorf("argument should be function but got %v", glisp.InspectType(fn))
+		var err error
+		args.Foreach(func(fn glisp.Sexp) bool {
+			isFn := glisp.IsFunction(fn)
+			if !isFn {
+				err = fmt.Errorf("argument should be function but got %v", glisp.InspectType(fn))
 			}
+			return isFn
+		})
+		if err != nil {
+			return glisp.SexpNull, err
 		}
-		args2 := glisp.GetSlice(len(args))
-		copy(args2, args)
-		args = args2
-		return glisp.MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *glisp.Environment, _args []glisp.Sexp) (glisp.Sexp, error) {
-			for i := len(args) - 1; i >= 0; i-- {
-				fn := args[i].(*glisp.SexpFunction)
+		args0 := args.GetAll()
+		return glisp.MakeUserFunction(env.GenSymbol("__compose").Name(), func(_env *glisp.Environment, _args glisp.Args) (glisp.Sexp, error) {
+			for i := len(args0) - 1; i >= 0; i-- {
+				fn := args0[i].(*glisp.SexpFunction)
 				ret, err := _env.Apply(fn, _args)
 				if err != nil {
 					return glisp.SexpNull, err
 				}
-				_args = []glisp.Sexp{ret}
+				_args = glisp.MakeArgs(ret)
 			}
 			/* len(_args) is greater than 0, because function always return something */
-			return _args[0], nil
+			return _args.Get(0), nil
 		}), nil
 	}
 }

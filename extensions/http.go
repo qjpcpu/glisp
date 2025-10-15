@@ -53,8 +53,9 @@ func ImportHTTP(vm *glisp.Environment) error {
 func DoHTTPMacro(withRespStatus bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
 		realFn := glisp.MakeUserFunction(name, DoHTTP(withRespStatus)(name))
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			for i := 0; i < len(args); i++ {
+		return func(env *glisp.Environment, args0 glisp.Args) (glisp.Sexp, error) {
+			args := args0.GetAll()
+			for i := 0; i < args0.Len(); i++ {
 				arg := args[i]
 				if option, ok := _httpIsOption(arg); ok {
 					args[i] = glisp.MakeList([]glisp.Sexp{
@@ -79,7 +80,7 @@ func DoHTTPMacro(withRespStatus bool) glisp.NamedUserFunction {
 /* (http/get|post|put|patch|delete OPTIONS URL) */
 func DoHTTP(withRespStatus bool) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 			return processHTTP(name, withRespStatus, newHttpReq(), env, args)
 		}
 	}
@@ -278,7 +279,7 @@ var availableHttpOptions = map[string]httpOption{
 }
 
 func querySexpType(env *glisp.Environment, val glisp.Sexp) string {
-	t, _ := glisp.GetTypeFunction("type")(env, []glisp.Sexp{val})
+	t, _ := glisp.GetTypeFunction("type")(env, glisp.MakeArgs(val))
 	return t.SexpString()
 }
 
@@ -343,18 +344,18 @@ func (c *httpDebugClient) Do(req *http.Request) (*http.Response, error) {
 	return res, err
 }
 
-func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args []glisp.Sexp) (bool, error) {
+func prepareHTTPReq(name string, hreq *request, env *glisp.Environment, args glisp.Args) (bool, error) {
 	/* parse user options */
 	var functions []func(*request) (*request, error)
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
+	for i := 0; i < args.Len(); i++ {
+		arg := args.Get(i)
 		if option, ok := _httpIsOption(arg); ok {
 			name, _ := readSymOrStr(arg)
 			if option.needValue {
-				if i+1 >= len(args) {
+				if i+1 >= args.Len() {
 					return false, fmt.Errorf("%s need an argument but got nothing", name)
 				}
-				val := args[i+1]
+				val := args.Get(i + 1)
 				functions = append(functions, func(req *request) (*request, error) {
 					return option.decorator(env, req, val)
 				})
@@ -544,14 +545,14 @@ func evalSingleHTTP(name string, hreq request, urlstr string, env *glisp.Environ
 
 }
 
-func processHTTP(name string, withRespStatus bool, req request, env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-	if len(args) < 1 {
-		return glisp.WrongNumberArguments(name, len(args), 1, glisp.Many)
+func processHTTP(name string, withRespStatus bool, req request, env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+	if args.Len() < 1 {
+		return glisp.WrongNumberArguments(name, args.Len(), 1, glisp.Many)
 	}
 	if evalNow, err := prepareHTTPReq(name, &req, env, args); err != nil {
 		return glisp.SexpNull, err
 	} else if !evalNow {
-		return glisp.MakeUserFunction(env.GenSymbol().Name(), func(env0 *glisp.Environment, args0 []glisp.Sexp) (glisp.Sexp, error) {
+		return glisp.MakeUserFunction(env.GenSymbol().Name(), func(env0 *glisp.Environment, args0 glisp.Args) (glisp.Sexp, error) {
 			return processHTTP(name, withRespStatus, req.copy(), env0, args0)
 		}), nil
 	}

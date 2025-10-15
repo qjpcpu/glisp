@@ -79,7 +79,7 @@ func (w *SexpIO) Stringify() string {
 	return w.SexpString()
 }
 
-func (w *SexpIO) Explain(env *glisp.Environment, sym string, args []glisp.Sexp) (glisp.Sexp, error) {
+func (w *SexpIO) Explain(env *glisp.Environment, sym string, args glisp.Args) (glisp.Sexp, error) {
 	switch sym {
 	case "close":
 		return glisp.SexpNull, w.Close()
@@ -91,17 +91,17 @@ func (w *SexpIO) Explain(env *glisp.Environment, sym string, args []glisp.Sexp) 
 		}
 		return glisp.SexpStr("anonWriter"), nil
 	case "write":
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(":write", len(args), 1)
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(":write", args.Len(), 1)
 		}
 		var n int
 		var err error
-		if glisp.IsBytes(args[0]) {
-			n, err = w.Write(args[0].(glisp.SexpBytes).Bytes())
-		} else if glisp.IsString(args[0]) {
-			n, err = w.Write([]byte(string(args[0].(glisp.SexpStr))))
+		if glisp.IsBytes(args.Get(0)) {
+			n, err = w.Write(args.Get(0).(glisp.SexpBytes).Bytes())
+		} else if glisp.IsString(args.Get(0)) {
+			n, err = w.Write([]byte(string(args.Get(0).(glisp.SexpStr))))
 		} else {
-			return glisp.SexpNull, fmt.Errorf("must write bytes/string to file but got %v", glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf("must write bytes/string to file but got %v", glisp.InspectType(args.Get(0)))
 		}
 		return glisp.NewSexpInt(n), err
 	default:
@@ -140,7 +140,7 @@ func (b *sexpBuffer) Stringify() string {
 }
 
 func newBuffer(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		return NewBuffer(), nil
 	}
 }

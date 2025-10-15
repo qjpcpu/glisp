@@ -41,19 +41,20 @@ type CommandOptions struct {
 
 func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 1 {
-				return glisp.WrongNumberArguments(name, len(args), 1)
+		return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+			if args.Len() != 1 {
+				return glisp.WrongNumberArguments(name, args.Len(), 1)
 			}
-			switch args[0].(type) {
+			var hash *glisp.SexpHash
+			switch val := args.Get(0).(type) {
 			case glisp.SexpStr:
-				args[0], _ = glisp.MakeHash([]glisp.Sexp{glisp.SexpStr("cmd"), args[0]})
+				hash, _ = glisp.MakeHash([]glisp.Sexp{glisp.SexpStr("cmd"), args.Get(0)})
 			case *glisp.SexpHash:
+				hash = val
 			default:
-				return glisp.SexpNull, fmt.Errorf("argument of command must be string/hash but got %v", glisp.InspectType(args[0]))
+				return glisp.SexpNull, fmt.Errorf("argument of command must be string/hash but got %v", glisp.InspectType(args.Get(0)))
 			}
 
-			hash := args[0].(*glisp.SexpHash)
 			/* command */
 			cmdstr := getHashStr(hash, "cmd")
 			if cmdstr == "" {
@@ -107,13 +108,13 @@ func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 }
 
 func GetReadFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		data, err := os.ReadFile(filename)
@@ -125,13 +126,13 @@ func GetReadFile(name string) glisp.UserFunction {
 }
 
 func Mkdir(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		os.MkdirAll(filename, 0755)
@@ -140,19 +141,19 @@ func Mkdir(name string) glisp.UserFunction {
 }
 
 func GetWriteFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		if _, err := os.Stat(filepath.Dir(filename)); err != nil && os.IsNotExist(err) {
 			os.MkdirAll(filepath.Dir(filename), 0755)
 		}
-		switch data := args[1].(type) {
+		switch data := args.Get(1).(type) {
 		case glisp.SexpStr:
 			return glisp.SexpNull, os.WriteFile(filename, []byte(data), 0644)
 		case glisp.SexpBytes:
@@ -164,19 +165,19 @@ func GetWriteFile(name string) glisp.UserFunction {
 }
 
 func ReadDir(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 && args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1, 2)
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		var listType int
-		if len(args) == 2 {
-			sy, ok := args[1].(glisp.SexpSymbol)
+		if args.Len() == 2 {
+			sy, ok := args.Get(1).(glisp.SexpSymbol)
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`second argument of %s should be symbol but got %v`, name, glisp.InspectType(args[1]))
+				return glisp.SexpNull, fmt.Errorf(`second argument of %s should be symbol but got %v`, name, glisp.InspectType(args.Get(1)))
 			}
 			switch sy.Name() {
 			case "file":
@@ -206,13 +207,13 @@ func ReadDir(name string) glisp.UserFunction {
 }
 
 func GetRemoveFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		return glisp.SexpNull, os.RemoveAll(filename)
@@ -220,16 +221,16 @@ func GetRemoveFile(name string) glisp.UserFunction {
 }
 
 func GetOpenFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) > 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 0/1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() > 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 0/1 argument but got %v`, name, args.Len())
 		}
 		var file *os.File
 		var err error
-		if len(args) == 1 {
-			str, ok := args[0].(glisp.SexpStr)
+		if args.Len() == 1 {
+			str, ok := args.Get(0).(glisp.SexpStr)
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+				return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 			}
 			filename := replaceHomeDirSymbol(string(str))
 			file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
@@ -245,13 +246,13 @@ func GetOpenFile(name string) glisp.UserFunction {
 }
 
 func GetExistFile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		filename := replaceHomeDirSymbol(string(str))
 		if _, err := os.Stat(filename); err != nil && os.IsNotExist(err) {
@@ -271,33 +272,33 @@ func replaceHomeDirSymbol(file string) string {
 }
 
 func Getenv(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) == 0 {
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() == 0 {
 			return glisp.SexpNull, errors.New("no arguments")
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[0]))
+		if !glisp.IsString(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args.Get(0)))
 		}
-		return glisp.SexpStr(os.Getenv(string(args[0].(glisp.SexpStr)))), nil
+		return glisp.SexpStr(os.Getenv(string(args.Get(0).(glisp.SexpStr)))), nil
 	}
 }
 
 func Setenv(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[0]))
+		if !glisp.IsString(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args.Get(0)))
 		}
-		if !glisp.IsString(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args[1]))
+		if !glisp.IsString(args.Get(1)) {
+			return glisp.SexpNull, fmt.Errorf("env variable should be string but got %v", glisp.InspectType(args.Get(1)))
 		}
-		name := string(args[0].(glisp.SexpStr))
+		name := string(args.Get(0).(glisp.SexpStr))
 		if name == `` {
 			return glisp.SexpNull, errors.New("env variable name can't be empty")
 		}
-		os.Setenv(name, string(args[1].(glisp.SexpStr)))
+		os.Setenv(name, string(args.Get(1).(glisp.SexpStr)))
 		return glisp.SexpNull, nil
 	}
 }
@@ -310,14 +311,14 @@ func chomp(b []byte) []byte {
 }
 
 func RunCommand(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
 			return glisp.SexpNull, errors.New("no command arguments")
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.InspectType(args[0]))
+		if !glisp.IsString(args.Get(0)) {
+			return glisp.SexpNull, errors.New("cmd must be string but got " + glisp.InspectType(args.Get(0)))
 		}
-		cmd := exec.Command("bash", "-c", string(args[0].(glisp.SexpStr)))
+		cmd := exec.Command("bash", "-c", string(args.Get(0).(glisp.SexpStr)))
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -390,7 +391,7 @@ func getHashStrList(hash *glisp.SexpHash, key string) []string {
 }
 
 func GetOSArgs(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		var ret glisp.SexpArray
 		for _, str := range os.Args {
 			ret = append(ret, glisp.SexpStr(str))
@@ -400,13 +401,13 @@ func GetOSArgs(name string) glisp.UserFunction {
 }
 
 func LookupPath(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		name := replaceHomeDirSymbol(string(str))
 		p, err := exec.LookPath(name)

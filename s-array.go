@@ -25,7 +25,7 @@ func MapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray, er
 	var err error
 
 	for i := range arr {
-		result[i], err = env.Apply(fun, arr[i:i+1])
+		result[i], err = env.Apply(fun, MakeArgs(arr[i:i+1]...))
 		if err != nil {
 			return SexpArray(result), err
 		}
@@ -38,7 +38,7 @@ func FlatMapArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray
 	result := make([]Sexp, 0, len(arr))
 
 	for i := range arr {
-		res, err := env.Apply(fun, arr[i:i+1])
+		res, err := env.Apply(fun, MakeArgs(arr[i:i+1]...))
 		if err != nil {
 			return SexpArray(result), err
 		}
@@ -60,7 +60,7 @@ func FilterArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray,
 
 	for i := range arr {
 		item := arr[i]
-		ret, err := env.Apply(fun, []Sexp{item})
+		ret, err := env.Apply(fun, MakeArgs(item))
 		if err != nil {
 			return SexpArray(result), err
 		}
@@ -75,16 +75,21 @@ func FilterArray(env *Environment, fun *SexpFunction, arr SexpArray) (SexpArray,
 	return SexpArray(result), nil
 }
 
-func ConcatArray(arr SexpArray, exprs ...Sexp) (SexpArray, error) {
+func ConcatArray(arr SexpArray, exprs Args) (SexpArray, error) {
 	ret := make(SexpArray, len(arr))
 	copy(ret, arr)
-	for _, expr := range exprs {
+	var err error
+	exprs.Foreach(func(expr Sexp) bool {
 		switch t := expr.(type) {
 		case SexpArray:
 			ret = append(ret, t...)
 		default:
-			return arr, fmt.Errorf("second argument(%s) is not an array", InspectType(expr))
+			err = fmt.Errorf("second argument(%s) is not an array", InspectType(expr))
 		}
+		return err == nil
+	})
+	if err != nil {
+		return arr, err
 	}
 
 	return ret, nil
@@ -107,7 +112,7 @@ func FoldlArray(env *Environment, fun *SexpFunction, lst Sexp, acc Sexp) (Sexp, 
 	}
 
 	var err error
-	if acc, err = env.Apply(fun, []Sexp{list[0], acc}); err != nil {
+	if acc, err = env.Apply(fun, MakeArgs(list[0], acc)); err != nil {
 		return SexpNull, err
 	}
 

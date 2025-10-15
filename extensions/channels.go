@@ -17,14 +17,14 @@ func (ch SexpChannel) TypeName() string {
 }
 
 func MakeChanFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) > 1 {
-			return glisp.WrongNumberArguments(name, len(args), 0, 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() > 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 0, 1)
 		}
 
 		size := 0
-		if len(args) == 1 {
-			switch t := args[0].(type) {
+		if args.Len() == 1 {
+			switch t := args.Get(0).(type) {
 			case glisp.SexpInt:
 				size = t.ToInt()
 			default:
@@ -38,12 +38,12 @@ func MakeChanFunction(name string) glisp.UserFunction {
 }
 
 func ChanTxFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() < 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1, 2)
 		}
 		var channel chan glisp.Sexp
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpChannel:
 			channel = chan glisp.Sexp(t)
 		default:
@@ -52,10 +52,10 @@ func ChanTxFunction(name string) glisp.UserFunction {
 		}
 
 		if name == "send!" {
-			if len(args) != 2 {
-				return glisp.WrongNumberArguments(name, len(args), 2)
+			if args.Len() != 2 {
+				return glisp.WrongNumberArguments(name, args.Len(), 2)
 			}
-			channel <- args[1]
+			channel <- args.Get(1)
 			return glisp.SexpNull, nil
 		}
 

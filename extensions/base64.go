@@ -15,13 +15,13 @@ func ImportBase64(vm *glisp.Environment) error {
 }
 
 func Base64StringToBytes(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpStr)
+		str, ok := args.Get(0).(glisp.SexpStr)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be string but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		bytes, err := base64.StdEncoding.DecodeString(string(str))
 		if err != nil {
@@ -32,13 +32,13 @@ func Base64StringToBytes(name string) glisp.UserFunction {
 }
 
 func BytesToBase64String(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		str, ok := args[0].(glisp.SexpBytes)
+		str, ok := args.Get(0).(glisp.SexpBytes)
 		if !ok {
-			return glisp.SexpNull, fmt.Errorf(`%s argument should be bytes but got %v`, name, glisp.InspectType(args[0]))
+			return glisp.SexpNull, fmt.Errorf(`%s argument should be bytes but got %v`, name, glisp.InspectType(args.Get(0)))
 		}
 		bs := base64.StdEncoding.EncodeToString(str.Bytes())
 		return glisp.SexpStr(bs), nil

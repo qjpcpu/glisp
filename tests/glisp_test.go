@@ -48,7 +48,7 @@ func TestLoadAllFunction(t *testing.T) {
 
 func TestOverrideBuiltin(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	vm.AddFunction("len", func(v *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+	vm.AddFunction("len", func(v *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		return glisp.NewSexpInt(100), nil
 	})
 	ret, err := vm.EvalString(`(len [])`)
@@ -100,14 +100,14 @@ func TestMakeScriptFunction(t *testing.T) {
 	fn, err := vm.MakeScriptFunction(`(+ %1 %2)`)
 	ExpectSuccess(t, err)
 
-	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ret, err := vm.Apply(fn, glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, ret)
 
 	fn, err = vm.MakeScriptFunction(`(str/start-with? %1 %2)`)
 	ExpectSuccess(t, err)
 
-	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.SexpStr("abc"), glisp.SexpStr("a")})
+	ret, err = vm.Apply(fn, glisp.MakeArgs(glisp.SexpStr("abc"), glisp.SexpStr("a")))
 	ExpectSuccess(t, err)
 	ExpectTrue(t, ret)
 }
@@ -117,7 +117,7 @@ func TestMakeScriptFunctionNoArgument(t *testing.T) {
 	fn, err := vm.MakeScriptFunction(`(+ 1 2)`)
 	ExpectSuccess(t, err)
 
-	ret, err := vm.Apply(fn, nil)
+	ret, err := vm.Apply(fn, glisp.MakeArgs())
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, ret)
 }
@@ -127,15 +127,15 @@ func TestMakeScriptFunctionArgumentNumber(t *testing.T) {
 	fn, err := vm.MakeScriptFunction(`%N`)
 	ExpectSuccess(t, err)
 
-	ret, err := vm.Apply(fn, nil)
+	ret, err := vm.Apply(fn, glisp.MakeArgs())
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 0, ret)
 
-	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.NewSexpBytes(nil)})
+	ret, err = vm.Apply(fn, glisp.MakeArgs(glisp.NewSexpBytes(nil)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 1, ret)
 
-	ret, err = vm.Apply(fn, []glisp.Sexp{glisp.NewSexpBytes(nil), glisp.NewSexpInt(1)})
+	ret, err = vm.Apply(fn, glisp.MakeArgs(glisp.NewSexpBytes(nil), glisp.NewSexpInt(1)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 2, ret)
 }
@@ -151,7 +151,7 @@ func TestMakeComplexScriptFunction(t *testing.T) {
 	fn, err := vm.MakeScriptFunction(strings.ReplaceAll(script, "ESCAPE", "`"))
 	ExpectSuccess(t, err)
 
-	ret, err := vm.Apply(fn, []glisp.Sexp{glisp.NewSexpInt(2), glisp.NewSexpInt(3), glisp.NewSexpInt(5), glisp.NewSexpInt(7)})
+	ret, err := vm.Apply(fn, glisp.MakeArgs(glisp.NewSexpInt(2), glisp.NewSexpInt(3), glisp.NewSexpInt(5), glisp.NewSexpInt(7)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 10, ret)
 }
@@ -177,10 +177,10 @@ func (testSexp2) SexpString() string { return "yyyy" }
 func TestCustomType(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	fn, _ := vm.FindObject("type")
-	ret, err := vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{&testSexp{}})
+	ret, err := vm.Apply(fn.(*glisp.SexpFunction), glisp.MakeArgs(&testSexp{}))
 	ExpectSuccess(t, err)
 	ExpectEqStr(t, "*tests.testSexp", ret)
-	ret, err = vm.Apply(fn.(*glisp.SexpFunction), []glisp.Sexp{testSexp2{}})
+	ret, err = vm.Apply(fn.(*glisp.SexpFunction), glisp.MakeArgs(testSexp2{}))
 	ExpectSuccess(t, err)
 	ExpectEqStr(t, "tests.testSexp2", ret)
 }
@@ -216,12 +216,12 @@ func TestSandBox(t *testing.T) {
 	_, err := vm.EvalString(`(defn sb [a b ] (+ a b))`)
 	ExpectSuccess(t, err)
 
-	ret, err := vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	ret, err := vm.ApplyByName("sb", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, ret)
 
 	vm.PopScope()
-	_, err = vm.ApplyByName("sb", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	_, err = vm.ApplyByName("sb", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectError(t, err, "function sb not found")
 }
 
@@ -236,7 +236,7 @@ func TestWrapExpressionsAsFunction(t *testing.T) {
 	sym, ok := vm.FindObject(name.Name())
 	ExpectTrue(t, glisp.SexpBool(ok))
 
-	ret, err := vm.Apply(sym.(*glisp.SexpFunction), nil)
+	ret, err := vm.Apply(sym.(*glisp.SexpFunction), glisp.MakeArgs())
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 5, ret)
 }
@@ -245,13 +245,13 @@ func TestApplyMessupPC0(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	_, err := vm.EvalString(`(+ 1 2)`)
 	ExpectSuccess(t, err)
-	expr, err := vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err := vm.ApplyByName("+", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 
 	_, err = vm.EvalString(`(+ 1 2)`)
 	ExpectSuccess(t, err)
-	expr, err = vm.ApplyByName("+", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("+", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 }
@@ -260,27 +260,27 @@ func TestApplyMessupPC(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
 	_, err := vm.EvalString(`(defn myfn [a b] (+ a b))`)
 	ExpectSuccess(t, err)
-	expr, err := vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err := vm.ApplyByName("myfn", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 
 	_, err = vm.EvalString(`(defn myfn2 [a b] (+ a b))`)
 	ExpectSuccess(t, err)
-	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn2", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (myfn2 2 3)`)
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 5, expr)
-	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn3", glisp.MakeArgs(glisp.NewSexpInt(3), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 9, expr)
 
 	expr, err = vm.EvalString(`(defn myfn3 [a b] (* a (myfn2 b 1))) (apply myfn2 [2 3])`)
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 5, expr)
-	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(3), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn3", glisp.MakeArgs(glisp.NewSexpInt(3), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 9, expr)
 }
@@ -290,35 +290,35 @@ func TestApplyMessupPCWithMacro(t *testing.T) {
 	expr, err := vm.EvalString("(defmac myfnmac [a b] `(+ ~a ~b)) (defn myfn [a b] (myfnmac a b)) (+ 1 2)")
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
-	expr, err = vm.ApplyByName("myfn", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString("(defmac myfnmac2 [a b] `(+ ~a ~b)) (defn myfn2 [a b] (myfnmac2 a b)) (+ 1 2)")
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
-	expr, err = vm.ApplyByName("myfn2", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn2", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
 
 	expr, err = vm.EvalString("(defmac myfnmac3 [a b] `(+ ~a ~b)) (defn myfn3 [a b] (myfnmac3 (myfnmac2 a 1) (myfnmac b 1))) (+ 1 2)")
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 3, expr)
-	expr, err = vm.ApplyByName("myfn3", []glisp.Sexp{glisp.NewSexpInt(1), glisp.NewSexpInt(2)})
+	expr, err = vm.ApplyByName("myfn3", glisp.MakeArgs(glisp.NewSexpInt(1), glisp.NewSexpInt(2)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 5, expr)
 }
 
 func TestCrossApply(t *testing.T) {
 	vm := loadAllExtensions(glisp.New())
-	vm.AddFunction("f0", func(env *glisp.Environment, expr []glisp.Sexp) (glisp.Sexp, error) {
+	vm.AddFunction("f0", func(env *glisp.Environment, expr glisp.Args) (glisp.Sexp, error) {
 		ret, err := env.ApplyByName("my-plus", expr)
 		ExpectSuccess(t, err)
 		return ret, err
 	})
 	_, err := vm.EvalString("(defn my-plus [a b] (+ a b))")
 	ExpectSuccess(t, err)
-	ret, err := vm.ApplyByName("f0", []glisp.Sexp{glisp.NewSexpInt(100), glisp.NewSexpInt(200)})
+	ret, err := vm.ApplyByName("f0", glisp.MakeArgs(glisp.NewSexpInt(100), glisp.NewSexpInt(200)))
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 300, ret)
 }
@@ -326,10 +326,10 @@ func TestCrossApply(t *testing.T) {
 func TestCloneEnv(t *testing.T) {
 	vm := glisp.New()
 	vm2 := vm.Clone()
-	vm.AddFunction("f0", func(env *glisp.Environment, expr []glisp.Sexp) (glisp.Sexp, error) {
+	vm.AddFunction("f0", func(env *glisp.Environment, expr glisp.Args) (glisp.Sexp, error) {
 		return glisp.NewSexpInt(100), nil
 	})
-	ret, err := vm.ApplyByName("f0", nil)
+	ret, err := vm.ApplyByName("f0", glisp.MakeArgs())
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 100, ret)
 
@@ -369,7 +369,7 @@ func TestMultiHTTP(t *testing.T) {
 func TestHTTPProxy(t *testing.T) {
 	WithHttpServer2(func(addr, path string) {
 		env := newFullEnv()
-		env.AddFunction("proxy", func(_ *glisp.Environment, a []glisp.Sexp) (glisp.Sexp, error) {
+		env.AddFunction("proxy", func(_ *glisp.Environment, a glisp.Args) (glisp.Sexp, error) {
 			return extensions.MakeDialer(func(_ context.Context, _ string, _ string) (net.Conn, error) {
 				return net.Dial("tcp", addr)
 			}), nil
@@ -685,7 +685,7 @@ func TestListBuilder(t *testing.T) {
 func TestListFuzzyMacro(t *testing.T) {
 	testMacro := func(script string) {
 		vm := loadAllExtensions(glisp.New())
-		vm.AddFuzzyMacro(`^fuzzy.+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+		vm.AddFuzzyMacro(`^fuzzy.+$`, func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 			/* always return 1024 */
 			return glisp.NewSexpInt(1024), nil
 		})
@@ -700,8 +700,8 @@ func TestListFuzzyMacro(t *testing.T) {
 func TestListFuzzyMacroName(t *testing.T) {
 	testMacro := func(script, docstr string) {
 		vm := loadAllExtensions(glisp.New())
-		vm.AddFuzzyMacro(`^fuzzy-\d+$`, func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			num := strings.TrimPrefix(string(args[0].(glisp.SexpStr)), "fuzzy-")
+		vm.AddFuzzyMacro(`^fuzzy-\d+$`, func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+			num := strings.TrimPrefix(string(args.Get(0).(glisp.SexpStr)), "fuzzy-")
 			return glisp.SexpStr("number:" + num), nil
 		})
 		ret, err := vm.EvalString(script)
@@ -944,19 +944,3 @@ func (rd) Read(p []byte) (n int, err error) { return }
 type wt int
 
 func (wt) Write(p []byte) (int, error) { return 0, nil }
-
-func TestUserInstruction(t *testing.T) {
-	vm := loadAllExtensions(glisp.New())
-	vm.AddInstruction("user_minus", func(env *glisp.UserInstrContext) (glisp.Sexp, error) {
-		b, a := env.PopExpr().(glisp.SexpInt), env.PopExpr().(glisp.SexpInt)
-		return a.Sub(b), nil
-	})
-	ret, err := vm.EvalString(`
-(defn test-user-function [a b]
-   (user_minus a b)
-)
-(test-user-function 3 2)
-`)
-	ExpectSuccess(t, err)
-	ExpectEqInteger(t, 1, ret)
-}

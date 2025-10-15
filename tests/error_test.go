@@ -31,10 +31,10 @@ func TestStack(t *testing.T) {
 func TestTypeInstrCoverage(t *testing.T) {
 	env := newFullEnv()
 	fn := glisp.GetTypeFunction(`type`)
-	expr, err := fn(env, []glisp.Sexp{glisp.SexpEnd})
+	expr, err := fn(env, glisp.MakeArgs(glisp.SexpEnd))
 	ExpectSuccess(t, err)
 	ExpectEqStr(t, `<end>`, expr)
-	expr, err = fn(env, []glisp.Sexp{glisp.SexpMarker})
+	expr, err = fn(env, glisp.MakeArgs(glisp.SexpMarker))
 	ExpectSuccess(t, err)
 	ExpectEqStr(t, `<marker>`, expr)
 }
@@ -42,7 +42,7 @@ func TestTypeInstrCoverage(t *testing.T) {
 func TestOverrideFunction(t *testing.T) {
 	env := newFullEnv()
 	newf := func(*glisp.SexpFunction) glisp.UserFunction {
-		return func(*glisp.Environment, []glisp.Sexp) (glisp.Sexp, error) { return glisp.SexpNull, nil }
+		return func(*glisp.Environment, glisp.Args) (glisp.Sexp, error) { return glisp.SexpNull, nil }
 	}
 	err := env.OverrideFunction("xxxxx", newf)
 	ExpectError(t, err, "function `xxxxx` not found")
@@ -277,7 +277,7 @@ func TestScriptFunctionFail(t *testing.T) {
 	env := newFullEnv()
 	fn, err := env.MakeScriptFunction(`(1 2 3)`)
 	ExpectSuccess(t, err)
-	_, err = env.Apply(fn, []glisp.Sexp{})
+	_, err = env.Apply(fn, glisp.MakeArgs())
 	ExpectError(t, err, "not a function")
 }
 
@@ -316,7 +316,7 @@ func TestDumpEnv(t *testing.T) {
 func TestApplyByNameFail(t *testing.T) {
 	env := newFullEnv()
 	env.Bind("aaa", glisp.NewSexpInt(1))
-	_, err := env.ApplyByName("aaa", nil)
+	_, err := env.ApplyByName("aaa", glisp.MakeArgs())
 	ExpectError(t, err, "is not a function")
 }
 
@@ -594,10 +594,10 @@ func TestWrongArgumentNumber(t *testing.T) {
 	})
 	ExpectScriptErr(t, `((compose (fn [e] e) (fn [e] (xxx))) 1)`, "symbol", "not found")
 
-	_, err := glisp.GetConstructorFunction("")(glisp.New(), nil)
+	_, err := glisp.GetConstructorFunction("")(glisp.New(), glisp.MakeArgs())
 	ExpectError(t, err, "invalid constructor")
 	h, _ := glisp.MakeHash(nil)
-	_, err = glisp.GetHashAccessFunction("")(glisp.New(), []glisp.Sexp{h, glisp.NewSexpInt(0)})
+	_, err = glisp.GetHashAccessFunction("")(glisp.New(), glisp.MakeArgs(h, glisp.NewSexpInt(0)))
 	ExpectSuccess(t, err)
 
 	ExpectScriptErr(t, `(http/get)`, `expect 1,... argument(s) but got 0`)

@@ -19,7 +19,6 @@ type Environment struct {
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]*SexpFunction
-	userInstr   map[string]UserInstruction
 	macros      *FuncMap
 	curfunc     *SexpFunction
 	mainfunc    *SexpFunction
@@ -46,7 +45,6 @@ func New() *Environment {
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
 	env.fileReader = DefaultFileReader()
-	env.userInstr = make(map[string]UserInstruction)
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
@@ -82,10 +80,6 @@ func (env *Environment) Clone() *Environment {
 		dupenv.revsymtable[k] = v
 	}
 	dupenv.nextsymbol = env.nextsymbol.Clone()
-	dupenv.userInstr = make(map[string]UserInstruction)
-	for k, v := range env.userInstr {
-		dupenv.userInstr[k] = v
-	}
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -115,7 +109,6 @@ func (env *Environment) Duplicate() *Environment {
 	}
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.fileReader = env.fileReader
-	dupenv.userInstr = env.userInstr
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
@@ -241,7 +234,7 @@ func (env *Environment) ReturnFromFunction() error {
 }
 
 func (env *Environment) CallUserFunction(function *SexpFunction, name string, nargs int) error {
-	args, err := env.datastack.PopExpressions(nargs)
+	args, err := env.datastack.PeekArgs(nargs)
 	if err != nil {
 		return fmt.Errorf("Error calling %s: %v", name, err)
 	}
@@ -251,10 +244,11 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 	env.pc = -1
 
 	res, err := function.userfun(env, args)
-	PutSlice(args)
 	if err != nil {
 		return fmt.Errorf("Error calling %s: %v", name, err)
 	}
+
+	env.datastack.DropArgs(args.Len())
 	env.datastack.PushExpr(res)
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
@@ -296,9 +290,6 @@ func (env *Environment) SetFileReader(fr FileReader) {
 
 func (env *Environment) SourceExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
-	if !env.ReachedEnd() {
-		gen.AddInstruction(Instruction{Op: OpPop})
-	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
@@ -337,9 +328,6 @@ func (env *Environment) SourceStream(stream io.Reader) error {
 
 func (env *Environment) LoadExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
-	if !env.ReachedEnd() {
-		gen.AddInstruction(Instruction{Op: OpPop})
-	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
@@ -385,10 +373,6 @@ func (env *Environment) AddFunction(name string, function UserFunction, opts ...
 
 func (env *Environment) AddNamedFunction(name string, function NamedUserFunction, opts ...FuntionOption) {
 	env.BindGlobal(name, MakeUserFunction(name, function(name), opts...))
-}
-
-func (env *Environment) AddInstruction(name string, instr UserInstruction) {
-	env.userInstr[name] = instr
 }
 
 func (env *Environment) AddMacro(name string, function UserFunction, opts ...FuntionOption) {
@@ -482,7 +466,7 @@ func (env *Environment) FindMacro(name string) (*SexpFunction, bool) {
 	return env.macros.Find(sym)
 }
 
-func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
+func (env *Environment) ApplyByName(fun string, args Args) (Sexp, error) {
 	f, ok := env.FindObject(fun)
 	if !ok {
 		return SexpNull, fmt.Errorf("function %s not found", fun)
@@ -494,16 +478,17 @@ func (env *Environment) ApplyByName(fun string, args []Sexp) (Sexp, error) {
 	return env.Apply(fn, args)
 }
 
-func (env *Environment) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
+func (env *Environment) Apply(fun *SexpFunction, args Args) (Sexp, error) {
 	if fun.user {
 		return fun.userfun(env, args)
 	}
 
-	for _, expr := range args {
+	args.Foreach(func(expr Sexp) bool {
 		env.datastack.PushExpr(expr)
-	}
+		return true
+	})
 
-	err := env.CallFunction(fun, len(args))
+	err := env.CallFunction(fun, args.Len())
 	if err != nil {
 		return SexpNull, err
 	}
@@ -640,13 +625,6 @@ func (env *Environment) Run() (Sexp, error) {
 			if err := env.scopestack.PopScope(); err != nil {
 				return SexpNull, err
 			}
-		case OpUserInstr:
-			expr, err := instr.UserInstr.userinstr(newUserInstrCtx(instr.UserInstr.name, env, instr.UserInstr.nargs))
-			if err != nil {
-				return SexpNull, err
-			}
-			env.datastack.PushExpr(expr)
-			env.pc++
 		case OpExplode:
 			expr, err := env.datastack.PopExpr()
 			if err != nil {

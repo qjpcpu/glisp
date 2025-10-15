@@ -588,20 +588,6 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateSharpQuote(args)
 	}
 
-	// Optimization: Use dedicated instructions for common operations
-	// This must come before the macro check.
-	if instr, ok := gen.env.userInstr[sym.name]; ok {
-		// First, generate the code for all arguments. They will be pushed onto the datastack.
-		err := gen.GenerateAll(args)
-		if err != nil {
-			return err
-		}
-		gen.AddInstruction(Instruction{Op: OpUserInstr, UserInstr: userInstrData{name: sym.name, nargs: len(args), userinstr: instr}})
-		// We've handled this call, so we return to prevent
-		// the generic CallInstr from being generated.
-		return nil
-	}
-
 	macro, found := gen.env.macros.Find(sym)
 	if found {
 		// calling Apply on the current environment will screw up
@@ -861,9 +847,9 @@ func (gen *Generator) GenerateSharpQuote(args []Sexp) error {
 	}
 }
 
-func prependCallName(macro *SexpFunction, sym SexpSymbol, args []Sexp) []Sexp {
+func prependCallName(macro *SexpFunction, sym SexpSymbol, args []Sexp) Args {
 	if macro.nameRegexp != nil {
-		return append([]Sexp{SexpStr(sym.Name())}, args...)
+		return MakeArgs(append([]Sexp{SexpStr(sym.Name())}, args...)...)
 	}
-	return args
+	return MakeArgs(args...)
 }

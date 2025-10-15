@@ -43,21 +43,21 @@ func regexpFindIndex(needle *regexp.Regexp, haystack string) (glisp.Sexp, error)
 }
 
 func RegexpFind(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
 		var haystack string
-		switch t := args[1].(type) {
+		switch t := args.Get(1).(type) {
 		case glisp.SexpStr:
 			haystack = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args[1]))
+				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args.Get(1)))
 		}
 
 		var needle *regexp.Regexp
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case *SexpRegexp:
 			needle = t.r
 		case glisp.SexpStr:
@@ -68,7 +68,7 @@ func RegexpFind(name string) glisp.UserFunction {
 			needle = reg.r
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args[0]))
+				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args.Get(0)))
 		}
 
 		switch name {
@@ -87,12 +87,12 @@ func RegexpFind(name string) glisp.UserFunction {
 }
 
 func RegexpReplace(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 3 {
-			return glisp.WrongNumberArguments(name, len(args), 3)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 3 {
+			return glisp.WrongNumberArguments(name, args.Len(), 3)
 		}
 		var needle *regexp.Regexp
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case *SexpRegexp:
 			needle = t.r
 		case glisp.SexpStr:
@@ -103,25 +103,25 @@ func RegexpReplace(name string) glisp.UserFunction {
 			needle = reg.r
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args[0]))
+				fmt.Errorf("1st argument of %v should be a compiled regular expression but got %v", name, glisp.InspectType(args.Get(0)))
 		}
 
 		var src string
-		switch t := args[1].(type) {
+		switch t := args.Get(1).(type) {
 		case glisp.SexpStr:
 			src = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args[1]))
+				fmt.Errorf("2nd argument of %v should be a string but got %v", name, glisp.InspectType(args.Get(1)))
 		}
 
 		var repl string
-		switch t := args[2].(type) {
+		switch t := args.Get(2).(type) {
 		case glisp.SexpStr:
 			repl = string(t)
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("3nd argument of %v should be a string but got %v", name, glisp.InspectType(args[2]))
+				fmt.Errorf("3nd argument of %v should be a string but got %v", name, glisp.InspectType(args.Get(2)))
 		}
 
 		return glisp.SexpStr(needle.ReplaceAllString(src, repl)), nil
@@ -129,12 +129,12 @@ func RegexpReplace(name string) glisp.UserFunction {
 }
 
 func RegexpCompile(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() < 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case glisp.SexpStr:
 			re, err := compileRegexp(string(t))
 			if err != nil {
@@ -143,7 +143,7 @@ func RegexpCompile(name string) glisp.UserFunction {
 			return re, nil
 		default:
 			return glisp.SexpNull,
-				fmt.Errorf("argument of regexp/compile should be a string but got %v", glisp.InspectType(args[0]))
+				fmt.Errorf("argument of regexp/compile should be a string but got %v", glisp.InspectType(args.Get(0)))
 		}
 	}
 }

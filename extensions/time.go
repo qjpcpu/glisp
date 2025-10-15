@@ -71,29 +71,29 @@ func (t SexpTime) Cmp(b glisp.Comparable) (int, error) {
 }
 
 func TimeNow(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 0 {
-			return glisp.WrongNumberArguments(name, len(args), 0)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 0 {
+			return glisp.WrongNumberArguments(name, args.Len(), 0)
 		}
 		return SexpTime(time.Now().In(time.UTC)), nil
 	}
 }
 
 func TimeZero(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 0 {
-			return glisp.WrongNumberArguments(name, len(args), 0)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 0 {
+			return glisp.WrongNumberArguments(name, args.Len(), 0)
 		}
 		return SexpTime(time.Time{}), nil
 	}
 }
 
 func TimeYearOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -103,11 +103,11 @@ func TimeYearOf(name string) glisp.UserFunction {
 }
 
 func TimeMonthOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -117,11 +117,11 @@ func TimeMonthOf(name string) glisp.UserFunction {
 }
 
 func TimeDayOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -131,11 +131,11 @@ func TimeDayOf(name string) glisp.UserFunction {
 }
 
 func TimeHourOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -145,11 +145,11 @@ func TimeHourOf(name string) glisp.UserFunction {
 }
 
 func TimeMinuteOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -159,11 +159,11 @@ func TimeMinuteOf(name string) glisp.UserFunction {
 }
 
 func TimeSecondOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -173,11 +173,11 @@ func TimeSecondOf(name string) glisp.UserFunction {
 }
 
 func TimeWeekdayOf(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be time", name)
 		}
@@ -188,35 +188,35 @@ func TimeWeekdayOf(name string) glisp.UserFunction {
 
 // TimeSub t1-t2 in seconds
 func TimeSub(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
-		for i, v := range args {
-			if _, ok := v.(SexpTime); !ok {
+		for i := 0; i < args.Len(); i++ {
+			if _, ok := args.Get(i).(SexpTime); !ok {
 				return glisp.SexpNull, fmt.Errorf(`the %v argument of function %s must be time`, i+1, name)
 			}
 		}
-		t1, t2 := time.Time(args[0].(SexpTime)), time.Time(args[1].(SexpTime))
+		t1, t2 := time.Time(args.Get(0).(SexpTime)), time.Time(args.Get(1).(SexpTime))
 		return glisp.NewSexpInt64(int64(t1.Sub(t2).Seconds())), nil
 	}
 }
 
 // (time/add time number uint)
 func TimeAdd(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 3 {
-			return glisp.WrongNumberArguments(name, len(args), 3)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 3 {
+			return glisp.WrongNumberArguments(name, args.Len(), 3)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf(`first argument of function %s must be time`, name)
 		}
-		if !glisp.IsInt(args[1]) {
+		if !glisp.IsInt(args.Get(1)) {
 			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be integer`, name)
 		}
-		number := args[1].(glisp.SexpInt).ToInt()
-		kind, ok := readSymOrStr(args[2])
+		number := args.Get(1).(glisp.SexpInt).ToInt()
+		kind, ok := readSymOrStr(args.Get(2))
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be string/symbol`, name)
 		}
@@ -242,21 +242,21 @@ func TimeAdd(name string) glisp.UserFunction {
 
 // (time/add-date time year month day)
 func TimeAddDate(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 4 {
-			return glisp.WrongNumberArguments(name, len(args), 4)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 4 {
+			return glisp.WrongNumberArguments(name, args.Len(), 4)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf(`first argument of function %s must be time`, name)
 		}
-		for i := 1; i < len(args); i++ {
-			if !glisp.IsInt(args[i]) {
+		for i := 1; i < args.Len(); i++ {
+			if !glisp.IsInt(args.Get(i)) {
 				return glisp.SexpNull, fmt.Errorf(`the %v argument of function %s must be integer`, i+1, name)
 			}
 		}
 		tm := time.Time(stm)
-		return SexpTime(tm.AddDate(args[1].(glisp.SexpInt).ToInt(), args[2].(glisp.SexpInt).ToInt(), args[3].(glisp.SexpInt).ToInt())), nil
+		return SexpTime(tm.AddDate(args.Get(1).(glisp.SexpInt).ToInt(), args.Get(2).(glisp.SexpInt).ToInt(), args.Get(3).(glisp.SexpInt).ToInt())), nil
 	}
 }
 
@@ -267,10 +267,10 @@ func ParseTime(name string) glisp.UserFunction {
 		`2006-01-02`,
 		`15:04:05`,
 	}
-	return timeWithDefault(func(_ *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		switch len(args) {
+	return timeWithDefault(func(_ *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		switch args.Len() {
 		case 1:
-			arg := args[0]
+			arg := args.Get(0)
 			switch val := arg.(type) {
 			case glisp.SexpInt:
 				return SexpTime(time.Unix(arg.(glisp.SexpInt).ToInt64(), 0)), nil
@@ -285,41 +285,41 @@ func ParseTime(name string) glisp.UserFunction {
 				}
 				return glisp.SexpNull, err
 			default:
-				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
+				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args.Get(0).SexpString())
 			}
 		case 2, 3:
-			if len(args) == 2 && glisp.IsInt(args[0]) && glisp.IsSymbol(args[1]) {
-				switch args[1].(glisp.SexpSymbol).Name() {
+			if args.Len() == 2 && glisp.IsInt(args.Get(0)) && glisp.IsSymbol(args.Get(1)) {
+				switch args.Get(1).(glisp.SexpSymbol).Name() {
 				case sym_timestamp:
-					tm := time.Unix(args[0].(glisp.SexpInt).ToInt64(), 0)
+					tm := time.Unix(args.Get(0).(glisp.SexpInt).ToInt64(), 0)
 					return SexpTime(tm), nil
 				case sym_timestamp_ms:
-					tm := time.UnixMilli(args[0].(glisp.SexpInt).ToInt64())
+					tm := time.UnixMilli(args.Get(0).(glisp.SexpInt).ToInt64())
 					return SexpTime(tm), nil
 				case sym_timestamp_micro:
-					tm := time.UnixMicro(args[0].(glisp.SexpInt).ToInt64())
+					tm := time.UnixMicro(args.Get(0).(glisp.SexpInt).ToInt64())
 					return SexpTime(tm), nil
 				case sym_timestamp_nano:
-					number := args[0].(glisp.SexpInt)
+					number := args.Get(0).(glisp.SexpInt)
 					sec := number.Div(glisp.NewSexpUint64(1e9))
 					nsec := number.Mod(glisp.NewSexpUint64(1e9))
 					tm := time.Unix(sec.ToInt64(), nsec.ToInt64())
 					return SexpTime(tm), nil
 				}
 			}
-			layout, ok := readSymOrStr(args[1])
+			layout, ok := readSymOrStr(args.Get(1))
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[1].SexpString())
+				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args.Get(1).SexpString())
 			}
-			value, ok := readSymOrStr(args[0])
+			value, ok := readSymOrStr(args.Get(0))
 			if !ok {
-				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[0].SexpString())
+				return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args.Get(0).SexpString())
 			}
 			var parseTimeFn func() (time.Time, error)
-			if len(args) == 3 {
-				loc, ok := readSymOrStr(args[2])
+			if args.Len() == 3 {
+				loc, ok := readSymOrStr(args.Get(2))
 				if !ok {
-					return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args[2].SexpString())
+					return glisp.SexpNull, fmt.Errorf(`%s with unsupported argument %v`, name, args.Get(2).SexpString())
 				}
 				location, err := time.LoadLocation(loc)
 				if err != nil {
@@ -335,16 +335,16 @@ func ParseTime(name string) glisp.UserFunction {
 			}
 			return SexpTime(tm), nil
 		}
-		return glisp.WrongNumberArguments(name, len(args), 1, 2)
+		return glisp.WrongNumberArguments(name, args.Len(), 1, 2)
 	})
 }
 
 func timeWithDefault(f glisp.UserFunction) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) > 0 {
-			switch tm := args[len(args)-1].(type) {
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() > 0 {
+			switch tm := args.Get(args.Len() - 1).(type) {
 			case SexpTime:
-				if ret, err := f(env, args[:len(args)-1]); err != nil {
+				if ret, err := f(env, args.SliceEnd(args.Len()-1)); err != nil {
 					return tm, nil
 				} else {
 					return ret, nil
@@ -356,24 +356,24 @@ func timeWithDefault(f glisp.UserFunction) glisp.UserFunction {
 }
 
 func TimeFormatFunction(fname string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 && len(args) != 3 {
-			return glisp.SexpNull, glisp.WrongGeneratorNumberArguments(fname, len(args), 2, 3)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 && args.Len() != 3 {
+			return glisp.SexpNull, glisp.WrongGeneratorNumberArguments(fname, args.Len(), 2, 3)
 		}
-		stm, ok := args[0].(SexpTime)
+		stm, ok := args.Get(0).(SexpTime)
 		if !ok {
 			return glisp.SexpNull, fmt.Errorf(`first argument of function %s must be time`, fname)
 		}
 		var format string
-		if sym, ok := args[1].(glisp.SexpSymbol); ok {
+		if sym, ok := args.Get(1).(glisp.SexpSymbol); ok {
 			format = sym.Name()
-		} else if layout, ok := args[1].(glisp.SexpStr); ok {
+		} else if layout, ok := args.Get(1).(glisp.SexpStr); ok {
 			format = string(layout)
 		} else {
 			return glisp.SexpNull, fmt.Errorf(`second argument of function %s must be symbol/string`, fname)
 		}
-		if len(args) == 3 && !glisp.IsString(args[2]) {
-			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.InspectType(args[2]))
+		if args.Len() == 3 && !glisp.IsString(args.Get(2)) {
+			return glisp.SexpNull, fmt.Errorf(`third argument of function %s must be string but got %s`, fname, glisp.InspectType(args.Get(2)))
 		}
 		tm := time.Time(stm)
 		switch format {
@@ -388,8 +388,8 @@ func TimeFormatFunction(fname string) glisp.UserFunction {
 		case "":
 			return glisp.SexpNull, errors.New(`blank time format symbol`)
 		default:
-			if len(args) == 3 {
-				locStr := string(string(args[2].(glisp.SexpStr)))
+			if args.Len() == 3 {
+				locStr := string(string(args.Get(2).(glisp.SexpStr)))
 				loc, err := time.LoadLocation(locStr)
 				if err != nil {
 					return glisp.SexpNull, fmt.Errorf("parse location `%s` fail %v", locStr, err)

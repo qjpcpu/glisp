@@ -10,70 +10,70 @@ import (
 )
 
 func QueryJSONSexp(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 && len(args) != 3 {
-			return glisp.WrongNumberArguments(name, len(args), 2, 3)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 && args.Len() != 3 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2, 3)
 		}
 		makeRes := func(s glisp.Sexp) glisp.Sexp {
-			if s == glisp.SexpNull && len(args) == 3 {
-				return args[2]
+			if s == glisp.SexpNull && args.Len() == 3 {
+				return args.Get(2)
 			}
 			return s
 		}
-		if args[0] == glisp.SexpNull {
+		if args.Get(0) == glisp.SexpNull {
 			return makeRes(glisp.SexpNull), nil
 		}
-		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+		if !glisp.IsHash(args.Get(0)) && !glisp.IsArray(args.Get(0)) {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
 		}
-		if !glisp.IsString(args[1]) {
+		if !glisp.IsString(args.Get(1)) {
 			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		p, ok := makeStPath(string(args[1].(glisp.SexpStr)))
+		p, ok := makeStPath(string(args.Get(1).(glisp.SexpStr)))
 		if !ok {
 			return makeRes(glisp.SexpNull), nil
 		}
-		return makeRes(findSexp(args[0], p)), nil
+		return makeRes(findSexp(args.Get(0), p)), nil
 	}
 }
 
 func SetJSONSexp(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 3 {
-			return glisp.WrongNumberArguments(name, len(args), 3)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 3 {
+			return glisp.WrongNumberArguments(name, args.Len(), 3)
 		}
-		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+		if !glisp.IsHash(args.Get(0)) && !glisp.IsArray(args.Get(0)) {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
 		}
-		if !glisp.IsString(args[1]) {
+		if !glisp.IsString(args.Get(1)) {
 			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		tokens, ok := makeStPath(string(args[1].(glisp.SexpStr)))
+		tokens, ok := makeStPath(string(args.Get(1).(glisp.SexpStr)))
 		if !ok || len(tokens) == 0 {
-			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args[1].(glisp.SexpStr)))
+			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args.Get(1).(glisp.SexpStr)))
 		}
 
-		return setSexp(args[0], tokens, args[2])
+		return setSexp(args.Get(0), tokens, args.Get(2))
 	}
 }
 
 func DelJSONSexp(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
-		if !glisp.IsHash(args[0]) && !glisp.IsArray(args[0]) {
+		if !glisp.IsHash(args.Get(0)) && !glisp.IsArray(args.Get(0)) {
 			return glisp.SexpNull, fmt.Errorf("first argument of %s must be hash/array", name)
 		}
-		if !glisp.IsString(args[1]) {
+		if !glisp.IsString(args.Get(1)) {
 			return glisp.SexpNull, fmt.Errorf("second argument of %s must be string", name)
 		}
-		tokens, ok := makeStPath(string(args[1].(glisp.SexpStr)))
+		tokens, ok := makeStPath(string(args.Get(1).(glisp.SexpStr)))
 		if !ok || len(tokens) == 0 {
-			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args[1].(glisp.SexpStr)))
+			return glisp.SexpNull, fmt.Errorf("invalid search path %s", string(args.Get(1).(glisp.SexpStr)))
 		}
 
-		return delSexp(args[0], tokens)
+		return delSexp(args.Get(0), tokens)
 	}
 }
 

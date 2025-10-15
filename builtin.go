@@ -19,36 +19,36 @@ func IsIType(s Sexp) bool {
 }
 
 func GetGenSymFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 0 {
-			return SexpNull, fmt.Errorf(`%s expect 0 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 0 {
+			return SexpNull, fmt.Errorf(`%s expect 0 argument but got %v`, name, args.Len())
 		}
 		return env.GenSymbol("__anon"), nil
 	}
 }
 
 func GetAnyToSymbolFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case SexpStr:
-			return env.MakeSymbol(string(args[0].(SexpStr))), nil
+			return env.MakeSymbol(string(args.Get(0).(SexpStr))), nil
 		case SexpSymbol:
 			return val, nil
 		}
-		return SexpNull, fmt.Errorf(`%s first argument bad type %v`, name, args[0])
+		return SexpNull, fmt.Errorf(`%s first argument bad type %v`, name, args.Get(0))
 	}
 }
 
 func GetTypeFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
 		var present string
-		switch expr := args[0].(type) {
+		switch expr := args.Get(0).(type) {
 		case SexpSymbol:
 			present = `symbol`
 		case SexpStr:
@@ -85,7 +85,7 @@ func GetTypeFunction(name string) UserFunction {
 		case ITypeName:
 			present = expr.TypeName()
 		default:
-			present = reflect.TypeOf(args[0]).String()
+			present = reflect.TypeOf(args.Get(0)).String()
 		}
 		return SexpStr(present), nil
 	}
@@ -95,6 +95,6 @@ func InspectType(expr Sexp) string {
 	if expr == SexpNull {
 		return `nil`
 	}
-	t, _ := GetTypeFunction(`type`)(nil, []Sexp{expr})
+	t, _ := GetTypeFunction(`type`)(nil, MakeArgs(expr))
 	return string(t.(SexpStr))
 }

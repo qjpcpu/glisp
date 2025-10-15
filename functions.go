@@ -19,7 +19,7 @@ var (
 )
 
 type Function []Instruction
-type UserFunction func(*Environment, []Sexp) (Sexp, error)
+type UserFunction func(*Environment, Args) (Sexp, error)
 type NamedUserFunction func(string) UserFunction
 type OverrideFunction func(*SexpFunction) UserFunction
 
@@ -77,22 +77,22 @@ var builtinFunctions = map[string]NamedUserFunction{
 }
 
 func GetConsFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2)
 		}
 
-		return Cons(args[0], args[1]), nil
+		return Cons(args.Get(0), args.Get(1)), nil
 	}
 }
 
 func GetFirstFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch expr := args[0].(type) {
+		switch expr := args.Get(0).(type) {
 		case SexpSentinel:
 			if expr == SexpNull {
 				return SexpNull, nil
@@ -118,12 +118,12 @@ func GetFirstFunction(name string) UserFunction {
 }
 
 func GetRestFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch expr := args[0].(type) {
+		switch expr := args.Get(0).(type) {
 		case *SexpPair:
 			return expr.tail, nil
 		case SexpArray:
@@ -142,15 +142,15 @@ func GetRestFunction(name string) UserFunction {
 }
 
 func GetArrayElementIndex(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2)
 		}
 
-		switch expr := args[0].(type) {
+		switch expr := args.Get(0).(type) {
 		case SexpArray:
 			for i, item := range expr {
-				if v, err := Compare(item, args[1]); err != nil {
+				if v, err := Compare(item, args.Get(1)); err != nil {
 					return SexpNull, err
 				} else if v == 0 {
 					return NewSexpInt(i), nil
@@ -166,27 +166,27 @@ func GetArrayElementIndex(name string) UserFunction {
 }
 
 func GetArrayAccessFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 {
-			return WrongNumberArguments(name, len(args), 2, 3)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() < 2 {
+			return WrongNumberArguments(name, args.Len(), 2, 3)
 		}
 
 		var arr SexpArray
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpArray:
 			arr = t
 		default:
-			return SexpNull, fmt.Errorf("first argument of aget must be array but got <%v:%v>", InspectType(args[0]), args[0].SexpString())
+			return SexpNull, fmt.Errorf("first argument of aget must be array but got <%v:%v>", InspectType(args.Get(0)), args.Get(0).SexpString())
 		}
 
 		var i int
-		switch t := args[1].(type) {
+		switch t := args.Get(1).(type) {
 		case SexpInt:
 			i = int(t.ToInt64())
 		case SexpChar:
 			i = int(t)
 		default:
-			return SexpNull, fmt.Errorf("second argument of aget must be integer but got <%v:%v>", InspectType(args[1]), args[1].SexpString())
+			return SexpNull, fmt.Errorf("second argument of aget must be integer but got <%v:%v>", InspectType(args.Get(1)), args.Get(1).SexpString())
 		}
 
 		if i < 0 || i >= len(arr) {
@@ -197,23 +197,23 @@ func GetArrayAccessFunction(name string) UserFunction {
 			return arr[i], nil
 		}
 
-		if len(args) != 3 {
-			return WrongNumberArguments(name, len(args), 3)
+		if args.Len() != 3 {
+			return WrongNumberArguments(name, args.Len(), 3)
 		}
-		arr[i] = args[2]
+		arr[i] = args.Get(2)
 
 		return arr, nil
 	}
 }
 
 func GetSgetFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2)
 		}
 
 		var str SexpStr
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpStr:
 			str = t
 		default:
@@ -221,7 +221,7 @@ func GetSgetFunction(name string) UserFunction {
 		}
 
 		var i int
-		switch t := args[1].(type) {
+		switch t := args.Get(1).(type) {
 		case SexpInt:
 			i = int(t.ToInt64())
 		case SexpChar:
@@ -239,13 +239,13 @@ func GetSgetFunction(name string) UserFunction {
 }
 
 func GetExistFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2)
 		}
-		switch expr := args[0].(type) {
+		switch expr := args.Get(0).(type) {
 		case *SexpHash:
-			if _, err := expr.HashGet(args[1]); err != nil {
+			if _, err := expr.HashGet(args.Get(1)); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					return SexpBool(false), nil
 				}
@@ -255,7 +255,7 @@ func GetExistFunction(name string) UserFunction {
 			}
 		case SexpArray:
 			for _, item := range expr {
-				if eq, err := Compare(item, args[1]); err != nil {
+				if eq, err := Compare(item, args.Get(1)); err != nil {
 					return SexpNull, err
 				} else if eq == 0 {
 					return SexpBool(true), nil
@@ -264,7 +264,7 @@ func GetExistFunction(name string) UserFunction {
 			return SexpBool(false), nil
 		case *SexpPair:
 			if IsList(expr) {
-				ex, err := existInList(expr, args[1])
+				ex, err := existInList(expr, args.Get(1))
 				return SexpBool(ex), err
 			}
 		case SexpSentinel:
@@ -277,13 +277,13 @@ func GetExistFunction(name string) UserFunction {
 }
 
 func GetHashAccessFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 || len(args) > 3 {
-			return WrongNumberArguments(name, len(args), 2, 3)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() < 2 || args.Len() > 3 {
+			return WrongNumberArguments(name, args.Len(), 2, 3)
 		}
 
 		var hash *SexpHash
-		switch e := args[0].(type) {
+		switch e := args.Get(0).(type) {
 		case *SexpHash:
 			hash = e
 		default:
@@ -292,21 +292,21 @@ func GetHashAccessFunction(name string) UserFunction {
 
 		switch name {
 		case "hget":
-			if len(args) == 3 {
-				return hash.HashGetDefault(args[1], args[2])
+			if args.Len() == 3 {
+				return hash.HashGetDefault(args.Get(1), args.Get(2))
 			}
-			return hash.HashGet(args[1])
+			return hash.HashGet(args.Get(1))
 		case "hset!":
-			if len(args) != 3 {
-				return WrongNumberArguments(name, len(args), 3)
+			if args.Len() != 3 {
+				return WrongNumberArguments(name, args.Len(), 3)
 			}
-			err := hash.HashSet(args[1], args[2])
+			err := hash.HashSet(args.Get(1), args.Get(2))
 			return hash, err
 		case "hdel!":
-			if len(args) != 2 {
-				return WrongNumberArguments(name, len(args), 2)
+			if args.Len() != 2 {
+				return WrongNumberArguments(name, args.Len(), 2)
 			}
-			err := hash.HashDelete(args[1])
+			err := hash.HashDelete(args.Get(1))
 			return hash, err
 		}
 
@@ -315,14 +315,14 @@ func GetHashAccessFunction(name string) UserFunction {
 }
 
 func GetSliceFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 3 && len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2, 3)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 3 && args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2, 3)
 		}
 
 		var start int
 		end := math.MaxInt
-		switch t := args[1].(type) {
+		switch t := args.Get(1).(type) {
 		case SexpInt:
 			start = int(t.ToInt64())
 		case SexpChar:
@@ -331,8 +331,8 @@ func GetSliceFunction(name string) UserFunction {
 			return SexpNull, errors.New("Second argument of slice must be integer")
 		}
 
-		if len(args) == 3 {
-			switch t := args[2].(type) {
+		if args.Len() == 3 {
+			switch t := args.Get(2).(type) {
 			case SexpInt:
 				end = int(t.ToInt64())
 			case SexpChar:
@@ -348,7 +348,7 @@ func GetSliceFunction(name string) UserFunction {
 			}
 			return i
 		}
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpArray:
 			if start < 0 || start > len(t) || end < start {
 				return SexpNull, errors.New("index out of range")
@@ -375,12 +375,12 @@ func GetSliceFunction(name string) UserFunction {
 }
 
 func GetLenFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpArray:
 			return NewSexpInt(len(t)), nil
 		case SexpStr:
@@ -401,67 +401,67 @@ func GetLenFunction(name string) UserFunction {
 			return NewSexpInt(len(t.bytes)), nil
 		}
 
-		return NewSexpInt(0), fmt.Errorf("argument must be string/array/list/hash/bytes but got %s", InspectType(args[0]))
+		return NewSexpInt(0), fmt.Errorf("argument must be string/array/list/hash/bytes but got %s", InspectType(args.Get(0)))
 	}
 }
 
 func GetAppendFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 {
-			return WrongNumberArguments(name, len(args), 2, Many)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() < 2 {
+			return WrongNumberArguments(name, args.Len(), 2, Many)
 		}
 
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpArray:
-			return SexpArray(append(t, args[1:]...)), nil
+			return SexpArray(append(t, args.GetAll()[1:]...)), nil
 		case SexpStr:
-			return AppendStr(t, args[1:]...)
+			return AppendStr(t, args.GetAll()[1:]...)
 		}
 
-		return SexpNull, errors.New("First argument of append must be array or string but got " + InspectType(args[0]))
+		return SexpNull, errors.New("First argument of append must be array or string but got " + InspectType(args.Get(0)))
 	}
 }
 
 func GetConcatFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 2 {
-			return WrongNumberArguments(name, len(args), 2, Many)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() < 2 {
+			return WrongNumberArguments(name, args.Len(), 2, Many)
 		}
 		return concatSexp(args)
 	}
 }
 
-func concatSexp(args []Sexp) (Sexp, error) {
-	if len(args) == 0 {
+func concatSexp(args Args) (Sexp, error) {
+	if args.Len() == 0 {
 		return SexpNull, nil
 	}
-	switch t := args[0].(type) {
+	switch t := args.Get(0).(type) {
 	case SexpArray:
-		return ConcatArray(t, args[1:]...)
+		return ConcatArray(t, args.SliceStart(1))
 	case SexpStr:
-		return ConcatStr(t, args[1:]...)
+		return ConcatStr(t, args.SliceStart(1))
 	case *SexpPair:
-		return ConcatList(t, args[1:]...)
+		return ConcatList(t, args.SliceStart(1))
 	case SexpBytes:
-		return ConcatBytes(t, args[1:]...)
+		return ConcatBytes(t, args.SliceStart(1))
 	case *SexpHash:
 		h, _ := MakeHash(nil)
-		return ConcatHash(h, args...)
+		return ConcatHash(h, args)
 	case SexpSentinel:
 		if t == SexpNull {
-			return concatSexp(args[1:])
+			return concatSexp(args.SliceStart(1))
 		}
 	}
-	return SexpNull, errors.New("expected strings/arrays/lists/bytes but got " + InspectType(args[0]))
+	return SexpNull, errors.New("expected strings/arrays/lists/bytes but got " + InspectType(args.Get(0)))
 }
 
 func GetReadFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 		str := ""
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpStr:
 			str = string(t)
 		default:
@@ -474,12 +474,12 @@ func GetReadFunction(name string) UserFunction {
 }
 
 func GetEvalFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 		newenv := env.Duplicate()
-		err := newenv.LoadExpressions(args)
+		err := newenv.LoadExpressions(args.GetAll())
 		if err != nil {
 			return SexpNull, fmt.Errorf("failed to compile expression: %v", err)
 		}
@@ -489,46 +489,46 @@ func GetEvalFunction(name string) UserFunction {
 }
 
 func GetTypeQueryFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
 		var result bool
 
 		switch name {
 		case "list?":
-			result = IsList(args[0])
+			result = IsList(args.Get(0))
 		case "nil?":
-			result = args[0] == SexpNull
+			result = args.Get(0) == SexpNull
 		case "array?":
-			result = IsArray(args[0])
+			result = IsArray(args.Get(0))
 		case "number?":
-			result = IsNumber(args[0])
+			result = IsNumber(args.Get(0))
 		case "float?":
-			result = IsFloat(args[0])
+			result = IsFloat(args.Get(0))
 		case "int?":
-			result = IsInt(args[0])
+			result = IsInt(args.Get(0))
 		case "char?":
-			result = IsChar(args[0])
+			result = IsChar(args.Get(0))
 		case "symbol?":
-			result = IsSymbol(args[0])
+			result = IsSymbol(args.Get(0))
 		case "string?":
-			result = IsString(args[0])
+			result = IsString(args.Get(0))
 		case "hash?":
-			result = IsHash(args[0])
+			result = IsHash(args.Get(0))
 		case "zero?":
-			result = IsZero(args[0])
+			result = IsZero(args.Get(0))
 		case "empty?":
-			result = IsEmpty(args[0])
+			result = IsEmpty(args.Get(0))
 		case "bytes?":
-			result = IsBytes(args[0])
+			result = IsBytes(args.Get(0))
 		case "bool?":
-			result = IsBool(args[0])
+			result = IsBool(args.Get(0))
 		case "function?":
-			result = IsFunction(args[0])
+			result = IsFunction(args.Get(0))
 		case "error?":
-			result = IsError(args[0])
+			result = IsError(args.Get(0))
 		}
 
 		return SexpBool(result), nil
@@ -536,25 +536,25 @@ func GetTypeQueryFunction(name string) UserFunction {
 }
 
 func GetNotFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		result := SexpBool(!IsTruthy(args[0]))
+		result := SexpBool(!IsTruthy(args.Get(0)))
 		return result, nil
 	}
 }
 
 func GetApplyFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 2)
 		}
 		var fun *SexpFunction
 		var funargs SexpArray
 
-		switch e := args[0].(type) {
+		switch e := args.Get(0).(type) {
 		case *SexpFunction:
 			fun = e
 		case SexpSymbol:
@@ -572,7 +572,7 @@ func GetApplyFunction(name string) UserFunction {
 			return SexpNull, errors.New("first argument must be function")
 		}
 
-		switch e := args[1].(type) {
+		switch e := args.Get(1).(type) {
 		case SexpArray:
 			funargs = e
 		case *SexpPair:
@@ -582,21 +582,21 @@ func GetApplyFunction(name string) UserFunction {
 				return SexpNull, err
 			}
 		default:
-			return SexpNull, fmt.Errorf("second argument must be array or list but got %v", InspectType(args[1]))
+			return SexpNull, fmt.Errorf("second argument must be array or list but got %v", InspectType(args.Get(1)))
 		}
 
-		return env.Apply(fun, funargs)
+		return env.Apply(fun, MakeArgs(funargs...))
 	}
 }
 
 func GetMakeArrayFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) < 1 {
-			return WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() < 1 {
+			return WrongNumberArguments(name, args.Len(), 1, 2)
 		}
 
 		var size int
-		switch e := args[0].(type) {
+		switch e := args.Get(0).(type) {
 		case SexpInt:
 			size = int(e.ToInt64())
 		default:
@@ -604,8 +604,8 @@ func GetMakeArrayFunction(name string) UserFunction {
 		}
 
 		var fill Sexp
-		if len(args) == 2 {
-			fill = args[1]
+		if args.Len() == 2 {
+			fill = args.Get(1)
 		} else {
 			fill = SexpNull
 		}
@@ -620,40 +620,38 @@ func GetMakeArrayFunction(name string) UserFunction {
 }
 
 func GetConstructorFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
+	return func(env *Environment, args Args) (Sexp, error) {
 		switch name {
 		case "array":
-			arr := GetSlice(len(args))
-			copy(arr, args)
-			return SexpArray(arr), nil
+			return SexpArray(args.GetAll()), nil
 		case "list":
-			return MakeList(args), nil
+			return MakeList(args.GetAll()), nil
 		case "hash":
-			return MakeHash(args)
+			return MakeHash(args.GetAll())
 		}
 		return SexpNull, errors.New("invalid constructor")
 	}
 }
 
 func GetMakeErrorFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
-		if !IsString(args[0]) {
+		if !IsString(args.Get(0)) {
 			return SexpNull, errors.New("error argument must be string")
 		}
-		return NewError(string(args[0].(SexpStr))), nil
+		return NewError(string(args.Get(0).(SexpStr))), nil
 	}
 }
 
 func GetSymnumFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case SexpSymbol:
 			return NewSexpInt(t.number), nil
 		}
@@ -662,9 +660,9 @@ func GetSymnumFunction(name string) UserFunction {
 }
 
 func GetSourceFileFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) == 0 {
-			return WrongNumberArguments(name, len(args), 1, Many)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() == 0 {
+			return WrongNumberArguments(name, args.Len(), 1, Many)
 		}
 
 		var sourceItem func(item Sexp) error
@@ -705,10 +703,13 @@ func GetSourceFileFunction(name string) UserFunction {
 			return nil
 		}
 
-		for _, v := range args {
-			if err := sourceItem(v); err != nil {
-				return SexpNull, err
-			}
+		var err error
+		args.Foreach(func(v Sexp) bool {
+			err = sourceItem(v)
+			return err == nil
+		})
+		if err != nil {
+			return SexpNull, err
 		}
 
 		return SexpNull, nil
@@ -776,9 +777,9 @@ func BuiltinFunctions() map[string]UserFunction {
 
 // GetStringifyFunction return s-expr's string representation
 func GetStringifyFunction(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 && len(args) != 2 {
-			return WrongNumberArguments(name, len(args), 1, 2)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 && args.Len() != 2 {
+			return WrongNumberArguments(name, args.Len(), 1, 2)
 		}
 		var sb strings.Builder
 		if err := sexpToString(&sb, args); err != nil {
@@ -789,20 +790,20 @@ func GetStringifyFunction(name string) UserFunction {
 }
 
 func GetSexpString(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
-		return SexpStr(args[0].SexpString()), nil
+		return SexpStr(args.Get(0).SexpString()), nil
 	}
 }
 
 func GetAnyToInteger(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return WrongNumberArguments(name, len(args), 1)
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return WrongNumberArguments(name, args.Len(), 1)
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case SexpChar:
 			return NewSexpInt64(int64(val)), nil
 		case SexpFloat:
@@ -816,16 +817,16 @@ func GetAnyToInteger(name string) UserFunction {
 		case SexpBytes:
 			return NewSexpIntBytes(val.Bytes()), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int/bytes but got %v`, name, InspectType(args[0]))
+		return SexpNull, fmt.Errorf(`%s argument should be char/float/str/int/bytes but got %v`, name, InspectType(args.Get(0)))
 	}
 }
 
 func GetAnyToChar(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case SexpInt:
 			return SexpChar(rune(val.ToInt())), nil
 		case SexpStr:
@@ -835,47 +836,47 @@ func GetAnyToChar(name string) UserFunction {
 			}
 			return SexpChar(rs[0]), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be integer but got %v`, name, InspectType(args[0]))
+		return SexpNull, fmt.Errorf(`%s argument should be integer but got %v`, name, InspectType(args.Get(0)))
 	}
 }
 
 func GetAnyToBool(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case SexpBool:
 			return val, nil
 		case SexpStr:
 			return SexpBool(string(val) == `true`), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be string/bool but got %v`, name, InspectType(args[0]))
+		return SexpNull, fmt.Errorf(`%s argument should be string/bool but got %v`, name, InspectType(args.Get(0)))
 	}
 }
 
 func GetAnyToBytes(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch v := args[0].(type) {
+		switch v := args.Get(0).(type) {
 		case SexpStr:
 			return NewSexpBytes([]byte(string(v))), nil
 		case SexpInt:
 			return NewSexpBytes(v.ToBytes()), nil
 		default:
-			return SexpNull, fmt.Errorf(`%s argument should be string/int but got %v`, name, InspectType(args[0]))
+			return SexpNull, fmt.Errorf(`%s argument should be string/int but got %v`, name, InspectType(args.Get(0)))
 		}
 	}
 }
 
 func GetAnyToFloat(name string) UserFunction {
-	return func(env *Environment, args []Sexp) (Sexp, error) {
-		if len(args) != 1 {
-			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *Environment, args Args) (Sexp, error) {
+		if args.Len() != 1 {
+			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case SexpStr:
 			return NewSexpFloatStr(string(val))
 		case SexpFloat:
@@ -883,7 +884,7 @@ func GetAnyToFloat(name string) UserFunction {
 		case SexpInt:
 			return NewSexpFloatInt(val), nil
 		}
-		return SexpNull, fmt.Errorf(`%s argument should be string/int/float but got %v`, name, InspectType(args[0]))
+		return SexpNull, fmt.Errorf(`%s argument should be string/int/float but got %v`, name, InspectType(args.Get(0)))
 	}
 }
 
@@ -896,21 +897,21 @@ func sliceOfStr(s string, i, j int) string {
 	return string(runes[i:j])
 }
 
-func sexpToString(sb *strings.Builder, args []Sexp) error {
-	if args[0] == SexpNull {
+func sexpToString(sb *strings.Builder, args Args) error {
+	if args.Get(0) == SexpNull {
 		return nil
 	}
-	switch val := args[0].(type) {
+	switch val := args.Get(0).(type) {
 	case SexpBytes:
 		sb.WriteString(string(val.bytes))
 	case SexpStr:
 		sb.WriteString(string(val))
 	case SexpFloat:
-		if len(args) == 2 {
-			if !IsInt(args[1]) {
-				return fmt.Errorf("prec should be integer but got %v", InspectType(args[1]))
+		if args.Len() == 2 {
+			if !IsInt(args.Get(1)) {
+				return fmt.Errorf("prec should be integer but got %v", InspectType(args.Get(1)))
 			}
-			sb.WriteString(val.ToString(args[1].(SexpInt).ToInt()))
+			sb.WriteString(val.ToString(args.Get(1).(SexpInt).ToInt()))
 			return nil
 		}
 		sb.WriteString(val.SexpString())
@@ -918,20 +919,98 @@ func sexpToString(sb *strings.Builder, args []Sexp) error {
 		sb.WriteRune(rune(val))
 	case SexpArray:
 		for _, elem := range val {
-			if err := sexpToString(sb, []Sexp{elem}); err != nil {
+			if err := sexpToString(sb, MakeArgs(elem)); err != nil {
 				return err
 			}
 		}
 	case *SexpPair:
 		var err error
 		val.Foreach(func(e Sexp) bool {
-			err = sexpToString(sb, []Sexp{e})
+			err = sexpToString(sb, MakeArgs(e))
 			return err == nil
 		})
 	case Stringer:
 		sb.WriteString(val.Stringify())
 	default:
-		sb.WriteString(args[0].SexpString())
+		sb.WriteString(args.Get(0).SexpString())
 	}
 	return nil
+}
+
+type Args struct {
+	len      int
+	argsList []StackElem
+	rawArgs  []Sexp
+	isRaw    bool
+}
+
+func MakeArgs(args ...Sexp) Args {
+	return Args{len: len(args), rawArgs: args, isRaw: true}
+}
+
+func (a Args) Len() int { return a.len }
+
+func (a Args) Get(i int) Sexp {
+	if i < 0 || i >= a.len {
+		return NewError("argument index out of bounds")
+	}
+	if a.isRaw {
+		return a.rawArgs[i]
+	}
+	return a.argsList[i].(*DataStackElem).expr
+}
+
+func (a Args) SliceStart(i int) Args {
+	if a.isRaw {
+		return MakeArgs(a.rawArgs[i:]...)
+	}
+	return Args{len: a.len - i, argsList: a.argsList[i:]}
+}
+
+func (a Args) SliceEnd(i int) Args {
+	if a.isRaw {
+		return MakeArgs(a.rawArgs[:i]...)
+	}
+	return Args{len: i, argsList: a.argsList[:i]}
+}
+
+func (a Args) Foreach(f func(Sexp) bool) {
+	if a.isRaw {
+		for i := 0; i < a.len; i++ {
+			if !f(a.rawArgs[i]) {
+				return
+			}
+		}
+	} else {
+		for i := 0; i < a.len; i++ {
+			if !f(a.argsList[i].(*DataStackElem).expr) {
+				return
+			}
+		}
+	}
+}
+
+func (a Args) GetAll() []Sexp {
+	if a.isRaw {
+		return a.rawArgs
+	}
+	arr := GetSlice(a.len)
+	for i := 0; i < a.len; i++ {
+		arr[i] = a.argsList[i].(*DataStackElem).expr
+	}
+	return arr
+}
+
+func (a Args) String() string {
+	buffer := new(strings.Builder)
+	fmt.Fprintf(buffer, "Args length: %d\n", a.len)
+	a.Foreach(func(expr Sexp) bool {
+		if expr == nil {
+			fmt.Fprintf(buffer, "%T INVALID S-expr\n", expr)
+		} else {
+			fmt.Fprintf(buffer, "%T %s\n", expr, expr.SexpString())
+		}
+		return true
+	})
+	return buffer.String()
 }

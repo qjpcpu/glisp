@@ -95,32 +95,32 @@ func (h *History) encodeLine(str string) string {
 }
 
 func exportHistory(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
-		if !glisp.IsString(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("filename should be string but got %v", args[0].SexpString())
+		if !glisp.IsString(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("filename should be string but got %v", args.Get(0).SexpString())
 		}
 		var buf bytes.Buffer
 		for _, line := range history.Get() {
 			buf.WriteString(line + "\n")
 		}
-		file := string(args[0].(glisp.SexpStr))
+		file := string(args.Get(0).(glisp.SexpStr))
 		if strings.HasPrefix(file, "~") {
 			home, _ := os.UserHomeDir()
 			file = filepath.Join(home, strings.TrimPrefix(file, "~"))
 		}
 		os.WriteFile(file, buf.Bytes(), 0755)
-		fmt.Printf("save history to %s\n", args[0].(glisp.SexpStr))
+		fmt.Printf("save history to %s\n", args.Get(0).(glisp.SexpStr))
 		return glisp.SexpNull, nil
 	}
 }
 
 func clearHistory(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 0 {
-			return glisp.WrongNumberArguments(name, len(args), 0)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 0 {
+			return glisp.WrongNumberArguments(name, args.Len(), 0)
 		}
 		history.Truncate()
 		fmt.Println("history truncated.")

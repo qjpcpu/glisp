@@ -5,6 +5,46 @@ import (
 	"fmt"
 )
 
+// Opcode is the type for virtual machine instructions.
+type Opcode byte
+
+const (
+	// OpInvalid is an invalid instruction
+	OpInvalid Opcode = iota
+
+	// Stack manipulation
+	OpPush
+	OpPushClosure
+	OpPop
+	OpDup
+
+	// Variable access
+	OpGet
+	OpPut
+	OpBindDynFun
+
+	// Control flow
+	OpJump     // Unconditional relative jump
+	OpGoto     // Unconditional absolute jump
+	OpBranch   // Conditional relative jump
+	OpReturn   // Return from function
+	OpCall     // Call a function by symbol
+	OpPrepare  // Prepare for tail call
+	OpDispatch // Call a function from stack
+
+	// Scope
+	OpAddScope
+	OpRemoveScope
+
+	// Special instructions
+	OpExplode
+	OpSquash
+	OpVectorize
+	OpHashize
+	OpBindlist
+	OpRefSym
+)
+
 // Instruction represents a single bytecode instruction for the VM.
 // Instead of an interface, it's a concrete struct.
 type Instruction struct {
@@ -20,13 +60,6 @@ type Instruction struct {
 	Direction  bool          // For OpBranch
 	Err        error         // For OpReturn
 	DynamicErr bool          // For OpReturn
-	UserInstr  userInstrData // For OpUserInstr
-}
-
-type userInstrData struct {
-	name      string
-	nargs     int
-	userinstr UserInstruction
 }
 
 // InstrString provides a human-readable representation of the instruction.
@@ -71,8 +104,6 @@ func (i Instruction) InstrString() string {
 		return "add scope"
 	case OpRemoveScope:
 		return "rem scope"
-	case OpUserInstr:
-		return i.UserInstr.name
 	case OpExplode:
 		return "explode"
 	case OpSquash:
@@ -91,47 +122,3 @@ func (i Instruction) InstrString() string {
 }
 
 var OutOfBounds error = errors.New("jump out of bounds")
-
-type UserInstrContext struct {
-	*Environment
-	nargs int
-	name  string
-}
-
-type UserInstruction func(*UserInstrContext) (Sexp, error)
-
-func newUserInstrCtx(name string, env *Environment, nargs int) *UserInstrContext {
-	return &UserInstrContext{name: name, Environment: env, nargs: nargs}
-}
-
-func (ctx *UserInstrContext) PopExpr() Sexp {
-	if ctx.nargs <= 0 {
-		return NewErrorWith(fmt.Errorf("userinstr:%s no argument left on stack", ctx.name))
-	}
-	ctx.nargs--
-	expr, err := ctx.Environment.datastack.PopExpr()
-	if err != nil {
-		return NewErrorWith(err)
-	}
-	return expr
-}
-
-type userInstr struct {
-	nargs     int
-	name      string
-	userinstr UserInstruction
-}
-
-func (i userInstr) InstrString() string {
-	return i.name
-}
-
-func (i userInstr) Execute(env *Environment) error {
-	expr, err := i.userinstr(newUserInstrCtx(i.name, env, i.nargs))
-	if err != nil {
-		return err
-	}
-	env.datastack.PushExpr(expr)
-	env.pc++
-	return nil
-}

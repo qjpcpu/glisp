@@ -98,7 +98,7 @@ func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		elem, err := env.Apply(fun, []Sexp{Cons(key, val)})
+		elem, err := env.Apply(fun, MakeArgs(Cons(key, val)))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -123,7 +123,7 @@ func MapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 
 	var err error
 
-	list.head, err = env.Apply(fun, []Sexp{list.head})
+	list.head, err = env.Apply(fun, MakeArgs(list.head))
 
 	if err != nil {
 		return SexpNull, err
@@ -153,7 +153,7 @@ func FlatMapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 
 	oldlist := list
 	tail := list.tail
-	head, err := env.Apply(fun, []Sexp{list.head})
+	head, err := env.Apply(fun, MakeArgs(list.head))
 	if err != nil {
 		return SexpNull, err
 	}
@@ -188,13 +188,19 @@ func FlatMapList(env *Environment, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	return oldlist, nil
 }
 
-func ConcatList(a *SexpPair, b ...Sexp) (Sexp, error) {
-	for _, expr := range b {
-		ret, err := concatList(a, expr)
-		if err != nil {
-			return ret, err
+func ConcatList(a *SexpPair, exprs Args) (Sexp, error) {
+	var err error
+	exprs.Foreach(func(expr Sexp) bool {
+		ret, err0 := concatList(a, expr)
+		if err0 != nil {
+			err = err0
+			return false
 		}
 		a = ret.(*SexpPair)
+		return true
+	})
+	if err != nil {
+		return SexpNull, err
 	}
 	return a, nil
 }
@@ -210,7 +216,7 @@ func concatList(a *SexpPair, b Sexp) (Sexp, error) {
 
 	switch t := a.tail.(type) {
 	case *SexpPair:
-		newtail, err := ConcatList(t, b)
+		newtail, err := ConcatList(t, MakeArgs(b))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -234,7 +240,7 @@ func FoldlList(env *Environment, fun *SexpFunction, lst, acc Sexp) (Sexp, error)
 	}
 
 	var err error
-	if acc, err = env.Apply(fun, []Sexp{list.head, acc}); err != nil {
+	if acc, err = env.Apply(fun, MakeArgs(list.head, acc)); err != nil {
 		return SexpNull, err
 	}
 
@@ -245,7 +251,7 @@ func FilterList(env *Environment, fun *SexpFunction, list *SexpPair) (Sexp, erro
 	var head *SexpPair
 	var last *SexpPair
 	for {
-		if ret, err := env.Apply(fun, []Sexp{list.head}); err != nil {
+		if ret, err := env.Apply(fun, MakeArgs(list.head)); err != nil {
 			return SexpNull, err
 		} else if !IsBool(ret) {
 			return SexpNull, errors.New("filter function must return boolean")

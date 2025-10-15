@@ -225,7 +225,7 @@ func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash,
 	}
 
 	hash.Foreach(func(key Sexp, val Sexp) bool {
-		ret, err0 := env.Apply(fun, []Sexp{Cons(key, val)})
+		ret, err0 := env.Apply(fun, MakeArgs(Cons(key, val)))
 		if err0 != nil {
 			err = err0
 			return false
@@ -255,7 +255,7 @@ func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (S
 
 	var err error
 	hash.Foreach(func(k Sexp, v Sexp) bool {
-		if acc, err = env.Apply(fun, []Sexp{Cons(k, v), acc}); err != nil {
+		if acc, err = env.Apply(fun, MakeArgs(Cons(k, v), acc)); err != nil {
 			return false
 		}
 		return true
@@ -276,7 +276,7 @@ func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, erro
 		if err != nil {
 			return SexpNull, err
 		}
-		res, err := env.Apply(fun, []Sexp{Cons(key, val)})
+		res, err := env.Apply(fun, MakeArgs(Cons(key, val)))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -297,9 +297,9 @@ func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, erro
 	return result.Get(), nil
 }
 
-func (hash *SexpHash) Explain(env *Environment, field string, args []Sexp) (Sexp, error) {
-	if len(args) > 1 {
-		return WrongNumberArguments("hash field accessor", len(args), 0, 1)
+func (hash *SexpHash) Explain(env *Environment, field string, args Args) (Sexp, error) {
+	if args.Len() > 1 {
+		return WrongNumberArguments("hash field accessor", args.Len(), 0, 1)
 	}
 	kstr := SexpStr(field)
 	if v, err := hash.HashGet(kstr); err == nil {
@@ -309,22 +309,28 @@ func (hash *SexpHash) Explain(env *Environment, field string, args []Sexp) (Sexp
 	if v, err := hash.HashGet(ksym); err == nil {
 		return v, nil
 	}
-	if len(args) == 1 {
-		return args[0], nil
+	if args.Len() == 1 {
+		return args.Get(0), nil
 	}
 	return SexpNull, fmt.Errorf("field %s not found", field)
 }
 
-func ConcatHash(h *SexpHash, b ...Sexp) (Sexp, error) {
-	for _, e := range b {
+func ConcatHash(h *SexpHash, exprs Args) (Sexp, error) {
+	var err error
+	exprs.Foreach(func(e Sexp) bool {
 		if !IsHash(e) {
-			return SexpNull, fmt.Errorf("expect hash but got %s", InspectType(e))
+			err = fmt.Errorf("expect hash but got %s", InspectType(e))
+			return false
 		}
 		eh := e.(*SexpHash)
 		for _, key := range eh.KeyOrder {
 			val, _ := eh.HashGet(key)
 			h.HashSet(key, val)
 		}
+		return true
+	})
+	if err != nil {
+		return h, err
 	}
 	return h, nil
 }

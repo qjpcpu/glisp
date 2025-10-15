@@ -236,16 +236,16 @@ func (c *Counter) SexpString() string {
 	return fmt.Sprintf(`(my-counter %v)`, c.Len)
 }
 
-func MakeCounter(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-	return &Counter{Len: args[0].(glisp.SexpInt).ToInt()}, nil
+func MakeCounter(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+	return &Counter{Len: args.Get(0).(glisp.SexpInt).ToInt()}, nil
 }
 
-func GetCounterNumber(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-	num := args[0].(*Counter).cursor
+func GetCounterNumber(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+	num := args.Get(0).(*Counter).cursor
 	return glisp.NewSexpInt(num), nil
 }
 
-func (c *Counter) Explain(env *glisp.Environment, n string, args []glisp.Sexp) (glisp.Sexp, error) {
+func (c *Counter) Explain(env *glisp.Environment, n string, args glisp.Args) (glisp.Sexp, error) {
 	return glisp.SexpStr("OK"), nil
 }
 
@@ -257,10 +257,10 @@ func (c *Counter) Next() (glisp.Sexp, bool) {
 	return glisp.SexpNull, false
 }
 
-func MakeErrStream(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
+func MakeErrStream(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 	msg := "error occur"
-	if len(args) > 0 {
-		msg = string(args[0].(glisp.SexpStr))
+	if args.Len() > 0 {
+		msg = string(args.Get(0).(glisp.SexpStr))
 	}
 	return &errStream{msg: msg}, nil
 }

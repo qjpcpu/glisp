@@ -88,9 +88,9 @@ func IntegerDo(op IntegerOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 }
 
 func GetBitwiseFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) < 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2, glisp.Many)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() < 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2, glisp.Many)
 		}
 
 		var op IntegerOp
@@ -103,26 +103,27 @@ func GetBitwiseFunction(name string) glisp.UserFunction {
 			op = BitXor
 		}
 
-		accum := args[0]
+		accum := args.Get(0)
 		var err error
 
-		for _, expr := range args[1:] {
+		args.SliceStart(1).Foreach(func(expr glisp.Sexp) bool {
 			accum, err = IntegerDo(op, accum, expr)
-			if err != nil {
-				return glisp.SexpNull, err
-			}
+			return err == nil
+		})
+		if err != nil {
+			return glisp.SexpNull, err
 		}
 		return accum, nil
 	}
 }
 
 func ComplementFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.WrongNumberArguments(name, len(args), 1)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.WrongNumberArguments(name, args.Len(), 1)
 		}
 
-		switch t := args[0].(type) {
+		switch t := args.Get(0).(type) {
 		case glisp.SexpInt:
 			return t.BitNot(), nil
 		case glisp.SexpChar:
@@ -134,9 +135,9 @@ func ComplementFunction(name string) glisp.UserFunction {
 }
 
 func GetBinaryIntFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
 
 		var op IntegerOp
@@ -149,24 +150,24 @@ func GetBinaryIntFunction(name string) glisp.UserFunction {
 			op = Modulo
 		}
 
-		return IntegerDo(op, args[0], args[1])
+		return IntegerDo(op, args.Get(0), args.Get(1))
 	}
 }
 
 func GetLogicalShiftFunction(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 2 {
-			return glisp.WrongNumberArguments(name, len(args), 2)
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 2 {
+			return glisp.WrongNumberArguments(name, args.Len(), 2)
 		}
 
-		if !glisp.IsInt(args[0]) {
-			return glisp.SexpNull, fmt.Errorf("first argument of %s must be integer but got %v", name, glisp.InspectType(args[0]))
+		if !glisp.IsInt(args.Get(0)) {
+			return glisp.SexpNull, fmt.Errorf("first argument of %s must be integer but got %v", name, glisp.InspectType(args.Get(0)))
 		}
-		if !glisp.IsInt(args[1]) {
-			return glisp.SexpNull, fmt.Errorf("second argument of %s must be integer but got %v", name, glisp.InspectType(args[1]))
+		if !glisp.IsInt(args.Get(1)) {
+			return glisp.SexpNull, fmt.Errorf("second argument of %s must be integer but got %v", name, glisp.InspectType(args.Get(1)))
 		}
-		shift := uint(args[1].(glisp.SexpInt).ToUint64())
-		snum := args[0].(glisp.SexpInt)
+		shift := uint(args.Get(1).(glisp.SexpInt).ToUint64())
+		snum := args.Get(0).(glisp.SexpInt)
 		switch name {
 		case "sll8":
 			if snum.Sign() >= 0 {
@@ -239,60 +240,60 @@ func GetLogicalShiftFunction(name string) glisp.UserFunction {
 }
 
 func GetRoundFloat(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpFloat:
 			return val.Round(), nil
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args.Get(0)))
 	}
 }
 
 func GetCeilFloat(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpFloat:
 			return val.Ceil(), nil
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args.Get(0)))
 	}
 }
 
 func GetFloorFloat(name string) glisp.UserFunction {
-	return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-		if len(args) != 1 {
-			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+		if args.Len() != 1 {
+			return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		switch val := args[0].(type) {
+		switch val := args.Get(0).(type) {
 		case glisp.SexpFloat:
 			return val.Floor(), nil
 		case glisp.SexpInt:
 			return val, nil
 		}
-		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args[0]))
+		return glisp.SexpNull, fmt.Errorf(`%s argument should be float but got %v`, name, glisp.InspectType(args.Get(0)))
 	}
 }
 
 func FormatInt(bit int) glisp.NamedUserFunction {
 	return func(name string) glisp.UserFunction {
-		return func(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-			if len(args) != 1 {
-				return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, len(args))
+		return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+			if args.Len() != 1 {
+				return glisp.SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 			}
-			if !glisp.IsInt(args[0]) {
-				return glisp.SexpNull, fmt.Errorf("first argument of %s must be int but got %s", name, glisp.InspectType(args[0]))
+			if !glisp.IsInt(args.Get(0)) {
+				return glisp.SexpNull, fmt.Errorf("first argument of %s must be int but got %s", name, glisp.InspectType(args.Get(0)))
 			}
-			num := args[0].(glisp.SexpInt)
+			num := args.Get(0).(glisp.SexpInt)
 			switch bit {
 			case 2:
 				return glisp.SexpStr("0b" + num.Format("%b")), nil

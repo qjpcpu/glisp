@@ -132,7 +132,7 @@ func (iter *mapIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error) 
 	if err != nil || !ok {
 		return glisp.SexpNull, false, err
 	}
-	ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+	ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 	return ret, true, err
 }
 
@@ -149,7 +149,7 @@ START:
 		if err != nil || !ok {
 			return glisp.SexpNull, false, err
 		}
-		ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+		ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 		if err != nil {
 			return glisp.SexpNull, false, err
 		}
@@ -183,7 +183,7 @@ func (iter *filterIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, erro
 		if err != nil || !ok {
 			return glisp.SexpNull, false, err
 		}
-		ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+		ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 		if err != nil {
 			return glisp.SexpNull, false, err
 		}
@@ -208,7 +208,7 @@ func (iter *takeIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 		if err != nil || !ok {
 			return glisp.SexpNull, false, err
 		}
-		ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+		ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 		if err != nil {
 			return glisp.SexpNull, false, err
 		}
@@ -237,7 +237,7 @@ func (iter *dropIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 			if err != nil || !ok {
 				return glisp.SexpNull, false, err
 			}
-			ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+			ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 			if err != nil {
 				return glisp.SexpNull, false, err
 			}
@@ -389,7 +389,7 @@ func (iter *partitionIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, e
 			iter.done = true
 			return group.Get(), group.Size() > 0, nil
 		}
-		ret, err := env.Apply(iter.f, []glisp.Sexp{elem})
+		ret, err := env.Apply(iter.f, glisp.MakeArgs(elem))
 		if err != nil {
 			return glisp.SexpNull, false, err
 		}
