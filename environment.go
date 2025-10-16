@@ -12,10 +12,10 @@ import (
 )
 
 type Environment struct {
-	datastack   *Stack
+	datastack   *DataStack
 	scopestack  *ScopeStack
-	addrstack   *Stack
-	stackstack  *Stack
+	addrstack   *AddrStack
+	stackstack  *StackStack
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]*SexpFunction
@@ -34,11 +34,11 @@ const StackStackSize = 5
 
 func New() *Environment {
 	env := new(Environment)
-	env.datastack = NewStack(DataStackSize)
+	env.datastack = NewDataStack(DataStackSize)
 	env.scopestack = NewScopeStack()
 	env.scopestack.PushScope()
-	env.stackstack = NewStack(StackStackSize)
-	env.addrstack = NewStack(CallStackSize)
+	env.stackstack = NewStackStack(StackStackSize)
+	env.addrstack = NewAddrStack(CallStackSize)
 	env.builtins = make(map[int]*SexpFunction)
 	env.macros = NewFuncMap()
 	env.symtable = make(map[string]int)
@@ -89,10 +89,10 @@ func (env *Environment) Clone() *Environment {
 
 func (env *Environment) Duplicate() *Environment {
 	dupenv := new(Environment)
-	dupenv.datastack = NewStack(DataStackSize)
+	dupenv.datastack = NewDataStack(DataStackSize)
 	dupenv.scopestack = env.scopestack.ForkBottom()
-	dupenv.stackstack = NewStack(StackStackSize)
-	dupenv.addrstack = NewStack(CallStackSize)
+	dupenv.stackstack = NewStackStack(StackStackSize)
+	dupenv.addrstack = NewAddrStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros.Clone()
 	// Create copies of the symbol tables and the symbol generator
@@ -228,7 +228,7 @@ func (env *Environment) ReturnFromFunction() error {
 	// The current scopestack is about to be replaced. We must clear it
 	// to decrement the reference counts of any layers it was sharing.
 	env.scopestack.Clear()
-	env.scopestack = scopestack.(*ScopeStack)
+	env.scopestack = scopestack
 
 	return nil
 }

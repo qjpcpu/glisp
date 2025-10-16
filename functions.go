@@ -939,13 +939,11 @@ func sexpToString(sb *strings.Builder, args Args) error {
 
 type Args struct {
 	len      int
-	argsList []StackElem
-	rawArgs  []Sexp
-	isRaw    bool
+	argsList []Sexp
 }
 
 func MakeArgs(args ...Sexp) Args {
-	return Args{len: len(args), rawArgs: args, isRaw: true}
+	return Args{len: len(args), argsList: args}
 }
 
 func (a Args) Len() int { return a.len }
@@ -954,49 +952,29 @@ func (a Args) Get(i int) Sexp {
 	if i < 0 || i >= a.len {
 		return NewError("argument index out of bounds")
 	}
-	if a.isRaw {
-		return a.rawArgs[i]
-	}
-	return a.argsList[i].(*DataStackElem).expr
+	return a.argsList[i]
 }
 
 func (a Args) SliceStart(i int) Args {
-	if a.isRaw {
-		return MakeArgs(a.rawArgs[i:]...)
-	}
 	return Args{len: a.len - i, argsList: a.argsList[i:]}
 }
 
 func (a Args) SliceEnd(i int) Args {
-	if a.isRaw {
-		return MakeArgs(a.rawArgs[:i]...)
-	}
 	return Args{len: i, argsList: a.argsList[:i]}
 }
 
 func (a Args) Foreach(f func(Sexp) bool) {
-	if a.isRaw {
-		for i := 0; i < a.len; i++ {
-			if !f(a.rawArgs[i]) {
-				return
-			}
-		}
-	} else {
-		for i := 0; i < a.len; i++ {
-			if !f(a.argsList[i].(*DataStackElem).expr) {
-				return
-			}
+	for i := 0; i < a.len; i++ {
+		if !f(a.argsList[i]) {
+			return
 		}
 	}
 }
 
 func (a Args) GetAll() []Sexp {
-	if a.isRaw {
-		return a.rawArgs
-	}
 	arr := GetSlice(a.len)
 	for i := 0; i < a.len; i++ {
-		arr[i] = a.argsList[i].(*DataStackElem).expr
+		arr[i] = a.argsList[i]
 	}
 	return arr
 }

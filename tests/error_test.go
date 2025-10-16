@@ -16,18 +16,6 @@ func TestCompareFloatWithString(t *testing.T) {
 	ExpectScriptErr(t, script, `cannot compare float to string`)
 }
 
-func TestStack(t *testing.T) {
-	stack := glisp.NewStack(1)
-	_, err := stack.GetExpressions(3)
-	ExpectError(t, err, `not enough items on stack`)
-	_, err = stack.PopExpressions(3)
-	ExpectError(t, err, `not enough items on stack`)
-	_, err = stack.GetExpr(3)
-	ExpectError(t, err, `invalid stack access asked for 3 Top was -1`)
-	_, _, err = stack.PopAddr()
-	ExpectError(t, err, `invalid stack access asked for 0 Top was -1`)
-}
-
 func TestTypeInstrCoverage(t *testing.T) {
 	env := newFullEnv()
 	fn := glisp.GetTypeFunction(`type`)
