@@ -248,7 +248,7 @@ func (env *Environment) CallUserFunction(function *SexpFunction, name string, na
 		return fmt.Errorf("Error calling %s: %v", name, err)
 	}
 
-	env.datastack.DropArgs(args.Len())
+	env.datastack.DropExpr(args.Len())
 	env.datastack.PushExpr(res)
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()

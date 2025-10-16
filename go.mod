@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/peterh/liner v1.2.2
-	github.com/qjpcpu/qjson v0.0.0-20250818075036-660bd82ecdbe
+	github.com/qjpcpu/qjson v0.0.0-20251016131356-8c69edf1a798
 )
 
 require (
@@ -15,3 +15,5 @@ require (
 	github.com/qjpcpu/http v0.0.0-20250930070619-83992a11c55b // indirect
 	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
 )
+
+replace github.com/qjpcpu/qjson => /home/qujianping/local/src/github.com/qjpcpu/qjson

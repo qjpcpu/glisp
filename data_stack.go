@@ -75,19 +75,11 @@ func (stack *DataStack) PopExpr() (Sexp, error) {
 }
 
 func (stack *DataStack) GetExpressions(n int) ([]Sexp, error) {
-	return stack.getExpressions(n)
-}
-
-func (stack *DataStack) getExpressions(n int) ([]Sexp, error) {
 	stack_start := stack.tos - n + 1
 	if stack_start < 0 {
 		return nil, errors.New("not enough items on stack")
 	}
-	arr := GetSlice(n)
-	for i := 0; i < n; i++ {
-		arr[i] = stack.elements[stack_start+i]
-	}
-	return arr, nil
+	return stack.elements[stack_start : stack_start+n], nil
 }
 
 func (stack *DataStack) PeekArgs(n int) (Args, error) {
@@ -101,7 +93,7 @@ func (stack *DataStack) PeekArgs(n int) (Args, error) {
 	}, nil
 }
 
-func (stack *DataStack) DropArgs(n int) {
+func (stack *DataStack) DropExpr(n int) {
 	stack_start := stack.tos - n + 1
 	if stack_start < 0 {
 		return
@@ -110,7 +102,7 @@ func (stack *DataStack) DropArgs(n int) {
 }
 
 func (stack *DataStack) PopExpressions(n int) ([]Sexp, error) {
-	expressions, err := stack.getExpressions(n)
+	expressions, err := stack.GetExpressions(n)
 	if err != nil {
 		return nil, err
 	}

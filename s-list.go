@@ -84,11 +84,7 @@ func ListToArray(expr Sexp) ([]Sexp, error) {
 }
 
 func MakeList(expressions []Sexp) Sexp {
-	if len(expressions) == 0 {
-		return SexpNull
-	}
-
-	return Cons(expressions[0], MakeList(expressions[1:]))
+	return NewListBuilder().Add(expressions...).Get()
 }
 
 func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
