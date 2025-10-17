@@ -49,7 +49,7 @@ func Echo(w http.ResponseWriter, req *http.Request) {
 
 	body, _ := ioutil.ReadAll(req.Body)
 
-	output, _ := stdMarshal(map[string]interface{}{
+	output, _ := stdMarshal(map[string]any{
 		"method":  req.Method,
 		"args":    args,
 		"headers": header,
@@ -59,7 +59,7 @@ func Echo(w http.ResponseWriter, req *http.Request) {
 	w.Write(output)
 }
 
-func stdMarshal(t interface{}) ([]byte, error) {
+func stdMarshal(t any) ([]byte, error) {
 	if t == nil {
 		return nil, nil
 	}

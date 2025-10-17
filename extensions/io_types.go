@@ -14,10 +14,10 @@ type Namer interface {
 
 type SexpIO struct {
 	err error
-	io  interface{}
+	io  any
 }
 
-func NewIO(obj interface{}) *SexpIO {
+func NewIO(obj any) *SexpIO {
 	switch obj.(type) {
 	case io.Reader, io.Writer:
 		return &SexpIO{io: obj}

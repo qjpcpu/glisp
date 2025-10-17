@@ -776,15 +776,15 @@ func TestGoRecord(t *testing.T) {
 	ExpectEqAny(t, []byte("abc"), r.GetBytesField("Bytes"))
 	ExpectEqAny(t, "stream", r.GetTag("Bytes"))
 
-	r.SetHashField("Hash", map[string]interface{}{"key": "value"})
-	ExpectEqAny(t, r.GetHashField("Hash"), map[string]interface{}{"key": "value"})
-	r.SetHashField("Hash", map[string]interface{}{"key": 1024})
+	r.SetHashField("Hash", map[string]any{"key": "value"})
+	ExpectEqAny(t, r.GetHashField("Hash"), map[string]any{"key": "value"})
+	r.SetHashField("Hash", map[string]any{"key": 1024})
 
-	r.SetListField("List", []interface{}{1, 2, 3})
-	ExpectEqList(t, r.GetListField("List"), []interface{}{1, 2, 3})
+	r.SetListField("List", []any{1, 2, 3})
+	ExpectEqList(t, r.GetListField("List"), []any{1, 2, 3})
 
-	r.SetListField("Array", []interface{}{1, 2, 3})
-	ExpectEqList(t, r.GetListField("Array"), []interface{}{1, 2, 3})
+	r.SetListField("Array", []any{1, 2, 3})
+	ExpectEqList(t, r.GetListField("Array"), []any{1, 2, 3})
 }
 
 func TestOSCmd(t *testing.T) {

@@ -636,15 +636,15 @@ func (r *SexpGoRecord) GetBytesField(name string) []byte {
 	return r.SexpRecord.GetFieldDefault(name, glisp.NewSexpBytes(nil)).(glisp.SexpBytes).Bytes()
 }
 
-func (r *SexpGoRecord) GetHashField(name string) map[string]interface{} {
-	ret := make(map[string]interface{})
+func (r *SexpGoRecord) GetHashField(name string) map[string]any {
+	ret := make(map[string]any)
 	h, _ := glisp.MakeHash(nil)
 	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, h))
 	stdUnmarshal(bs, &ret)
 	return ret
 }
 
-func (r *SexpGoRecord) GetListField(name string) (ret []interface{}) {
+func (r *SexpGoRecord) GetListField(name string) (ret []any) {
 	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, glisp.SexpArray{}))
 	stdUnmarshal(bs, &ret)
 	return ret
@@ -675,14 +675,14 @@ func (r *SexpGoRecord) SetBytesField(name string, val []byte) *SexpGoRecord {
 	return r
 }
 
-func (r *SexpGoRecord) SetHashField(name string, val map[string]interface{}) *SexpGoRecord {
+func (r *SexpGoRecord) SetHashField(name string, val map[string]any) *SexpGoRecord {
 	bytes := qjson.JSONMarshalWithPanic(val)
 	hash, _ := ParseJSON(bytes)
 	r.SexpRecord.SetField(name, hash)
 	return r
 }
 
-func (r *SexpGoRecord) SetListField(name string, val []interface{}) *SexpGoRecord {
+func (r *SexpGoRecord) SetListField(name string, val []any) *SexpGoRecord {
 	bytes := qjson.JSONMarshalWithPanic(val)
 	list, _ := ParseJSON(bytes)
 	if glisp.IsArray(list) {

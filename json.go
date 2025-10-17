@@ -161,7 +161,7 @@ func (a SexpArray) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func stdMarshal(t interface{}) ([]byte, error) {
+func stdMarshal(t any) ([]byte, error) {
 	if t == nil {
 		return nil, nil
 	}

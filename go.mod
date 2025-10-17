@@ -15,5 +15,3 @@ require (
 	github.com/qjpcpu/http v0.0.0-20250930070619-83992a11c55b // indirect
 	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
 )
-
-replace github.com/qjpcpu/qjson => /home/qujianping/local/src/github.com/qjpcpu/qjson

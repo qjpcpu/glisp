@@ -99,7 +99,7 @@ func GetPrintFunction(w io.Writer) glisp.NamedUserFunction {
 	}
 }
 
-func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, interface{}) {
+func mapSexpToGoPrintableInterface(fmtstr string, sexp glisp.Sexp) (string, any) {
 	if fmtstr == "" {
 		fmtstr = "%v"
 	}
@@ -188,10 +188,10 @@ func parseFmtStr(str string, args glisp.Args) ([]string, []int) {
 	return ret, mark
 }
 
-func transformFmt(fmtstr string, args glisp.Args) (string, []interface{}) {
+func transformFmt(fmtstr string, args glisp.Args) (string, []any) {
 	if fmtstr != "" {
 		fmtStrs, mark := parseFmtStr(fmtstr, args)
-		var ret []interface{}
+		var ret []any
 		var i int
 		args.Foreach(func(item glisp.Sexp) bool {
 			f, v := mapSexpToGoPrintableInterface(fmtStrs[mark[i]], item)
@@ -202,7 +202,7 @@ func transformFmt(fmtstr string, args glisp.Args) (string, []interface{}) {
 		})
 		return strings.Join(fmtStrs, ""), ret
 	}
-	var ret []interface{}
+	var ret []any
 	args.Foreach(func(item glisp.Sexp) bool {
 		_, v := mapSexpToGoPrintableInterface("%v", item)
 		ret = append(ret, v)

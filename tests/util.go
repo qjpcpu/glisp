@@ -131,7 +131,7 @@ func ExpectNonEmptyStr(t *testing.T, str string) {
 }
 
 func ExpectPanic(t *testing.T, fn func()) {
-	f := func() (r interface{}) {
+	f := func() (r any) {
 		defer func() {
 			r = recover()
 		}()
@@ -169,13 +169,13 @@ func ExpectEqString(t *testing.T, s1, s2 string) {
 	}
 }
 
-func ExpectEqAny(t *testing.T, s1, s2 interface{}) {
+func ExpectEqAny(t *testing.T, s1, s2 any) {
 	if !reflect.DeepEqual(s1, s2) {
 		t.Fatalf("%v != %v", s1, s2)
 	}
 }
 
-func ExpectEqList(t *testing.T, s1, s2 []interface{}) {
+func ExpectEqList(t *testing.T, s1, s2 []any) {
 	if len(s1) != len(s2) {
 		t.Fatalf("%v != %v", s1, s2)
 	}

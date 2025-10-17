@@ -313,12 +313,12 @@ func (stack *ScopeStack) Clear() {
 
 // scopePool holds maps for reuse.
 var scopePool = sync.Pool{
-	New: func() interface{} { return make(Scope) },
+	New: func() any { return make(Scope) },
 }
 
 // scopeLayerPool holds ScopeLayer structs for reuse.
 var scopeLayerPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &ScopeLayer{}
 	},
 }

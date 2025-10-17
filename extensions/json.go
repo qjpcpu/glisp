@@ -134,7 +134,7 @@ func mapJsonNodeToSexp(v *qjson.Node) glisp.Sexp {
 	return glisp.SexpNull
 }
 
-func stdUnmarshal(data []byte, v interface{}) error {
+func stdUnmarshal(data []byte, v any) error {
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	dec.UseNumber()
 	return dec.Decode(v)
