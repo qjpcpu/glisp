@@ -155,7 +155,6 @@ func (env *Environment) wrangleOptargs(fnargs, nargs int) error {
 			return err
 		}
 		env.datastack.PushExpr(MakeList(optargs))
-		PutSlice(optargs)
 	} else {
 		env.datastack.PushExpr(SexpNull)
 	}
