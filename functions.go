@@ -389,10 +389,17 @@ func GetLenFunction(name string) UserFunction {
 			n, err := HashCountKeys(t)
 			return NewSexpInt(n), err
 		case *SexpPair:
-			if IsList(t) {
-				arr, _ := ListToArray(t)
-				return NewSexpInt(len(arr)), nil
+			var expr Sexp = t
+			var n int
+			for expr != SexpNull {
+				list, ok := expr.(*SexpPair)
+				if !ok {
+					break
+				}
+				expr = list.tail
+				n++
 			}
+			return NewSexpInt(n), nil
 		case SexpSentinel:
 			if t == SexpNull {
 				return NewSexpInt(0), nil

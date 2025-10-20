@@ -156,8 +156,7 @@ func compileRegexp(re string) (*SexpRegexp, error) {
 	r, err := regexp.Compile(re)
 
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("error during regexp/compile: '%v'", err))
+		return nil, fmt.Errorf("error during regexp/compile: '%v'", err)
 	}
 
 	sr := &SexpRegexp{r: r}
@@ -183,7 +182,7 @@ func (c *regexpCache) Set(k string, v *SexpRegexp) {
 	c.rw.Lock()
 	defer c.rw.Unlock()
 	if len(c.rmap) > c.maxSize {
-		c.rmap = make(map[string]*SexpRegexp)
+		clear(c.rmap)
 	}
 	c.rmap[k] = v
 }
@@ -191,5 +190,5 @@ func (c *regexpCache) Set(k string, v *SexpRegexp) {
 var regCache = &regexpCache{
 	rmap:    make(map[string]*SexpRegexp),
 	rw:      new(sync.RWMutex),
-	maxSize: 100,
+	maxSize: 1024,
 }
