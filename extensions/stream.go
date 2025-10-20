@@ -154,6 +154,7 @@ func StreamFlatmapFunction(name string) glisp.UserFunction {
 		if !IsStream(args.Get(1)) {
 			return normalfn(env, args)
 		}
+
 		f, stream := args.Get(0).(*glisp.SexpFunction), args.Get(1).(iStream)
 		return &flatmapIterator{iStream: stream, f: f}, nil
 	}

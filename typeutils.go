@@ -8,12 +8,15 @@ func IsArray(expr Sexp) bool {
 	return false
 }
 
-func IsList(expr Sexp) bool {
+func IsList(expr Sexp, fastCheck ...bool) bool {
 	if expr == SexpNull {
 		return true
 	}
 	switch list := expr.(type) {
 	case *SexpPair:
+		if len(fastCheck) > 0 && fastCheck[0] {
+			return true
+		}
 		return IsList(list.tail)
 	}
 	return false

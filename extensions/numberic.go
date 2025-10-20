@@ -62,9 +62,17 @@ func GetNumericFunction(name string) glisp.UserFunction {
 		case "/":
 			op = Div
 		}
+		handle := NumericDo
+		if op == Sub {
+			if glisp.IsList(accum, true) {
+				handle = list_NumericDoSub
+			} else if glisp.IsArray(accum) {
+				handle = array_NumericDoSub
+			}
+		}
 
 		args.SliceStart(1).Foreach(func(expr glisp.Sexp) bool {
-			accum, err = NumericDo(op, accum, expr)
+			accum, err = handle(op, accum, expr)
 			return err == nil
 		})
 		if err != nil {
@@ -114,4 +122,54 @@ func GetSortFunction(name string) glisp.UserFunction {
 		}
 		return glisp.SexpArray(arr), nil
 	}
+}
+
+func list_NumericDoSub(op NumericOp, a, b glisp.Sexp) (glisp.Sexp, error) {
+	if !glisp.IsList(a, true) {
+		return glisp.SexpNull, fmt.Errorf("operands is not list %s", glisp.GetSexpType(a))
+	}
+	if !glisp.IsList(b, true) {
+		return glisp.SexpNull, fmt.Errorf("operands is not list %s", glisp.GetSexpType(b))
+	}
+	if a == glisp.SexpNull || b == glisp.SexpNull {
+		return a, nil
+	}
+	hash, _ := glisp.MakeHash(nil)
+	b.(*glisp.SexpPair).Foreach(func(elem glisp.Sexp) bool {
+		hash.HashSet(elem, glisp.SexpNull)
+		return true
+	})
+	lb := glisp.NewListBuilder()
+	a.(*glisp.SexpPair).Foreach(func(elem glisp.Sexp) bool {
+		if !hash.HashExist(elem) {
+			lb.Add(elem)
+		}
+		return true
+	})
+	return lb.Get(), nil
+}
+
+func array_NumericDoSub(op NumericOp, a, b glisp.Sexp) (glisp.Sexp, error) {
+	arr0, ok := a.(glisp.SexpArray)
+	if !ok {
+		return glisp.SexpNull, fmt.Errorf("operands is not array %s", glisp.GetSexpType(a))
+	}
+	arr1, ok := b.(glisp.SexpArray)
+	if !ok {
+		return glisp.SexpNull, fmt.Errorf("operands is not array %s", glisp.GetSexpType(b))
+	}
+	if len(arr0) == 0 || len(arr1) == 0 {
+		return a, nil
+	}
+	hash, _ := glisp.MakeHash(nil)
+	for _, elem := range arr1 {
+		hash.HashSet(elem, glisp.SexpNull)
+	}
+	ret := make([]glisp.Sexp, 0, len(arr0))
+	for _, elem := range arr0 {
+		if !hash.HashExist(elem) {
+			ret = append(ret, elem)
+		}
+	}
+	return glisp.SexpArray(ret), nil
 }

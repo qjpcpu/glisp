@@ -246,23 +246,11 @@ Result coll = a \\ b."
   (let [h (foldl (fn [e acc] (hset! acc e '()) acc) {} b)]
     (filter (fn [e] (not (exist? h e))) a)))
 
-(override - (fn [& args]
-              (let [length (len args)]
-                (cond (and (>= length 2) (list? (car args)) (list? (car (cdr args)))) (foldl (fn [b a] (list/complement a b)) (car args) (cdr args))
-                      (and (>= length 2) (array? (car args)) (array? (car (cdr args)))) (foldl (fn [b a] (list/complement a b)) (car args) (cdr args))
-                      (and (>= length 2) (stream? (car args)) (stream? (car (cdr args))))
-                      (foldl (fn [b a]
-                               (let [h (core/__stream2hash b)] (reject #(exist? h %) a))) (car args) (cdr args))
-                      (apply - args)))))
-
 (defn list/intersect [a b]
   "Usage: (list/intersect a b)
 Return coll which elements belongs to a and b."
   (let [h (foldl (fn [e acc] (hset! acc e '()) acc) {} b)]
     (filter (fn [e] (exist? h e)) a)))
-
-(defn core/__stream2hash [s]
-  (foldl (fn [e acc] (hset! acc e true)) {} s))
 
 (defn uniq [& a]
   "Usage: (uniq a)

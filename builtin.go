@@ -47,48 +47,52 @@ func GetTypeFunction(name string) UserFunction {
 		if args.Len() != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		var present string
-		switch expr := args.Get(0).(type) {
-		case SexpSymbol:
-			present = `symbol`
-		case SexpStr:
-			present = `string`
-		case SexpArray:
-			present = `array`
-		case SexpBool:
-			present = `bool`
-		case SexpChar:
-			present = `char`
-		case SexpFloat:
-			present = `float`
-		case *SexpFunction:
-			present = `function`
-		case *SexpHash:
-			present = `hash`
-		case SexpInt:
-			present = `int`
-		case *SexpPair:
-			present = `list`
-		case SexpSentinel:
-			switch expr {
-			case SexpNull:
-				present = "list"
-			case SexpEnd:
-				present = "<end>"
-			case SexpMarker:
-				present = "<marker>"
-			}
-		case SexpBytes:
-			present = `bytes`
-		case SexpError:
-			present = `error`
-		case ITypeName:
-			present = expr.TypeName()
-		default:
-			present = reflect.TypeOf(args.Get(0)).String()
-		}
-		return SexpStr(present), nil
+		return SexpStr(GetSexpType(args.Get(0))), nil
 	}
+}
+
+func GetSexpType(arg Sexp) string {
+	var present string
+	switch expr := arg.(type) {
+	case SexpSymbol:
+		present = `symbol`
+	case SexpStr:
+		present = `string`
+	case SexpArray:
+		present = `array`
+	case SexpBool:
+		present = `bool`
+	case SexpChar:
+		present = `char`
+	case SexpFloat:
+		present = `float`
+	case *SexpFunction:
+		present = `function`
+	case *SexpHash:
+		present = `hash`
+	case SexpInt:
+		present = `int`
+	case *SexpPair:
+		present = `list`
+	case SexpSentinel:
+		switch expr {
+		case SexpNull:
+			present = "list"
+		case SexpEnd:
+			present = "<end>"
+		case SexpMarker:
+			present = "<marker>"
+		}
+	case SexpBytes:
+		present = `bytes`
+	case SexpError:
+		present = `error`
+	case ITypeName:
+		present = expr.TypeName()
+	default:
+		present = reflect.TypeOf(arg).String()
+	}
+	return present
 }
 
 func InspectType(expr Sexp) string {
