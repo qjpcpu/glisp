@@ -52,7 +52,7 @@ func jsonUnmarshal(name string) glisp.UserFunction {
 		}
 		switch val := args.Get(0).(type) {
 		case glisp.SexpStr:
-			rawBytes := []byte(string(val))
+			rawBytes := []byte(val)
 			return makeRes(ParseJSON(rawBytes))
 		case glisp.SexpBytes:
 			return makeRes(ParseJSON(val.Bytes()))

@@ -106,7 +106,7 @@ func GetFirstFunction(name string) UserFunction {
 			return expr[0], nil
 		case *SexpHash:
 			var ret Sexp = SexpNull
-			expr.Foreach(func(k Sexp, v Sexp) bool {
+			expr.Visit(func(k Sexp, v Sexp) bool {
 				ret = Cons(k, v)
 				return false
 			})

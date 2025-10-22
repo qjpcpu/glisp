@@ -84,3 +84,6 @@
 (assert ((test-closure2)))
 (assert (= 2 ((test-closure3))))
 (assert (= 3 ((test-closure4))))
+
+(assert (= '("2" 3) (- '(1 "2" 3) '(1 2))))
+(assert (= ["2" 3] (- [1 "2" 3] [1 2])))

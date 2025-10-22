@@ -119,17 +119,18 @@ func (a *SexpPair) MarshalJSON() ([]byte, error) {
 func (a *SexpHash) MarshalJSON() ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	buffer.WriteByte('{')
-	keys := a.KeyOrder
 	var addComma bool
-	for _, key := range keys {
-		val, _ := a.HashGet(key)
-		keyj, err := Marshal(key)
-		if err != nil {
-			return nil, err
+	var err error
+	a.Visit(func(key Sexp, val Sexp) bool {
+		keyj, err0 := Marshal(key)
+		if err0 != nil {
+			err = err0
+			return false
 		}
-		valj, err := Marshal(val)
-		if err != nil {
-			return nil, err
+		valj, err0 := Marshal(val)
+		if err0 != nil {
+			err = err0
+			return false
 		}
 		if addComma {
 			buffer.WriteByte(',')
@@ -139,6 +140,10 @@ func (a *SexpHash) MarshalJSON() ([]byte, error) {
 		buffer.Write(keyj)
 		buffer.WriteByte(':')
 		buffer.Write(valj)
+		return true
+	})
+	if err != nil {
+		return nil, err
 	}
 	buffer.WriteByte('}')
 	return buffer.Bytes(), nil

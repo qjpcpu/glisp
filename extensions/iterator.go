@@ -261,8 +261,8 @@ func (iter *dropIterator) Next(env *glisp.Environment) (glisp.Sexp, bool, error)
 }
 
 type HashIterator struct {
+	iter *glisp.HashIter
 	expr *glisp.SexpHash
-	idx  int
 }
 
 func (iter *HashIterator) SexpString() string {
@@ -270,19 +270,14 @@ func (iter *HashIterator) SexpString() string {
 }
 
 func (iter *HashIterator) Next(*glisp.Environment) (glisp.Sexp, bool, error) {
-	if iter.idx >= len(iter.expr.KeyOrder) {
+	if iter.iter == nil {
+		iter.iter = iter.expr.Iter()
+	}
+	key, val, ok := iter.iter.Next()
+	if !ok {
 		return glisp.SexpNull, false, nil
 	}
-	iter.idx++
-	key := iter.expr.KeyOrder[iter.idx-1]
-	if iter.expr.HashExist(key) {
-		val, err := iter.expr.HashGet(key)
-		if err != nil {
-			return glisp.SexpNull, false, err
-		}
-		return glisp.Cons(key, val), true, nil
-	}
-	return glisp.SexpNull, false, nil
+	return glisp.Cons(key, val), true, nil
 }
 
 type RecordIterator struct {

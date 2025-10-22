@@ -255,7 +255,7 @@ var availableHttpOptions = map[string]httpOption{
 			case *glisp.SexpHash:
 				if strings.Contains(req.Header.Get("Content-Type"), `form`) {
 					val := make(url.Values)
-					expr.Foreach(func(k glisp.Sexp, v glisp.Sexp) bool {
+					expr.Visit(func(k glisp.Sexp, v glisp.Sexp) bool {
 						val.Add(_httpToFormValue(k), _httpToFormValue(v))
 						return true
 					})

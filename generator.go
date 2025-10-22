@@ -799,18 +799,10 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	default:
 		return fmt.Errorf("arg to generateSyntaxQuoteHash() must be a hash; got %v", InspectType(a))
 	}
-	n, err := HashCountKeys(hash)
-	if err != nil {
-		return err
-	}
 	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
-	for i := 0; i < n; i++ {
-		// must reverse order here to preserve order on rebuild
-		key := hash.KeyOrder[(n-i)-1]
-		val, err := hash.HashGet(key)
-		if err != nil {
-			return err
-		}
+
+	// must reverse order here to preserve order on rebuild
+	hash.ReverseVisit(func(key Sexp, val Sexp) bool {
 		// value first, since value comes second on rebuild
 		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
 		gen.GenerateSyntaxQuote([]Sexp{val})
@@ -821,7 +813,8 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 		gen.GenerateSyntaxQuote([]Sexp{key})
 		gen.AddInstruction(Instruction{Op: OpSquash})
 		gen.AddInstruction(Instruction{Op: OpExplode})
-	}
+		return true
+	})
 	gen.AddInstruction(Instruction{Op: OpHashize})
 	return nil
 }

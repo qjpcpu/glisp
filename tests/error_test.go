@@ -198,11 +198,6 @@ func TestAppendStringErr(t *testing.T) {
 	ExpectScriptErr(t, script, `second argument is not a char`)
 }
 
-func TestHashKey(t *testing.T) {
-	script := `(exist? {} {})`
-	ExpectScriptErr(t, script, `cannot hash type hash`)
-}
-
 func TestEvalNothing(t *testing.T) {
 	script := `(eval (begin))`
 	ExpectScriptErr(t, script, `generating (eval (begin))`)
@@ -225,7 +220,7 @@ func TestJSONParse(t *testing.T) {
 
 func TestApplyArgMustBeList(t *testing.T) {
 	script := `(apply + (cons 1 2))`
-	ExpectScriptErr(t, script, `expect list but got list`)
+	ExpectScriptErr(t, script, `expect list but got (1 . 2)`)
 }
 
 func TestDefensiveCornor(t *testing.T) {

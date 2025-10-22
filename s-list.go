@@ -69,13 +69,13 @@ func (pair *SexpPair) Foreach(f func(Sexp) bool) {
 }
 
 func ListToArray(expr Sexp) ([]Sexp, error) {
-	if !IsList(expr) {
-		return nil, fmt.Errorf("expect list but got %s", InspectType(expr))
-	}
+	orig := expr
 	arr := make([]Sexp, 0)
-
 	for expr != SexpNull {
-		list := expr.(*SexpPair)
+		list, ok := expr.(*SexpPair)
+		if !ok {
+			return nil, fmt.Errorf("expect list but got %s", orig.SexpString())
+		}
 		arr = append(arr, list.head)
 		expr = list.tail
 	}
@@ -89,16 +89,18 @@ func MakeList(expressions []Sexp) Sexp {
 
 func MapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
 	result := NewListBuilder()
-	for _, key := range arr.KeyOrder {
-		val, err := arr.HashGet(key)
-		if err != nil {
-			return SexpNull, err
-		}
-		elem, err := env.Apply(fun, MakeArgs(Cons(key, val)))
-		if err != nil {
-			return SexpNull, err
+	var err error
+	arr.Visit(func(key Sexp, val Sexp) bool {
+		elem, err0 := env.Apply(fun, MakeArgs(Cons(key, val)))
+		if err0 != nil {
+			err = err0
+			return false
 		}
 		result.Add(elem)
+		return true
+	})
+	if err != nil {
+		return SexpNull, err
 	}
 
 	return result.Get(), nil

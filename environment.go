@@ -735,7 +735,7 @@ func (env *Environment) bindListInstruction() error {
 			env.scopestack.BindSymbol(arr[i*2].(SexpSymbol), arr[i*2+1])
 		}
 	case *SexpHash:
-		arr.Foreach(func(k Sexp, v Sexp) bool {
+		arr.Visit(func(k Sexp, v Sexp) bool {
 			if IsSymbol(k) {
 				env.scopestack.BindSymbol(k.(SexpSymbol), v)
 				return true

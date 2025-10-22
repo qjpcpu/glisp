@@ -120,12 +120,18 @@ func findSexp(node glisp.Sexp, paths []stPath) glisp.Sexp {
 	p := paths[0]
 	switch expr := node.(type) {
 	case *glisp.SexpHash:
-		keys := expr.KeyOrder
-		for _, key := range keys {
+		var ret glisp.Sexp
+		var hit bool
+		expr.Visit(func(key glisp.Sexp, val glisp.Sexp) bool {
 			if sexprToStr(key) == p.Name {
-				val, _ := expr.HashGet(key)
-				return findSexp(val, paths[1:])
+				ret = findSexp(val, paths[1:])
+				hit = true
+				return false
 			}
+			return true
+		})
+		if hit {
+			return ret
 		}
 	case glisp.SexpArray:
 		if p.isArrayElemSelector() {
@@ -253,7 +259,8 @@ func isElemMatched(n glisp.Sexp, op string, val string) bool {
 }
 
 func makeStPath(p string) ([]stPath, bool) {
-	var paths []stPath
+	// Pre-allocate slice with a reasonable capacity to avoid reallocations.
+	paths := make([]stPath, 0, strings.Count(p, ".")+1)
 	proj := map[byte]byte{
 		'(': ')',
 		'"': '"',

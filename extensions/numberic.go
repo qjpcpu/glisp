@@ -107,7 +107,7 @@ func GetSortFunction(name string) glisp.UserFunction {
 			return coll, nil
 		} else if glisp.IsArray(coll) {
 			arr = coll.(glisp.SexpArray)
-		} else if glisp.IsList(coll) {
+		} else if glisp.IsList(coll, true) {
 			isList = true
 			arr, _ = glisp.ListToArray(coll)
 		} else {
@@ -134,14 +134,17 @@ func list_NumericDoSub(op NumericOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 	if a == glisp.SexpNull || b == glisp.SexpNull {
 		return a, nil
 	}
-	hash, _ := glisp.MakeHash(nil)
+	presenceMap := make(map[string]struct{})
 	b.(*glisp.SexpPair).Foreach(func(elem glisp.Sexp) bool {
-		hash.HashSet(elem, glisp.SexpNull)
+		if key, err := glisp.HashExpr(elem); err == nil {
+			presenceMap[key] = struct{}{}
+		}
 		return true
 	})
 	lb := glisp.NewListBuilder()
 	a.(*glisp.SexpPair).Foreach(func(elem glisp.Sexp) bool {
-		if !hash.HashExist(elem) {
+		key, _ := glisp.HashExpr(elem)
+		if _, ok := presenceMap[key]; !ok {
 			lb.Add(elem)
 		}
 		return true
@@ -161,13 +164,16 @@ func array_NumericDoSub(op NumericOp, a, b glisp.Sexp) (glisp.Sexp, error) {
 	if len(arr0) == 0 || len(arr1) == 0 {
 		return a, nil
 	}
-	hash, _ := glisp.MakeHash(nil)
+	presenceMap := make(map[string]struct{})
 	for _, elem := range arr1 {
-		hash.HashSet(elem, glisp.SexpNull)
+		if key, err := glisp.HashExpr(elem); err == nil {
+			presenceMap[key] = struct{}{}
+		}
 	}
 	ret := make([]glisp.Sexp, 0, len(arr0))
 	for _, elem := range arr0 {
-		if !hash.HashExist(elem) {
+		key, _ := glisp.HashExpr(elem)
+		if _, ok := presenceMap[key]; !ok {
 			ret = append(ret, elem)
 		}
 	}

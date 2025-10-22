@@ -127,7 +127,7 @@ func extractCSVRows(rows glisp.SexpArray) (ret [][]string, err error) {
 			}
 			if i == 0 {
 				var cols, vals []string
-				hash.Foreach(func(k glisp.Sexp, v glisp.Sexp) bool {
+				hash.Visit(func(k glisp.Sexp, v glisp.Sexp) bool {
 					columns = append(columns, k)
 					cols = append(cols, toCSVString(k))
 					vals = append(vals, toCSVString(v))

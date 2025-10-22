@@ -3,22 +3,33 @@ package glisp
 import (
 	"errors"
 	"fmt"
-	"hash/fnv"
+	"strings"
 )
 
+const CompactHashThreshold = 16
+
+type hashkey struct {
+	t string
+	k string
+}
+
+type hashval struct {
+	k, v Sexp
+	i    int
+}
+
 type SexpHash struct {
-	Map      map[int][]*SexpPair
-	KeyOrder []Sexp // must user pointers here, else hset! will fail to update.
-	NumKeys  int
+	Map      map[hashkey]hashval
+	keys     []hashkey
+	del      []int
+	delCount int
 }
 
 func (hash *SexpHash) SexpString() string {
 	str := "{"
-	for _, arr := range hash.Map {
-		for _, pair := range arr {
-			str += pair.head.SexpString() + " "
-			str += pair.tail.SexpString() + " "
-		}
+	for _, elem := range hash.Map {
+		str += elem.k.SexpString() + " "
+		str += elem.v.SexpString() + " "
 	}
 	if len(str) > 1 {
 		return str[:len(str)-1] + "}"
@@ -26,49 +37,42 @@ func (hash *SexpHash) SexpString() string {
 	return str + "}"
 }
 
-func HashExpression(expr Sexp) (int, error) {
-	switch e := expr.(type) {
-	case SexpInt:
-		if e.IsInt64() {
-			return e.ToInt(), nil
-		}
-		hasher := fnv.New32()
-		_, err := hasher.Write([]byte(e.SexpString()))
-		if err != nil {
-			return 0, err
-		}
-		return int(hasher.Sum32()), nil
-	case SexpChar:
-		return int(e), nil
+func hashExpr(e Sexp) (hashkey, error) {
+	switch expr := e.(type) {
 	case SexpSymbol:
-		return e.number, nil
+		return hashkey{t: "symbol", k: expr.SexpString()}, nil
 	case SexpStr:
-		hasher := fnv.New32()
-		_, err := hasher.Write([]byte(e))
-		if err != nil {
-			return 0, err
-		}
-		return int(hasher.Sum32()), nil
+		return hashkey{t: "string", k: expr.SexpString()}, nil
 	case SexpBool:
-		if bool(e) {
-			return 1, nil
-		}
-		return 0, nil
+		return hashkey{t: "bool", k: expr.SexpString()}, nil
+	case SexpChar:
+		return hashkey{t: "char", k: expr.SexpString()}, nil
+	case SexpInt:
+		return hashkey{t: "int", k: expr.SexpString()}, nil
+	default:
+		return hashkey{}, fmt.Errorf("can't hash type %s", GetSexpType(e))
 	}
-	return 0, fmt.Errorf("cannot hash type %v", InspectType(expr))
+}
+
+func HashExpr(e Sexp) (string, error) {
+	k, err := hashExpr(e)
+	if err != nil {
+		return "", err
+	}
+	sb := strings.Builder{}
+	sb.WriteString(k.t)
+	sb.WriteString(":")
+	sb.WriteString(k.k)
+	return sb.String(), nil
 }
 
 func MakeHash(args []Sexp) (*SexpHash, error) {
 	if len(args)%2 != 0 {
-		return &SexpHash{},
-			errors.New("hash requires even number of arguments")
+		return &SexpHash{}, errors.New("hash requires even number of arguments")
 	}
 
-	var memberCount int
 	hash := &SexpHash{
-		Map:      make(map[int][]*SexpPair),
-		KeyOrder: []Sexp{},
-		NumKeys:  memberCount,
+		Map: make(map[hashkey]hashval),
 	}
 	for i := 0; i < len(args); i += 2 {
 		key := args[i]
@@ -91,11 +95,9 @@ func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
 	val, err := hash.HashGetDefault(key, SexpEnd)
-
 	if err != nil {
 		return SexpNull, err
 	}
-
 	if val == SexpEnd {
 		return SexpNull, fmt.Errorf("key %s not found", key.SexpString())
 	}
@@ -103,119 +105,101 @@ func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
-	hashval, err := HashExpression(key)
+	hkey, err := hashExpr(key)
 	if err != nil {
 		return SexpNull, err
 	}
-	arr, ok := hash.Map[hashval]
-
+	elem, ok := hash.Map[hkey]
 	if !ok {
 		return defaultval, nil
 	}
-
-	for _, pair := range arr {
-		res, err := Compare(pair.head, key)
-		if err == nil && res == 0 {
-			return pair.tail, nil
-		}
-	}
-	return defaultval, nil
+	return elem.v, nil
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	hashval, err := HashExpression(key)
+	hkey, err := hashExpr(key)
 	if err != nil {
 		return err
 	}
-	arr, ok := hash.Map[hashval]
-
+	elem, ok := hash.Map[hkey]
 	if !ok {
-		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
-		hash.KeyOrder = append(hash.KeyOrder, key)
-		(hash.NumKeys)++
-		return nil
+		hash.Map[hkey] = hashval{k: key, v: val, i: len(hash.keys)}
+		hash.keys = append(hash.keys, hkey)
+		hash.del = append(hash.del, 0)
+	} else {
+		hash.Map[hkey] = hashval{k: key, v: val, i: elem.i}
 	}
-
-	found := false
-	for i, pair := range arr {
-		res, err := Compare(pair.head, key)
-		if err == nil && res == 0 {
-			arr[i] = Cons(key, val)
-			found = true
-		}
-	}
-
-	if !found {
-		arr = append(arr, Cons(key, val))
-		hash.KeyOrder = append(hash.KeyOrder, key)
-		(hash.NumKeys)++
-	}
-
-	hash.Map[hashval] = arr
-
 	return nil
 }
 
 func (hash *SexpHash) HashDelete(key Sexp) error {
-	hashval, err := HashExpression(key)
+	hkey, err := hashExpr(key)
 	if err != nil {
 		return err
 	}
-	arr, ok := hash.Map[hashval]
-
+	elem, ok := hash.Map[hkey]
 	// if it doesn't exist, no need to delete it
 	if !ok {
 		return nil
 	}
 
-	(hash.NumKeys)--
-	for i, pair := range arr {
-		res, err := Compare(pair.head, key)
-		if err == nil && res == 0 {
-			if len(arr) == 1 {
-				for j, k := range hash.KeyOrder {
-					if kr, kerr := Compare(k, key); kerr == nil && kr == 0 {
-						hash.KeyOrder = append((hash.KeyOrder)[0:j], (hash.KeyOrder)[j+1:]...)
-						break
-					}
-				}
-			}
-			hash.Map[hashval] = append(arr[0:i], arr[i+1:]...)
-			break
-		}
-	}
-
+	delete(hash.Map, hkey)
+	hash.del[elem.i] = 1
+	hash.delCount++
+	hash.compact()
 	return nil
 }
 
-func HashCountKeys(hash *SexpHash) (int, error) {
-	var num int
-	for _, arr := range hash.Map {
-		num += len(arr)
+func (hash *SexpHash) compact() {
+	if hash.delCount > CompactHashThreshold {
+		var delCount int
+		for i := range hash.keys {
+			if hash.del[i] == 1 {
+				hash.del[i] = 0
+				delCount++
+			} else if delCount > 0 {
+				key := hash.keys[i]
+				val := hash.Map[key]
+				val.i = i - delCount
+				hash.Map[key] = val
+				hash.keys[i-delCount] = hash.keys[i]
+			}
+		}
+		size := len(hash.keys)
+		hash.keys = hash.keys[:size-delCount]
+		hash.del = hash.del[:size-delCount]
+		hash.delCount = 0
 	}
-	if num != hash.NumKeys {
-		return 0, fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, hash.NumKeys)
-	}
-	return num, nil
 }
 
-func (hash *SexpHash) Foreach(fn func(Sexp, Sexp) bool) {
-	keys := hash.KeyOrder
-	for _, key := range keys {
-		val, _ := hash.HashGet(key)
-		if !fn(key, val) {
-			break
+func HashCountKeys(hash *SexpHash) (int, error) {
+	return len(hash.Map), nil
+}
+
+func (hash *SexpHash) Visit(fn func(Sexp, Sexp) bool) {
+	for i := range len(hash.keys) {
+		if hash.del[i] == 0 {
+			elem := hash.Map[hash.keys[i]]
+			if !fn(elem.k, elem.v) {
+				break
+			}
+		}
+	}
+}
+
+func (hash *SexpHash) ReverseVisit(fn func(Sexp, Sexp) bool) {
+	for i := len(hash.keys) - 1; i >= 0; i-- {
+		if hash.del[i] == 0 {
+			elem := hash.Map[hash.keys[i]]
+			if !fn(elem.k, elem.v) {
+				break
+			}
 		}
 	}
 }
 
 func HashIsEmpty(hash *SexpHash) bool {
-	for _, arr := range hash.Map {
-		if len(arr) > 0 {
-			return false
-		}
-	}
-	return true
+	return len(hash.Map) == 0
 }
 
 func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash, error) {
@@ -224,7 +208,7 @@ func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash,
 		return hash, err
 	}
 
-	hash.Foreach(func(key Sexp, val Sexp) bool {
+	hash.Visit(func(key Sexp, val Sexp) bool {
 		ret, err0 := env.Apply(fun, MakeArgs(Cons(key, val)))
 		if err0 != nil {
 			err = err0
@@ -249,12 +233,12 @@ func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash,
 }
 
 func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (Sexp, error) {
-	if hash.NumKeys == 0 {
+	if len(hash.Map) == 0 {
 		return acc, nil
 	}
 
 	var err error
-	hash.Foreach(func(k Sexp, v Sexp) bool {
+	hash.Visit(func(k Sexp, v Sexp) bool {
 		if acc, err = env.Apply(fun, MakeArgs(Cons(k, v), acc)); err != nil {
 			return false
 		}
@@ -271,29 +255,35 @@ func FoldlHash(env *Environment, fun *SexpFunction, hash *SexpHash, acc Sexp) (S
 func FlatMapHash(env *Environment, fun *SexpFunction, arr *SexpHash) (Sexp, error) {
 	result := NewListBuilder()
 
-	for _, key := range arr.KeyOrder {
-		val, err := arr.HashGet(key)
-		if err != nil {
-			return SexpNull, err
-		}
-		res, err := env.Apply(fun, MakeArgs(Cons(key, val)))
-		if err != nil {
-			return SexpNull, err
+	var err error
+	arr.Visit(func(key Sexp, val Sexp) bool {
+		res, err0 := env.Apply(fun, MakeArgs(Cons(key, val)))
+		if err0 != nil {
+			err = err0
+			return false
 		}
 		if res == SexpNull {
-			continue
+			return true
 		}
 		if IsArray(res) {
 			arr := res.(SexpArray)
 			result.Add(arr...)
-		} else if IsList(res) {
-			arr, _ := ListToArray(res)
+		} else if IsList(res, true) {
+			arr, err0 := ListToArray(res)
+			if err0 != nil {
+				err = err0
+				return false
+			}
 			result.Add(arr...)
 		} else {
-			return SexpNull, errors.New("flatmap function must return array/list")
+			err = errors.New("flatmap function must return array/list")
+			return false
 		}
+		return true
+	})
+	if err != nil {
+		return SexpNull, err
 	}
-
 	return result.Get(), nil
 }
 
@@ -323,14 +313,38 @@ func ConcatHash(h *SexpHash, exprs Args) (Sexp, error) {
 			return false
 		}
 		eh := e.(*SexpHash)
-		for _, key := range eh.KeyOrder {
-			val, _ := eh.HashGet(key)
+		eh.Visit(func(key Sexp, val Sexp) bool {
 			h.HashSet(key, val)
-		}
+			return true
+		})
 		return true
 	})
 	if err != nil {
 		return h, err
 	}
 	return h, nil
+}
+
+func (hash *SexpHash) Iter() *HashIter {
+	return &HashIter{hash: hash}
+}
+
+type HashIter struct {
+	hash *SexpHash
+	idx  int
+}
+
+func (iter *HashIter) Next() (Sexp, Sexp, bool) {
+	if iter.idx >= len(iter.hash.keys) {
+		return SexpNull, SexpNull, false
+	}
+	for ; iter.idx < len(iter.hash.keys); iter.idx++ {
+		if iter.hash.del[iter.idx] == 0 {
+			key := iter.hash.keys[iter.idx]
+			val := iter.hash.Map[key]
+			iter.idx++
+			return val.k, val.v, true
+		}
+	}
+	return SexpNull, SexpNull, false
 }

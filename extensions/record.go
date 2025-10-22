@@ -269,14 +269,18 @@ func checkTypeMatched(typ string, v glisp.Sexp) error {
 		}
 		hash := v.(*glisp.SexpHash)
 		ik, iv := getInnerKVType(typ)
-		for _, key := range hash.KeyOrder {
-			if err := checkTypeMatched(ik, key); err != nil {
-				return err
+		var err error
+		hash.Visit(func(key glisp.Sexp, val glisp.Sexp) bool {
+			if err = checkTypeMatched(ik, key); err != nil {
+				return false
 			}
-			val, _ := hash.HashGet(key)
-			if err := checkTypeMatched(iv, val); err != nil {
-				return err
+			if err = checkTypeMatched(iv, val); err != nil {
+				return false
 			}
+			return true
+		})
+		if err != nil {
+			return err
 		}
 	case isListType(typ):
 		if !glisp.IsList(v) {
