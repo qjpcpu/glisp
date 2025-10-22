@@ -99,6 +99,5 @@ func InspectType(expr Sexp) string {
 	if expr == SexpNull {
 		return `nil`
 	}
-	t, _ := GetTypeFunction(`type`)(nil, MakeArgs(expr))
-	return string(t.(SexpStr))
+	return GetSexpType(expr)
 }
