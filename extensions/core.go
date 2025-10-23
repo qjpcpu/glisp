@@ -22,7 +22,6 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("sort", GetSortFunction)
 	env.AddNamedFunction("compose", GetComposeFunction)
 	/* stream */
-	env.OverrideFunction("type", OverrideTypeFunction)
 	env.AddNamedFunction("streamable?", IsStreamableFunction)
 	env.AddNamedFunction("stream?", IsStreamFunction)
 	env.AddNamedFunction("stream", StreamFunction)
@@ -46,6 +45,10 @@ func ImportCoreUtils(vm *glisp.Environment) error {
 	env.AddNamedFunction("get-record-class", GetRecordClass)
 	env.AddNamedFunction("record-class-definition", ClassDefinition)
 	env.AddNamedFunction("record-of?", CheckIsRecordOf)
+
+	/* register user types */
+	regiserStreamTypes(env.Environment)
+
 	mustLoadScript(env.Environment, "core")
 
 	/* buffer */
@@ -327,4 +330,24 @@ func GetComposeFunction(name string) glisp.UserFunction {
 			return _args.Get(0), nil
 		}), nil
 	}
+}
+
+func regiserStreamTypes(env *glisp.Environment) {
+	env.RegisterType("stream",
+		&ListIterator{},
+		&ZipListIterator{},
+		&ArrayIterator{},
+		&BytesIterator{},
+		&StringIterator{},
+		&IterableStream{},
+		&mapIterator{},
+		&flatmapIterator{},
+		&filterIterator{},
+		&takeIterator{},
+		&dropIterator{},
+		&HashIterator{},
+		&RangeIterator{},
+		&partitionIterator{},
+		&UnionIterator{},
+	)
 }

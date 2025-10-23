@@ -59,7 +59,7 @@ func ReadCSVFile(name string) glisp.UserFunction {
 							glisp.SexpStr(col),
 						)
 					}
-					h, _ := glisp.MakeHash(sexpRow)
+					h, _ := glisp.MakeHash(glisp.MakeArgs(sexpRow...))
 					rows = append(rows, h)
 				}
 			}

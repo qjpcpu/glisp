@@ -533,7 +533,7 @@ func evalSingleHTTP(name string, hreq request, urlstr string, env *glisp.Environ
 		for key := range resp.Header {
 			kvs = append(kvs, glisp.SexpStr(key), glisp.SexpStr(resp.Header.Get(key)))
 		}
-		header, _ := glisp.MakeHash(kvs)
+		header, _ := glisp.MakeHash(glisp.MakeArgs(kvs...))
 		responseBody = glisp.Cons(header, responseBody)
 	}
 

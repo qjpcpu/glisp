@@ -47,7 +47,7 @@ func GetTypeFunction(name string) UserFunction {
 		if args.Len() != 1 {
 			return SexpNull, fmt.Errorf(`%s expect 1 argument but got %v`, name, args.Len())
 		}
-		return SexpStr(GetSexpType(args.Get(0))), nil
+		return SexpStr(env.GetTypeName(args.Get(0))), nil
 	}
 }
 
@@ -90,9 +90,13 @@ func GetSexpType(arg Sexp) string {
 	case ITypeName:
 		present = expr.TypeName()
 	default:
-		present = reflect.TypeOf(arg).String()
+		present = getGoType(arg)
 	}
 	return present
+}
+
+func getGoType(arg Sexp) string {
+	return fmt.Sprintf("go:%s", reflect.TypeOf(arg).String())
 }
 
 func InspectType(expr Sexp) string {

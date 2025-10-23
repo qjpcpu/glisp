@@ -205,7 +205,10 @@ func existInList(a Sexp, element Sexp) (bool, error) {
 		if a == SexpNull {
 			return false, nil
 		}
-		expr := a.(*SexpPair)
+		expr, ok := a.(*SexpPair)
+		if !ok {
+			return false, fmt.Errorf("%s is not list", a.SexpString())
+		}
 		eq, err := Compare(expr.head, element)
 		if err != nil {
 			return false, err

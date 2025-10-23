@@ -48,7 +48,7 @@ func ExecCommand(opts *CommandOptions) glisp.NamedUserFunction {
 			var hash *glisp.SexpHash
 			switch val := args.Get(0).(type) {
 			case glisp.SexpStr:
-				hash, _ = glisp.MakeHash([]glisp.Sexp{glisp.SexpStr("cmd"), args.Get(0)})
+				hash, _ = glisp.MakeHash(glisp.MakeArgs(glisp.SexpStr("cmd"), args.Get(0)))
 			case *glisp.SexpHash:
 				hash = val
 			default:

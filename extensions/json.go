@@ -112,7 +112,7 @@ func mapJsonNodeToSexp(v *qjson.Node) glisp.Sexp {
 				mapJsonNodeToSexp(elem.Value),
 			)
 		}
-		hash, _ := glisp.MakeHash(arr)
+		hash, _ := glisp.MakeHash(glisp.MakeArgs(arr...))
 		return hash
 	case qjson.Array:
 		arr := make(glisp.SexpArray, 0, len(v.ArrayValues))

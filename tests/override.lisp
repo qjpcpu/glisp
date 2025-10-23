@@ -12,11 +12,12 @@
 
 
 (override - (fn [a b]
-                        (cond (or (list? a) (array? a)) (list/complement a b) (- a b))))
+                (cond (or (list? a) (array? a)) (list/complement a b) (- a b))))
 
 (assert (= 1 (- 3 2)))
 (assert (= [1] (- [1 2 3] [2 3])))
 (assert (= '(1) (- '(1 2 3) '(2 3))))
 
-(override len (fn [x] 100))
-(assert (= 100 (len [1])))
+(defn my-len [e] (len e))
+(override my-len (fn [x] 100))
+(assert (= 100 (my-len [1])))

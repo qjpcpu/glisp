@@ -51,7 +51,7 @@ func TestOverrideBuiltin(t *testing.T) {
 	vm.AddFunction("len", func(v *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		return glisp.NewSexpInt(100), nil
 	})
-	ret, err := vm.EvalString(`(len [])`)
+	ret, err := vm.EvalString(`(apply len [[]])`)
 	ExpectSuccess(t, err)
 	ExpectEqInteger(t, 100, ret)
 }
@@ -179,10 +179,10 @@ func TestCustomType(t *testing.T) {
 	fn, _ := vm.FindObject("type")
 	ret, err := vm.Apply(fn.(*glisp.SexpFunction), glisp.MakeArgs(&testSexp{}))
 	ExpectSuccess(t, err)
-	ExpectEqStr(t, "*tests.testSexp", ret)
+	ExpectEqStr(t, "go:*tests.testSexp", ret)
 	ret, err = vm.Apply(fn.(*glisp.SexpFunction), glisp.MakeArgs(testSexp2{}))
 	ExpectSuccess(t, err)
-	ExpectEqStr(t, "tests.testSexp2", ret)
+	ExpectEqStr(t, "go:tests.testSexp2", ret)
 }
 
 func testFile(t *testing.T, file string) {
@@ -335,6 +335,35 @@ func TestCloneEnv(t *testing.T) {
 
 	_, ok := vm2.FindObject("f0")
 	ExpectFalse(t, glisp.SexpBool(ok))
+}
+
+func TestGenerateDefnWithDynamicName(t *testing.T) {
+	script := `
+(def my-name (gensym))
+(defn (symbol my-name) [a b] (+ a b))
+`
+	vm := newFullEnv()
+	_, err := vm.EvalString(script)
+	ExpectSuccess(t, err)
+
+	// To call it, we need to get the generated name first
+	nameExpr, _ := vm.FindObject("my-name")
+	name := nameExpr.(glisp.SexpSymbol).Name()
+
+	ret, err := vm.ApplyByName(name, glisp.MakeArgs(glisp.NewSexpInt(10), glisp.NewSexpInt(20)))
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 30, ret)
+}
+
+func TestGenerateSharpQuoteWithList(t *testing.T) {
+	script := `(defn my-add [a b] (+ a b)) (apply #'my-add [1 2])`
+	ret, err := newFullEnv().EvalString(script)
+	ExpectSuccess(t, err)
+	ExpectEqInteger(t, 3, ret)
+}
+
+func TestOpRefSymOnNonSymbol(t *testing.T) {
+	ExpectScriptErr(t, `(ref-symbol 123)`, "symbol `ref-symbol` not found")
 }
 
 func TestSourceFile(t *testing.T) {
@@ -944,3 +973,23 @@ func (rd) Read(p []byte) (n int, err error) { return }
 type wt int
 
 func (wt) Write(p []byte) (int, error) { return 0, nil }
+
+func TestDataStackPeekArgsUntil(t *testing.T) {
+	stack := glisp.NewDataStack(10)
+	/* stack bottom -> top: 0 1 2 3 4 */
+	for i := 0; i < 5; i++ {
+		stack.PushExpr(glisp.NewSexpInt(i))
+	}
+	/* should be 2 3 4 */
+	args, err := stack.PeekArgsUntil(func(expr glisp.Sexp) bool {
+		return expr.(glisp.SexpInt).ToInt() == 2
+	})
+	ExpectSuccess(t, err)
+	ExpectEqAny(t, 3, args.Len())
+	ExpectEqAny(t, 2, args.Get(0).(glisp.SexpInt).ToInt())
+	ExpectEqAny(t, 3, args.Get(1).(glisp.SexpInt).ToInt())
+	ExpectEqAny(t, 4, args.Get(2).(glisp.SexpInt).ToInt())
+	stack.DropExpr(args.Len())
+
+	ExpectEqAny(t, 1, stack.Top())
+}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"sync/atomic"
 )
 
@@ -25,6 +26,7 @@ type Environment struct {
 	pc          int
 	nextsymbol  *nextSymbol
 	fileReader  FileReader
+	typeAlias   map[string]string
 }
 
 const CallStackSize = 25
@@ -45,6 +47,7 @@ func New() *Environment {
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = &nextSymbol{counter: 1}
 	env.fileReader = DefaultFileReader()
+	env.typeAlias = make(map[string]string)
 
 	for key, function := range BuiltinFunctions() {
 		sym := env.MakeSymbol(key)
@@ -84,6 +87,10 @@ func (env *Environment) Clone() *Environment {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.typeAlias = make(map[string]string)
+	for k, v := range env.typeAlias {
+		dupenv.typeAlias[k] = v
+	}
 	return dupenv
 }
 
@@ -113,7 +120,27 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.typeAlias = make(map[string]string)
+	for k, v := range env.typeAlias {
+		dupenv.typeAlias[k] = v
+	}
 	return dupenv
+}
+
+func (env *Environment) RegisterType(name string, exprs ...Sexp) {
+	for _, expr := range exprs {
+		env.typeAlias[getGoType(expr)] = name
+	}
+}
+
+func (env *Environment) GetTypeName(expr Sexp) string {
+	name := GetSexpType(expr)
+	if len(name) > 3 && name[:3] == "go:" {
+		if alias, ok := env.typeAlias[name]; ok {
+			return alias
+		}
+	}
+	return name
 }
 
 func (env *Environment) MakeSymbol(name string) SexpSymbol {
@@ -652,36 +679,13 @@ func (env *Environment) Run() (Sexp, error) {
 			env.datastack.PushExpr(list)
 			env.pc++
 		case OpVectorize:
-			vec := make([]Sexp, 0)
-			for {
-				expr, err := env.datastack.PopExpr()
-				if err != nil {
-					return SexpNull, err
-				}
-				if expr == SexpMarker {
-					break
-				}
-				vec = append([]Sexp{expr}, vec...)
-			}
-			env.datastack.PushExpr(SexpArray(vec))
-			env.pc++
-		case OpHashize:
-			a := make([]Sexp, 0)
-			for {
-				expr, err := env.datastack.PopExpr()
-				if err != nil {
-					return SexpNull, err
-				}
-				if expr == SexpMarker {
-					break
-				}
-				a = append(a, expr)
-			}
-			hash, err := MakeHash(a)
+			args, err := env.datastack.PeekArgsUntil(func(e Sexp) bool { return e == SexpMarker })
 			if err != nil {
 				return SexpNull, err
 			}
-			env.datastack.PushExpr(hash)
+			vec := SexpArray(args.SliceStart(1).GetAll()) // drop head Marker
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(vec)
 			env.pc++
 		case OpBindlist:
 			if err := env.bindListInstruction(); err != nil {
@@ -771,6 +775,186 @@ func (env *Environment) Run() (Sexp, error) {
 				return SexpNull, err
 			}
 			env.datastack.PushExpr(res)
+			env.pc++
+		case OpCons:
+			b, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			a, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(Cons(a, b))
+			env.pc++
+		case OpCar:
+			res, err := env.doCar()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpCdr:
+			res, err := env.doCdr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpNot:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			switch e := expr.(type) {
+			case SexpBool:
+				env.datastack.PushExpr(SexpBool(!e))
+			case SexpSentinel:
+				env.datastack.PushExpr(SexpBool(e == SexpNull))
+			default:
+				env.datastack.PushExpr(SexpBool(false))
+			}
+			env.pc++
+		case OpGenSymbol:
+			env.datastack.PushExpr(env.GenSymbol("__anon"))
+			env.pc++
+		case OpSymbolNum:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			switch t := expr.(type) {
+			case SexpSymbol:
+				env.datastack.PushExpr(NewSexpInt(t.number))
+			default:
+				return SexpNull, errors.New("argument must be symbol")
+			}
+			env.pc++
+		case OpType:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpStr(env.GetTypeName(expr)))
+			env.pc++
+		case OpHget:
+			res, err := env.doHashAccess("hget", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpHSet:
+			res, err := env.doHashAccess("hset!", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpHDel:
+			res, err := env.doHashAccess("hdel!", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpHash:
+			res, err := env.doMakeHash(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpExist:
+			args, err := env.datastack.PeekArgs(2)
+			if err != nil {
+				return SexpNull, err
+			}
+			exist, err := checkExistence("exist?", args)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(SexpBool(exist))
+			env.pc++
+		case OpLen:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			n, err := getLenFunction(expr)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(NewSexpInt(n))
+			env.pc++
+		case OpAppend:
+			args, err := env.datastack.PeekArgs(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			var res Sexp
+			switch t := args.Get(0).(type) {
+			case SexpArray:
+				res = SexpArray(append(t, args.GetAll()[1:]...))
+			case SexpStr:
+				if res, err = AppendStr(t, args.GetAll()[1:]...); err != nil {
+					return SexpNull, err
+				}
+			default:
+				return SexpNull, errors.New("First argument of append must be array or string but got " + InspectType(args.Get(0)))
+			}
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpConcat:
+			args, err := env.datastack.PeekArgs(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			res, err := concatSexp(args)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpMakeList:
+			args, err := env.datastack.PeekArgs(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			res := MakeListByArgs(args)
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpMakeArray:
+			args, err := env.datastack.PeekArgs(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			res := SexpArray(args.GetAll())
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpStr:
+			args, err := env.datastack.PeekArgs(instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			var sb strings.Builder
+			if err := sexpToString(&sb, args); err != nil {
+				return SexpNull, err
+			}
+			env.datastack.DropExpr(args.Len())
+			env.datastack.PushExpr(SexpStr(sb.String()))
+			env.pc++
+		case OpSexpStr:
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpStr(expr.SexpString()))
 			env.pc++
 		default:
 			return SexpNull, fmt.Errorf("unknown opcode: %v", instr.Op)
@@ -974,4 +1158,39 @@ func (env *Environment) doArithmetic(name string, nargs int) (Sexp, error) {
 		return SexpNull, err
 	}
 	return simpleArithmetic(name, args)
+}
+
+func (env *Environment) doCar() (Sexp, error) {
+	defer env.datastack.DropExpr(1)
+	args, err := env.datastack.PeekArgs(1)
+	if err != nil {
+		return SexpNull, err
+	}
+	return getFirstFunction(args)
+}
+
+func (env *Environment) doCdr() (Sexp, error) {
+	defer env.datastack.DropExpr(1)
+	args, err := env.datastack.PeekArgs(1)
+	if err != nil {
+		return SexpNull, err
+	}
+	return getRestFunction(args)
+}
+
+func (env *Environment) doHashAccess(name string, nargs int) (Sexp, error) {
+	defer env.datastack.DropExpr(nargs)
+	args, err := env.datastack.PeekArgs(nargs)
+	if err != nil {
+		return SexpNull, err
+	}
+	return hashAccess(name, args)
+}
+func (env *Environment) doMakeHash(nargs int) (Sexp, error) {
+	defer env.datastack.DropExpr(nargs)
+	args, err := env.datastack.PeekArgs(nargs)
+	if err != nil {
+		return SexpNull, err
+	}
+	return MakeHash(args)
 }

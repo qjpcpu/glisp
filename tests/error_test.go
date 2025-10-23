@@ -579,7 +579,7 @@ func TestWrongArgumentNumber(t *testing.T) {
 
 	_, err := glisp.GetConstructorFunction("")(glisp.New(), glisp.MakeArgs())
 	ExpectError(t, err, "invalid constructor")
-	h, _ := glisp.MakeHash(nil)
+	h, _ := glisp.MakeHash(glisp.MakeArgs())
 	_, err = glisp.GetHashAccessFunction("")(glisp.New(), glisp.MakeArgs(h, glisp.NewSexpInt(0)))
 	ExpectSuccess(t, err)
 
@@ -629,12 +629,12 @@ func TestWrongArgumentNumber(t *testing.T) {
 	ExpectScriptErr(t, `(realize (drop (fn [e] (int "x")) (stream (my-counter 1))))`, `x not number`)
 	ExpectScriptErr(t, `(filter 1 (stream (my-counter 1)))`, `first argument of filter must be function, but got int`)
 	ExpectScriptErr(t, `(take)`, `expected 2 arguments, got 0`)
-	ExpectScriptErr(t, `(take 1  (my-counter 1))`, `second argument of take must be stream, but got *tests.Counter`)
+	ExpectScriptErr(t, `(take 1  (my-counter 1))`, `second argument of take must be stream, but got go:*tests.Counter`)
 	ExpectScriptErr(t, `(take ""  (stream (my-counter 1)))`, `first argument of take must be int/function, but got string`)
 	ExpectScriptErr(t, `(drop)`, `expected 2 arguments, got 0`)
 	ExpectScriptErr(t, `(realize (drop (fn [e] 1) (stream [1 2 3])))`, `drop function should return bool but got int`)
 	ExpectScriptErr(t, `(realize (take (fn [e] 1) (stream [1 2 3])))`, `take function should return bool but got int`)
-	ExpectScriptErr(t, `(drop 1  (my-counter 1))`, `second argument of drop must be stream, but got *tests.Counter`)
+	ExpectScriptErr(t, `(drop 1  (my-counter 1))`, `second argument of drop must be stream, but got go:*tests.Counter`)
 	ExpectScriptErr(t, `(drop ""  (stream (my-counter 1)))`, `first argument of drop must be int/function, but got string`)
 	ExpectScriptErr(t, `(flatten)`, `expected 1 arguments, got 0`)
 	ExpectScriptErr(t, `(flatten 1)`, `second argument of map must be array/list`)

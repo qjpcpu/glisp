@@ -40,7 +40,6 @@ const (
 	OpExplode
 	OpSquash
 	OpVectorize
-	OpHashize
 	OpBindlist
 	OpRefSym
 
@@ -57,6 +56,37 @@ const (
 	OpArithSub
 	OpArithMul
 	OpArithDiv
+
+	// List
+	OpCons
+	OpCar
+	OpCdr
+	OpExist
+	OpAppend
+	OpConcat
+	OpMakeList
+	OpMakeArray
+
+	// Logical
+	OpNot
+
+	// Symbolic
+	OpGenSymbol
+	OpSymbolNum
+
+	// Meta
+	OpType
+	OpLen
+
+	// Hash
+	OpHget
+	OpHSet
+	OpHDel
+	OpHash
+
+	// String
+	OpStr
+	OpSexpStr
 )
 
 // Instruction represents a single bytecode instruction for the VM.
@@ -124,8 +154,6 @@ func (i Instruction) InstrString() string {
 		return "squash"
 	case OpVectorize:
 		return "vectorize"
-	case OpHashize:
-		return "hashize"
 	case OpBindlist:
 		return "bindlist"
 	case OpRefSym:
@@ -150,6 +178,44 @@ func (i Instruction) InstrString() string {
 		return "*"
 	case OpArithDiv:
 		return "/"
+	case OpCons:
+		return "cons"
+	case OpCar:
+		return "car"
+	case OpCdr:
+		return "cdr"
+	case OpNot:
+		return "not"
+	case OpGenSymbol:
+		return "gensym"
+	case OpSymbolNum:
+		return "symnum"
+	case OpType:
+		return "type"
+	case OpHash:
+		return "hash"
+	case OpHget:
+		return "hget"
+	case OpHSet:
+		return "hset!"
+	case OpHDel:
+		return "hdel!"
+	case OpExist:
+		return "exist?"
+	case OpLen:
+		return "len"
+	case OpAppend:
+		return "append"
+	case OpConcat:
+		return "concat"
+	case OpMakeList:
+		return "list"
+	case OpMakeArray:
+		return "array"
+	case OpStr:
+		return "string"
+	case OpSexpStr:
+		return "sexp-str"
 	default:
 		return "invalid"
 	}

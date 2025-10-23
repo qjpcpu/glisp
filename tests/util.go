@@ -24,6 +24,7 @@ func loadAllExtensions(vm *glisp.Environment) *glisp.Environment {
 		panic(err)
 	}
 	vm.AddFunction("my-counter", MakeCounter)
+	vm.RegisterType("stream", &Counter{})
 	vm.AddFunction("err-stream", MakeErrStream)
 	vm.AddFunction("get-my-counter", GetCounterNumber)
 	return vm

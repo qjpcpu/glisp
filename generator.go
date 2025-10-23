@@ -589,6 +589,40 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateCompare(sym.name, args)
 	case "+", "-", "*", "/":
 		return gen.GenerateArithmetic(sym.name, args)
+	case "cons":
+		return gen.GenerateCons(sym.name, args)
+	case "car":
+		return gen.GenerateCar(sym.name, args)
+	case "cdr":
+		return gen.GenerateCdr(sym.name, args)
+	case "not":
+		return gen.GenerateNot(sym.name, args)
+	case "gensym":
+		return gen.GenerateGenSym(sym.name, args)
+	case "symnum":
+		return gen.GenerateSymNum(sym.name, args)
+	case "type":
+		return gen.GenerateType(sym.name, args)
+	case "hget", "hset!", "hdel!":
+		return gen.GenerateHashAccess(sym.name, args)
+	case "hash":
+		return gen.GenerateMakeHash(args)
+	case "exist?":
+		return gen.GenerateExist(sym.name, args)
+	case "len":
+		return gen.GenerateLen(sym.name, args)
+	case "append":
+		return gen.GenerateAppend(sym.name, args)
+	case "concat":
+		return gen.GenerateConcat(sym.name, args)
+	case "list":
+		return gen.GenerateMakeList(sym.name, args)
+	case "array":
+		return gen.GenerateMakeArray(sym.name, args)
+	case "string":
+		return gen.GenerateStringify(sym.name, args)
+	case "sexp-str":
+		return gen.GenerateGetSexpStr(sym.name, args)
 	}
 
 	macro, found := gen.env.macros.Find(sym)
@@ -694,7 +728,6 @@ func (gen *Generator) Reset() {
 // side-effect (or main effect) has to be pushing an expression on the top of
 // the datastack that represents the expanded and substituted expression
 func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
-
 	if len(args) != 1 {
 		return errors.New("syntax-quote takes exactly one argument")
 	}
@@ -711,9 +744,6 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 			break
 		}
 		gen.generateSyntaxQuoteList(arg)
-		return nil
-	case *SexpHash:
-		gen.generateSyntaxQuoteHash(arg)
 		return nil
 	}
 	gen.AddInstruction(Instruction{Op: OpPush, Expr: arg})
@@ -789,36 +819,6 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 		gen.AddInstruction(Instruction{Op: OpExplode})
 	}
 	gen.AddInstruction(Instruction{Op: OpVectorize})
-	return nil
-}
-
-func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
-
-	var hash *SexpHash
-	switch a := arg.(type) {
-	case *SexpHash:
-		//good, required here
-		hash = a
-	default:
-		return fmt.Errorf("arg to generateSyntaxQuoteHash() must be a hash; got %v", InspectType(a))
-	}
-	gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
-
-	// must reverse order here to preserve order on rebuild
-	hash.ReverseVisit(func(key Sexp, val Sexp) bool {
-		// value first, since value comes second on rebuild
-		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
-		gen.GenerateSyntaxQuote([]Sexp{val})
-		gen.AddInstruction(Instruction{Op: OpSquash})
-		gen.AddInstruction(Instruction{Op: OpExplode})
-
-		gen.AddInstruction(Instruction{Op: OpPush, Expr: SexpMarker})
-		gen.GenerateSyntaxQuote([]Sexp{key})
-		gen.AddInstruction(Instruction{Op: OpSquash})
-		gen.AddInstruction(Instruction{Op: OpExplode})
-		return true
-	})
-	gen.AddInstruction(Instruction{Op: OpHashize})
 	return nil
 }
 
@@ -902,5 +902,245 @@ func (gen *Generator) GenerateArithmetic(name string, args []Sexp) error {
 	}
 	gen.tail = oldtail
 	gen.AddInstruction(Instruction{Op: op, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateCons(name string, args []Sexp) error {
+	if len(args) != 2 {
+		return WrongGeneratorNumberArguments(name, len(args), 2)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpCons, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateCar(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpCar, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateCdr(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpCdr, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateNot(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpNot, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateGenSym(name string, args []Sexp) error {
+	if len(args) != 0 {
+		return WrongGeneratorNumberArguments(name, len(args), 0)
+	}
+	gen.AddInstruction(Instruction{Op: OpGenSymbol})
+	return nil
+}
+
+func (gen *Generator) GenerateSymNum(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpSymbolNum, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateType(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpType, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateHashAccess(name string, args []Sexp) error {
+	var op Opcode
+	switch name {
+	case "hget":
+		if len(args) != 2 && len(args) != 3 {
+			return WrongGeneratorNumberArguments(name, len(args), 2, 3)
+		}
+		op = OpHget
+	case "hset!":
+		if len(args) != 3 {
+			return WrongGeneratorNumberArguments(name, len(args), 3)
+		}
+		op = OpHSet
+	case "hdel!":
+		if len(args) != 2 {
+			return WrongGeneratorNumberArguments(name, len(args), 2)
+		}
+		op = OpHDel
+	default:
+		return fmt.Errorf("unknown hash access op `%s`", name)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: op, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateMakeHash(args []Sexp) error {
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpHash, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateExist(name string, args []Sexp) error {
+	if len(args) != 2 {
+		return WrongGeneratorNumberArguments(name, len(args), 2)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpExist, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateLen(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.Generate(args[0]); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpLen, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateAppend(name string, args []Sexp) error {
+	if len(args) <= 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1, Many)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpAppend, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateConcat(name string, args []Sexp) error {
+	if len(args) < 2 {
+		return WrongGeneratorNumberArguments(name, len(args), 2, Many)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpConcat, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateMakeList(name string, args []Sexp) error {
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpMakeList, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateMakeArray(name string, args []Sexp) error {
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpMakeArray, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateStringify(name string, args []Sexp) error {
+	if len(args) != 1 && len(args) != 2 {
+		return WrongGeneratorNumberArguments(name, len(args), 1, 2)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpStr, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateGetSexpStr(name string, args []Sexp) error {
+	if len(args) != 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: OpSexpStr, Nargs: len(args)})
 	return nil
 }

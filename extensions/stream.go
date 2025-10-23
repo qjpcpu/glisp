@@ -237,15 +237,6 @@ func StreamDropFunction(name string) glisp.UserFunction {
 	}
 }
 
-func OverrideTypeFunction(orig *glisp.SexpFunction) glisp.UserFunction {
-	return func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
-		if args.Len() == 1 && IsStream(args.Get(0)) && !glisp.IsIType(args.Get(0)) {
-			return glisp.SexpStr(`stream`), nil
-		}
-		return env.Apply(orig, args)
-	}
-}
-
 func StreamFoldlFunction(name string) glisp.UserFunction {
 	normalFn := func(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
 		fun := args.Get(0).(*glisp.SexpFunction)

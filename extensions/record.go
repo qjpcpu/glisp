@@ -107,7 +107,7 @@ func (class *sexpRecordClass) MakeRecord(args glisp.Args) (SexpRecord, error) {
 	if args.Len()%2 != 0 {
 		return nil, fmt.Errorf("argument of %s count must be even but got %v", class.constructorName(), args.Len())
 	}
-	value, _ := glisp.MakeHash(nil)
+	value, _ := glisp.MakeHash(glisp.MakeArgs())
 	/* set default value */
 	for _, name := range class.fieldNames {
 		value.HashSet(glisp.SexpStr(name), class.fieldsMeta[name].DefaultValue)
@@ -394,22 +394,22 @@ func ClassDefinition(name string) glisp.UserFunction {
 		cls := args.Get(0).(SexpRecordClass)
 		var fields glisp.SexpArray
 		for _, f := range cls.Fields() {
-			hash, _ := glisp.MakeHash([]glisp.Sexp{
+			hash, _ := glisp.MakeHash(glisp.MakeArgs(
 				glisp.SexpStr("name"),
 				glisp.SexpStr(f.Name),
 				glisp.SexpStr("type"),
 				glisp.SexpStr(f.Type),
 				glisp.SexpStr("tag"),
 				glisp.SexpStr(f.Tag),
-			})
+			))
 			fields = append(fields, hash)
 		}
-		return glisp.MakeHash([]glisp.Sexp{
+		return glisp.MakeHash(glisp.MakeArgs(
 			glisp.SexpStr("name"),
 			glisp.SexpStr(strings.TrimPrefix(cls.TypeName(), "#class.")),
 			glisp.SexpStr("fields"),
 			fields,
-		})
+		))
 	}
 }
 
@@ -642,7 +642,7 @@ func (r *SexpGoRecord) GetBytesField(name string) []byte {
 
 func (r *SexpGoRecord) GetHashField(name string) map[string]any {
 	ret := make(map[string]any)
-	h, _ := glisp.MakeHash(nil)
+	h, _ := glisp.MakeHash(glisp.MakeArgs())
 	bs, _ := glisp.Marshal(r.SexpRecord.GetFieldDefault(name, h))
 	stdUnmarshal(bs, &ret)
 	return ret

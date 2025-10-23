@@ -1,5 +1,6 @@
 (defrecord TestStreamRecord (Int int) (Str string))
 
+(assert (= "stream" (type (range)) (apply type [(range)])))
 (assert (not (stream? nil)))
 (assert (not (stream? [])))
 (assert (not (stream? {})))
@@ -30,12 +31,12 @@
 
 (let [counter (my-counter 100)]
      (def score (->> (stream counter)
-          (filter #(= 0 (mod % 2)))
-          (flatmap (fn [e] [-1024 e]))
-          (map #(+ 100 %))
-          (filter #(>= % 0))
-          (take 3)
-          (realize)))
+                     (filter #(= 0 (mod % 2)))
+                     (flatmap (fn [e] [-1024 e]))
+                     (map #(+ 100 %))
+                     (filter #(>= % 0))
+                     (take 3)
+                     (realize)))
      ;; return (102 104 106)
      (assert (= 3 (len score)))
      (assert (= 102 (car score)))
@@ -46,12 +47,12 @@
 
 (assert (= [10 11 12]
            (list-to-array
-               (->> (stream (my-counter 100))
-                    (map (fn [e] [1 e]))
-                    (flatten)
-                    (filter #(>= % 10))
-                    (take 3)
-                    (realize)))))
+            (->> (stream (my-counter 100))
+                 (map (fn [e] [1 e]))
+                 (flatten)
+                 (filter #(>= % 10))
+                 (take 3)
+                 (realize)))))
 
 (assert (= 6
            (->> (stream (my-counter 100))
@@ -60,46 +61,46 @@
 
 (assert (= [10 11 12]
            (list-to-array
-               (->> (stream (list 1 2 3 4 5 6 7 8 9 10 11 12 13))
-                    (map (fn [e] [1 e]))
-                    (flatten)
-                    (filter #(>= % 10))
-                    (take 3)
-                    (realize)))))
+            (->> (stream (list 1 2 3 4 5 6 7 8 9 10 11 12 13))
+                 (map (fn [e] [1 e]))
+                 (flatten)
+                 (filter #(>= % 10))
+                 (take 3)
+                 (realize)))))
 
 (assert (= [10 11 12]
            (list-to-array
-               (->> (stream [1 2 3 4 5 6 7 8 9 10 11 12 13])
-                    (map (fn [e] [1 e]))
-                    (flatten)
-                    (filter #(>= % 10))
-                    (take 3)
-                    (realize)))))
+            (->> (stream [1 2 3 4 5 6 7 8 9 10 11 12 13])
+                 (map (fn [e] [1 e]))
+                 (flatten)
+                 (filter #(>= % 10))
+                 (take 3)
+                 (realize)))))
 
 (assert (= [#d #e #f]
            (list-to-array
-               (->> (stream "abcdefghijklmn")
-                    (filter #(exist? [#d #e #f] %))
-                    (realize)))))
+            (->> (stream "abcdefghijklmn")
+                 (filter #(exist? [#d #e #f] %))
+                 (realize)))))
 
 (assert (= [#d #e #f]
            (list-to-array
-               (->> (stream (bytes "abcdefghijklmn"))
-                    (filter #(exist? [#d #e #f] %))
-                    (realize)))))
+            (->> (stream (bytes "abcdefghijklmn"))
+                 (filter #(exist? [#d #e #f] %))
+                 (realize)))))
 
 ;; flatmap inner stream
 (assert (= [1 2 3 1 2]
            (list-to-array
-               (->> (stream [(stream (my-counter 3)) (stream (my-counter 2))])
-                    (flatmap (fn [e] e))
-                    (realize)))))
+            (->> (stream [(stream (my-counter 3)) (stream (my-counter 2))])
+                 (flatmap (fn [e] e))
+                 (realize)))))
 
 (assert (= [1 2 3 1 2]
            (list-to-array
-               (->> (stream [(stream (my-counter 3)) (stream (my-counter 2))])
-                    (flatten)
-                    (realize)))))
+            (->> (stream [(stream (my-counter 3)) (stream (my-counter 2))])
+                 (flatten)
+                 (realize)))))
 
 (let [score (->> (stream (list 1 nil 2))
                  (flatmap (fn [e] [100 e]))
@@ -135,32 +136,32 @@
 
 (assert (= [1 2]
            (list-to-array
-               (->> (stream [(stream (my-counter 100))])
-                    (flatten)
-                    (take #(< % 3))
-                    (realize)))))
+            (->> (stream [(stream (my-counter 100))])
+                 (flatten)
+                 (take #(< % 3))
+                 (realize)))))
 
 (assert (= [99 100]
            (list-to-array
-               (->> (stream [(stream (my-counter 100))])
-                    (flatten)
-                    (drop #(<= % 98))
-                    (realize)))))
+            (->> (stream [(stream (my-counter 100))])
+                 (flatten)
+                 (drop #(<= % 98))
+                 (realize)))))
 
 
 (assert (= [99 100]
            (list-to-array
-               (->> (stream [(stream (my-counter 100))])
-                    (flatten)
-                    (drop 98)
-                    (realize)))))
+            (->> (stream [(stream (my-counter 100))])
+                 (flatten)
+                 (drop 98)
+                 (realize)))))
 
 (assert (= [1 2]
            (list-to-array
-               (->> (stream [(stream (my-counter 100))])
-                    (flatten)
-                    (reject #(> % 2))
-                    (realize)))))
+            (->> (stream [(stream (my-counter 100))])
+                 (flatten)
+                 (reject #(> % 2))
+                 (realize)))))
 
 ;; range
 (assert (= "(range)" (sexp-str (range))))
@@ -284,10 +285,10 @@
                   (realize)
                   (car))))
 (assert (= nil (->> (zip (range) (stream ["c" "golang" "lisp" "ruby" "python"]))
-                  (filter #(= "c++" (car (cdr %))))
-                  (map #(car %))
-                  (realize)
-                  (car))))
+                    (filter #(= "c++" (car (cdr %))))
+                    (map #(car %))
+                    (realize)
+                    (car))))
 
 (assert (= 2 (index-of #(= % "lisp") ["c" "golang" "lisp" "ruby" "python"])))
 (assert (= -1 (index-of #(= % "c++") ["c" "golang" "lisp" "ruby" "python"])))

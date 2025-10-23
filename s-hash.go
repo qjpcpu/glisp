@@ -66,17 +66,17 @@ func HashExpr(e Sexp) (string, error) {
 	return sb.String(), nil
 }
 
-func MakeHash(args []Sexp) (*SexpHash, error) {
-	if len(args)%2 != 0 {
+func MakeHash(args Args) (*SexpHash, error) {
+	if args.Len()%2 != 0 {
 		return &SexpHash{}, errors.New("hash requires even number of arguments")
 	}
 
 	hash := &SexpHash{
 		Map: make(map[hashkey]hashval),
 	}
-	for i := 0; i < len(args); i += 2 {
-		key := args[i]
-		val := args[i+1]
+	for i := 0; i < args.Len(); i += 2 {
+		key := args.Get(i)
+		val := args.Get(i + 1)
 		err := hash.HashSet(key, val)
 		if err != nil {
 			return hash, err
@@ -203,7 +203,7 @@ func HashIsEmpty(hash *SexpHash) bool {
 }
 
 func FilterHash(env *Environment, fun *SexpFunction, hash *SexpHash) (*SexpHash, error) {
-	result, err := MakeHash(nil)
+	result, err := MakeHash(MakeArgs())
 	if err != nil {
 		return hash, err
 	}

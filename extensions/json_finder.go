@@ -395,7 +395,7 @@ func sexprToStr(expr glisp.Sexp) string {
 
 func setSexp(root glisp.Sexp, tokens []stPath, val glisp.Sexp) (glisp.Sexp, error) {
 	if root == glisp.SexpNull {
-		root, _ = glisp.MakeHash(nil)
+		root, _ = glisp.MakeHash(glisp.MakeArgs())
 	}
 	key := glisp.SexpStr(tokens[0].Name)
 	switch expr := root.(type) {

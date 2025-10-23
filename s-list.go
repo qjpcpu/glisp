@@ -83,6 +83,15 @@ func ListToArray(expr Sexp) ([]Sexp, error) {
 	return arr, nil
 }
 
+func MakeListByArgs(args Args) Sexp {
+	lb := NewListBuilder()
+	args.Foreach(func(s Sexp) bool {
+		lb.Add(s)
+		return true
+	})
+	return lb.Get()
+}
+
 func MakeList(expressions []Sexp) Sexp {
 	return NewListBuilder().Add(expressions...).Get()
 }

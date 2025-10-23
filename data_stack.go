@@ -82,7 +82,44 @@ func (stack *DataStack) GetExpressions(n int) ([]Sexp, error) {
 	return stack.elements[stack_start : stack_start+n], nil
 }
 
+// PeekArgsUntil peeks at arguments from the top of the stack downwards until
+// the predicate `isEnd` returns true.
+//
+// It returns an `Args` object containing all elements from the top of the stack
+// down to and including the element that satisfied the predicate.
+//
+// Key characteristics:
+//
+//  1. Inclusion of the End Element: The returned `Args` slice *includes* the
+//     element for which `isEnd` returned true.
+//
+//  2. Argument Order: The elements in the returned `Args` are ordered from the
+//     deepest element (the one that matched `isEnd`) to the shallowest (the one
+//     at the very top of the stack). For example, `args.Get(0)` will be the
+//     element that satisfied `isEnd`. This is the natural order as they appear
+//     in the underlying `elements` array, but is the reverse of the LIFO (Last-In, First-Out)
+//     order you would get from calling `Pop()` repeatedly.
+//
+//  3. Discarding the End Element: Since the end element is always at index 0
+//     of the returned `Args`, you can easily get a slice of the arguments
+//     without the end element by calling `args.SliceStart(1)`. This is a common
+//     pattern, as seen in the implementation of `OpVectorize`.
+func (stack *DataStack) PeekArgsUntil(isEnd func(Sexp) bool) (Args, error) {
+	for i := 1; ; i++ {
+		elem, err := stack.Get(i - 1)
+		if err != nil {
+			return Args{}, err
+		}
+		if isEnd(elem) {
+			return stack.PeekArgs(i)
+		}
+	}
+}
+
 func (stack *DataStack) PeekArgs(n int) (Args, error) {
+	if n <= 0 {
+		return Args{}, nil
+	}
 	stack_start := stack.tos - n + 1
 	if stack_start < 0 {
 		return Args{}, errors.New("not enough items on stack")
