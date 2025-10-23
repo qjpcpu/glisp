@@ -74,6 +74,17 @@ var builtinFunctions = map[string]NamedUserFunction{
 	"gensym":     GetGenSymFunction,
 	"symbol":     GetAnyToSymbolFunction,
 	"bytes":      GetAnyToBytes,
+	"<":          GetCompareFunction,
+	">":          GetCompareFunction,
+	"<=":         GetCompareFunction,
+	">=":         GetCompareFunction,
+	"=":          GetCompareFunction,
+	"not=":       GetCompareFunction,
+	"!=":         GetCompareFunction,
+	"+":          GetNumericFunction,
+	"-":          GetNumericFunction,
+	"*":          GetNumericFunction,
+	"/":          GetNumericFunction,
 }
 
 func GetConsFunction(name string) UserFunction {
