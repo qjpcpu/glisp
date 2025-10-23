@@ -43,6 +43,20 @@ const (
 	OpHashize
 	OpBindlist
 	OpRefSym
+
+	// Compare
+	OpLt
+	OpGt
+	OpLEt
+	OpGEt
+	OpEq
+	OpNotEq
+
+	// Arithmetic
+	OpArithAdd
+	OpArithSub
+	OpArithMul
+	OpArithDiv
 )
 
 // Instruction represents a single bytecode instruction for the VM.
@@ -116,6 +130,26 @@ func (i Instruction) InstrString() string {
 		return "bindlist"
 	case OpRefSym:
 		return "ref symbol"
+	case OpLt:
+		return "<"
+	case OpGt:
+		return ">"
+	case OpLEt:
+		return "<="
+	case OpGEt:
+		return ">="
+	case OpEq:
+		return "="
+	case OpNotEq:
+		return "!="
+	case OpArithAdd:
+		return "+"
+	case OpArithSub:
+		return "-"
+	case OpArithMul:
+		return "*"
+	case OpArithDiv:
+		return "/"
 	default:
 		return "invalid"
 	}

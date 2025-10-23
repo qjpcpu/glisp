@@ -9,34 +9,8 @@ func GetCompareFunction(name string) UserFunction {
 		if args.Len() < 2 {
 			return WrongNumberArguments(name, args.Len(), 2, Many)
 		}
-
-		for i := 1; i < args.Len(); i++ {
-			res, err := Compare(args.Get(i-1), args.Get(i))
-			if err != nil {
-				return SexpNull, err
-			}
-
-			var cond bool
-			switch name {
-			case "<":
-				cond = res < 0
-			case ">":
-				cond = res > 0
-			case "<=":
-				cond = res <= 0
-			case ">=":
-				cond = res >= 0
-			case "=":
-				cond = res == 0
-			case "not=", "!=":
-				cond = res != 0
-			}
-			if !cond {
-				return SexpBool(false), nil
-			}
-		}
-
-		return SexpBool(true), nil
+		cond, err := compareArgs(name, args)
+		return SexpBool(cond), err
 	}
 }
 
@@ -45,38 +19,44 @@ func GetNumericFunction(name string) UserFunction {
 		if args.Len() < 1 {
 			return WrongNumberArguments(name, args.Len(), 1)
 		}
-
-		var err error
-		accum := args.Get(0)
-		var op NumericOp
-		switch name {
-		case "+":
-			op = Add
-		case "-":
-			op = Sub
-		case "*":
-			op = Mult
-		case "/":
-			op = Div
-		}
-		handle := NumericDo
-		if op == Sub {
-			if IsList(accum, true) {
-				handle = list_NumericDoSub
-			} else if IsArray(accum) {
-				handle = array_NumericDoSub
-			}
-		}
-
-		args.SliceStart(1).Foreach(func(expr Sexp) bool {
-			accum, err = handle(op, accum, expr)
-			return err == nil
-		})
-		if err != nil {
-			return SexpNull, err
-		}
-		return accum, nil
+		return simpleArithmetic(name, args)
 	}
+}
+
+func simpleArithmetic(name string, args Args) (Sexp, error) {
+	if args.Len() <= 1 {
+		return WrongNumberArguments(name, args.Len(), 1, 2)
+	}
+	var err error
+	accum := args.Get(0)
+	var op NumericOp
+	switch name {
+	case "+":
+		op = Add
+	case "-":
+		op = Sub
+	case "*":
+		op = Mult
+	case "/":
+		op = Div
+	}
+	handle := NumericDo
+	if op == Sub {
+		if IsList(accum, true) {
+			handle = list_NumericDoSub
+		} else if IsArray(accum) {
+			handle = array_NumericDoSub
+		}
+	}
+
+	args.SliceStart(1).Foreach(func(expr Sexp) bool {
+		accum, err = handle(op, accum, expr)
+		return err == nil
+	})
+	if err != nil {
+		return SexpNull, err
+	}
+	return accum, nil
 }
 
 func list_NumericDoSub(op NumericOp, a, b Sexp) (Sexp, error) {

@@ -94,6 +94,9 @@ func (stack *DataStack) PeekArgs(n int) (Args, error) {
 }
 
 func (stack *DataStack) DropExpr(n int) {
+	if n <= 0 {
+		return
+	}
 	stack_start := stack.tos - n + 1
 	if stack_start < 0 {
 		return

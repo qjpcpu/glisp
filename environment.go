@@ -702,6 +702,76 @@ func (env *Environment) Run() (Sexp, error) {
 				env.datastack.PushExpr(SexpNull)
 			}
 			env.pc++
+		case OpLt:
+			cond, err := env.doCompare("<", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpGt:
+			cond, err := env.doCompare(">", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpLEt:
+			cond, err := env.doCompare("<=", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpGEt:
+			cond, err := env.doCompare(">=", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpEq:
+			cond, err := env.doCompare("=", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpNotEq:
+			cond, err := env.doCompare("!=", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(SexpBool(cond))
+			env.pc++
+		case OpArithAdd:
+			res, err := env.doArithmetic("+", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpArithSub:
+			res, err := env.doArithmetic("-", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpArithMul:
+			res, err := env.doArithmetic("*", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
+		case OpArithDiv:
+			res, err := env.doArithmetic("/", instr.Nargs)
+			if err != nil {
+				return SexpNull, err
+			}
+			env.datastack.PushExpr(res)
+			env.pc++
 		default:
 			return SexpNull, fmt.Errorf("unknown opcode: %v", instr.Op)
 		}
@@ -858,4 +928,50 @@ func (g *nextSymbol) Get() int64 {
 
 func (g *nextSymbol) Clone() *nextSymbol {
 	return &nextSymbol{counter: g.counter}
+}
+
+func (env *Environment) doCompare(name string, nargs int) (bool, error) {
+	defer env.datastack.DropExpr(nargs)
+	args, err := env.datastack.PeekArgs(nargs)
+	if err != nil {
+		return false, err
+	}
+	return compareArgs(name, args)
+}
+
+func compareArgs(name string, args Args) (bool, error) {
+	for i := 1; i < args.Len(); i++ {
+		res, err := Compare(args.Get(i-1), args.Get(i))
+		if err != nil {
+			return false, err
+		}
+		var cond bool
+		switch name {
+		case "<":
+			cond = res < 0
+		case ">":
+			cond = res > 0
+		case "<=":
+			cond = res <= 0
+		case ">=":
+			cond = res >= 0
+		case "=":
+			cond = res == 0
+		case "not=", "!=":
+			cond = res != 0
+		}
+		if !cond {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (env *Environment) doArithmetic(name string, nargs int) (Sexp, error) {
+	defer env.datastack.DropExpr(nargs)
+	args, err := env.datastack.PeekArgs(nargs)
+	if err != nil {
+		return SexpNull, err
+	}
+	return simpleArithmetic(name, args)
 }

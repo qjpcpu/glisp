@@ -1,20 +1,20 @@
-; test different ways of writing an integer
+                                        ; test different ways of writing an integer
 (assert (= 24 0x18))
 (assert (= 63 0o77))
 (assert (= 13 0b1101))
 
-; test shift operations
+                                        ; test shift operations
 (assert (= 4 (sla 1 2)))
 (assert (= -1 (sra -4 2)))
 (assert (= 2 (sra 4 1)))
 
-; bitwise operations
+                                        ; bitwise operations
 (assert (= 0b0001 (bit-and 0b0011 0b0101)))
 (assert (= 0b0111 (bit-or 0b0011 0b0101)))
 (assert (= 0b0110 (bit-xor 0b0011 0b0101)))
 (assert (= 0b1100 (bit-and (bit-not 0b0011) 0b1111)))
 
-; arithmetic
+                                        ; arithmetic
 (assert (= 5 (+ 3 2)))
 (assert (= 2.4 (* 2 1.2)))
 (assert (= 2 (mod 5 3)))
@@ -134,3 +134,8 @@
 
 (assert (= 1 (floor 1)))
 (assert (= 1 (ceil 1)))
+
+(defn my-sum [l] (cond (empty? l) 0 (+ (car l) (my-sum (cdr l)))))
+
+(defn my-test [n] (> (my-sum [1 2 3 4 5]) n))
+(assert (my-test 10))

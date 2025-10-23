@@ -332,9 +332,10 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 	}
 
 	subgen := NewGenerator(gen.env)
-	subgen.tail = gen.tail
 	subgen.scopes = gen.scopes
 	subgen.funcname = gen.funcname
+	oldtail := gen.tail
+	subgen.tail = oldtail
 	err := subgen.Generate(args[len(args)-1])
 	if err != nil {
 		return err
@@ -350,9 +351,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		pred_code := subgen.instructions
 
 		subgen.Reset()
-		subgen.tail = gen.tail
-		subgen.scopes = gen.scopes
-		subgen.funcname = gen.funcname
+		subgen.tail = oldtail
 		err = subgen.Generate(args[2*i+1])
 		if err != nil {
 			return err
@@ -586,6 +585,10 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateInclude(args)
 	case "sharp-quote":
 		return gen.GenerateSharpQuote(args)
+	case "<", ">", "<=", ">=", "=", "!=", "not=":
+		return gen.GenerateCompare(sym.name, args)
+	case "+", "-", "*", "/":
+		return gen.GenerateArithmetic(sym.name, args)
 	}
 
 	macro, found := gen.env.macros.Find(sym)
@@ -845,4 +848,59 @@ func prependCallName(macro *SexpFunction, sym SexpSymbol, args []Sexp) Args {
 		return MakeArgs(append([]Sexp{SexpStr(sym.Name())}, args...)...)
 	}
 	return MakeArgs(args...)
+}
+
+func (gen *Generator) GenerateCompare(name string, args []Sexp) error {
+	if len(args) <= 1 {
+		return WrongGeneratorNumberArguments(name, len(args), 1, 2)
+	}
+	var op Opcode
+	switch name {
+	case "<":
+		op = OpLt
+	case ">":
+		op = OpGt
+	case "<=":
+		op = OpLEt
+	case ">=":
+		op = OpGEt
+	case "=":
+		op = OpEq
+	case "not=", "!=":
+		op = OpNotEq
+	default:
+		return fmt.Errorf("not support compare op %s", name)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: op, Nargs: len(args)})
+	return nil
+}
+
+func (gen *Generator) GenerateArithmetic(name string, args []Sexp) error {
+	var op Opcode
+	switch name {
+	case "+":
+		op = OpArithAdd
+	case "-":
+		op = OpArithSub
+	case "*":
+		op = OpArithMul
+	case "/":
+		op = OpArithDiv
+	default:
+		return fmt.Errorf("not support arithmetic op %s", name)
+	}
+	oldtail := gen.tail
+	gen.tail = false
+	if err := gen.GenerateAll(args); err != nil {
+		return err
+	}
+	gen.tail = oldtail
+	gen.AddInstruction(Instruction{Op: op, Nargs: len(args)})
+	return nil
 }
