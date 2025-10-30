@@ -226,7 +226,7 @@ func main() {
 		panic(err)
 	}
 
-	args := []glisp.Sexp{glisp.SexpInt(10), glisp.SexpInt(20)}
+	args := glisp.MakeArgs(glisp.SexpInt(10), glisp.SexpInt(20))
 	result, err := glisp.Apply(addFunc, args)
 	if err != nil {
 		panic(err)
@@ -246,8 +246,8 @@ GLISP values are represented by the `Sexp` interface. Most types map directly to
 You can expose Go functions to your GLISP environment. A Go function must have the following signature:
 
 ```go
-func MyGoFunction(env *glisp.Environment, args []glisp.Sexp) (glisp.Sexp, error) {
-    if len(args) != 2 {
+func MyGoFunction(env *glisp.Environment, args glisp.Args) (glisp.Sexp, error) {
+    if args.Len() != 2 {
         return glisp.SexpNull, glisp.WrongNargs
     }
     // ... your logic here ...
