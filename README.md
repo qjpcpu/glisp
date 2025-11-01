@@ -201,12 +201,13 @@ package main
 import (
 	"fmt"
 	"github.com/qjpcpu/glisp"
+	ext  "github.com/qjpcpu/glisp/extensions"
 )
 
 func main() {
 	// 1. Create a new interpreter environment
 	env := glisp.New()
-	env.AddStdLib() // Load standard library
+	ext.ImportCoreUtils(env) // Load standard library
 
 	// 2. Load and compile GLISP code
 	err := env.LoadString(`(defn add [a b] (+ a b))`)
@@ -232,8 +233,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Result of (add 10 20) is: %s
-", result.SexpString())
+	fmt.Printf("Result of (add 10 20) is: %s", result.SexpString())
 }
 ```
 
@@ -278,7 +278,7 @@ if err != nil {
 To start the interactive REPL:
 ```bash
 cd ./repl/glisp
-go run .
+go build && ./glisp
 ```
 
 Inside the REPL, you can use `(doc function-name)` to get documentation for any function.
