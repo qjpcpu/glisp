@@ -334,3 +334,86 @@ Eval s expression.
 Usage: (function? x)
 
 Returns true if x is function.
+
+========== error? ==========
+Usage: (error? x)
+
+Returns true if x is error.
+
+========== error ==========
+Usage: (error msg)
+
+Create an error.
+
+========== aindex ==========
+Usage: (aindex array element)
+
+Returns the index of element in array, or -1 if not found.
+
+========== < ==========
+Usage: (< x y & more)
+
+Returns true if arguments are in monotonically increasing order.
+Applies to numbers, strings, and chars.
+Example: (< 1 2 3) ; returns true
+
+========== > ==========
+Usage: (> x y & more)
+
+Returns true if arguments are in monotonically decreasing order.
+Applies to numbers, strings, and chars.
+Example: (> 3 2 1) ; returns true
+
+========== <= ==========
+Usage: (<= x y & more)
+
+Returns true if arguments are in monotonically non-decreasing order.
+Applies to numbers, strings, and chars.
+Example: (<= 1 2 2) ; returns true
+
+========== >= ==========
+Usage: (>= x y & more)
+
+Returns true if arguments are in monotonically non-increasing order.
+Applies to numbers, strings, and chars.
+Example: (>= 3 2 2) ; returns true
+
+========== = ==========
+Usage: (= x y & more)
+
+Returns true if all arguments are equal.
+Applies to numbers, strings, and chars.
+Example: (= 1 1 1) ; returns true
+
+========== not= ==========
+Usage: (not= x y & more)
+
+Returns true if no two arguments are equal.
+Applies to numbers, strings, and chars.
+Example: (not= 1 2 3) ; returns true
+
+
+========== + ==========
+Usage: (+ x y & more)
+
+Returns the sum of all arguments.
+Example: (+ 1 2 3) ; returns 6
+
+========== - ==========
+Usage: (- x y & more)
+
+If one argument, returns the negation. Otherwise, subtracts the rest from the first.
+Example: (- 5 2 1) ; returns 2
+
+========== * ==========
+Usage: (* x y & more)
+
+Returns the product of all arguments.
+Example: (* 2 3 4) ; returns 24
+
+========== / ==========
+Usage: (/ x y & more)
+
+If one argument, returns the reciprocal. Otherwise, divides the first by the rest.
+Example: (/ 24 2 3) ; returns 4
+
