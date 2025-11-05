@@ -102,18 +102,11 @@ func (env *Environment) Duplicate() *Environment {
 	dupenv.addrstack = NewAddrStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros.Clone()
-	// Create copies of the symbol tables and the symbol generator
-	// to prevent race conditions if multiple duplicated environments are used
-	// concurrently. This makes each duplicated environment safe for defining
-	// new symbols in its own context.
-	dupenv.symtable = make(map[string]int)
-	for k, v := range env.symtable {
-		dupenv.symtable[k] = v
-	}
-	dupenv.revsymtable = make(map[int]string)
-	for k, v := range env.revsymtable {
-		dupenv.revsymtable[k] = v
-	}
+
+	// must use same symbolic table, nor new symbols in macro env would lost
+	dupenv.symtable = env.symtable
+	dupenv.revsymtable = env.revsymtable
+
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.fileReader = env.fileReader
 

@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"runtime/debug"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/qjpcpu/glisp"
 	"github.com/qjpcpu/glisp/extensions"
@@ -274,4 +276,68 @@ func (e *errStream) SexpString() string { return fmt.Sprintf(`(err-stream "%s")`
 
 func (e *errStream) Next(*glisp.Environment) (glisp.Sexp, bool, error) {
 	return glisp.SexpNull, false, errors.New(e.msg)
+}
+
+type runeReader struct {
+	input chan rune
+	stopc chan struct{}
+}
+
+func NewRuneReader() *runeReader {
+	return &runeReader{input: make(chan rune, 1024), stopc: make(chan struct{})}
+}
+
+func (rr *runeReader) ReadRune() (r rune, size int, err error) {
+	select {
+	case r = <-rr.input:
+		size = utf8.RuneLen(r)
+	case <-rr.stopc:
+		err = io.EOF
+		return
+	}
+	return
+}
+
+type repl struct {
+	reader *runeReader
+	lexer  *glisp.Lexer
+	env    *glisp.Environment
+}
+
+func NewREPL() *repl {
+	env := glisp.New()
+	extensions.ImportAll(env)
+	stream := NewRuneReader()
+	lexer := glisp.NewLexerFromStream(stream)
+	return &repl{
+		reader: stream,
+		lexer:  lexer,
+		env:    env,
+	}
+}
+
+func (self *repl) InputLine(str string) {
+	bs := []rune(str)
+	for _, b := range bs {
+		self.reader.input <- b
+	}
+}
+
+func (self *repl) REPLOnce() (glisp.Sexp, error) {
+	expr, err := glisp.ParseExpression(glisp.NewParser(self.lexer, self.env))
+	if err != nil {
+		return glisp.SexpNull, errors.New(self.env.GetStackTrace(err))
+	}
+	if err = self.env.LoadExpressions([]glisp.Sexp{expr}); err != nil {
+		return glisp.SexpNull, errors.New(self.env.GetStackTrace(err))
+	}
+	ret, err := self.env.Run()
+	if err != nil {
+		return glisp.SexpNull, errors.New(self.env.GetStackTrace(err))
+	}
+	return ret, err
+}
+
+func (self *repl) Close() {
+	close(self.reader.stopc)
 }

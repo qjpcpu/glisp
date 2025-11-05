@@ -993,3 +993,25 @@ func TestDataStackPeekArgsUntil(t *testing.T) {
 
 	ExpectEqAny(t, 1, stack.Top())
 }
+
+func TestMacroSymbolLostInREPL(t *testing.T) {
+	repl := NewREPL()
+	defer repl.Close()
+	repl.InputLine(`(defrecord Person (Name string) (Age int) )`)
+	_, err := repl.REPLOnce()
+	ExpectSuccess(t, err)
+
+	repl.InputLine(`(->Person Name "jack")`)
+	// if test fail, would throw symbol `Name` not found
+	_, err = repl.REPLOnce()
+	ExpectSuccess(t, err)
+}
+
+func TestMacroSymbolLostNotInREPL(t *testing.T) {
+	vm := loadAllExtensions(glisp.New())
+	_, err := vm.EvalString(`
+(defrecord Person (Name string) (Age int))
+(->Person Name "jack")
+`)
+	ExpectSuccess(t, err)
+}
