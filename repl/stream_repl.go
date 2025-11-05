@@ -44,10 +44,21 @@ START:
 			return
 		default:
 		}
+		// Before executing a command, we clone the current environment to create a backup.
+		// This is a crucial feature for improving the user experience in the interactive REPL.
+		// While cloning the environment introduces some performance overhead, it is acceptable
+		// in a REPL context where user experience and fault tolerance are more critical than
+		// maximum performance.
+		backup := sr.env.Clone()
 		expr, err := sr.replOnce(lexer)
 		if err != nil {
 			sr.output <- &Result{Err: err}
-			sr.env.Clear()
+			// If an error occurs during execution (e.g., a syntax error or runtime panic),
+			// instead of clearing the entire environment (which would lose all user-defined
+			// variables and functions), we restore the environment from the backup.
+			// This makes the REPL more robust and forgiving, as a single mistake
+			// won't reset the entire session.
+			sr.env = backup
 			goto START
 		}
 		sr.output <- &Result{Ret: expr}
